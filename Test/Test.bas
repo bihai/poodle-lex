@@ -33,7 +33,7 @@ Dim As Poodle.Token.TokenID ExpectedTokens(0 to 6) = { _
 
 Dim As String ExpectedTexts(0 to 6) = { _
     "123.45", _
-    "Keyword", _
+    "K€yword", _
     "    ", _
     "12345", _
     "Hello", _

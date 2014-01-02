@@ -72,13 +72,13 @@ class LexicalAnalyzer(object):
         self._dfa = None
         
     @staticmethod
-    def parse(file):
+    def parse(file, encoding):
         """
         Creates a lexical analyzer from a rules definition file
         @param file: string containing the file name of the rules definition file.
         """
         lexer = LexicalAnalyzer()
-        for rule_id, pattern, is_case_insensitive in LexicalAnalyzerParser.parse(file):
+        for rule_id, pattern, is_case_insensitive in LexicalAnalyzerParser.parse(file, encoding):
             lexer.add_rule(rule_id, pattern, is_case_insensitive)
         return lexer
 

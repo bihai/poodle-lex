@@ -33,6 +33,7 @@ import os.path
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("RULES_FILE", help="Rules file")
 arg_parser.add_argument("OUTPUT_DIR", help="Containing directory for output files")
+arg_parser.add_argument("-e", "--encoding", help="Rules file encoding", default="utf-8")
 arg_parser.add_argument("-n", "--print-nfa", help="Print a graph of the NFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-d", "--print-dfa", help="Print a graph of the non-minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
@@ -91,7 +92,7 @@ except IOError:
     exit()
 
 try:
-    lexer = LexicalAnalyzer.parse(arguments.RULES_FILE)
+    lexer = LexicalAnalyzer.parse(arguments.RULES_FILE, arguments.encoding)
     lexer.finalize()
     
     # Export automata if requested

@@ -47,12 +47,12 @@ class LexicalAnalyzerLexer(object):
     _pattern = "|".join(["(?P<%s>%s)" % (key, value) for key, value in _patterns])
     _regex = re.compile(_pattern, re.UNICODE or re.MULTILINE)
     
-    def __init__(self, file):
+    def __init__(self, file, encoding):
         """
         @param file: the name of the rules definition file to tokenize
         """
         with open(file, 'r') as f:
-            self.source = f.read()
+            self.source = f.read().decode(encoding)
         self.generator = self._tokens()
         
     def __iter__(self):
@@ -125,7 +125,7 @@ class LexicalAnalyzerLexer(object):
             index = match.end()
             
 # Parse returns an iterator for each rule in the file
-def parse(file):
+def parse(file, encoding):
     """
     Parses a rules definition file and returns an iterator for each rule.
     @param file: the filename of the rules definition file to parse
@@ -134,7 +134,7 @@ def parse(file):
         2. a string containing the rule pattern
         3. a boolean which is true of the rule is case insensitive
     """
-    file_lexer = LexicalAnalyzerLexer(file)
+    file_lexer = LexicalAnalyzerLexer(file, encoding)
     token, text = file_lexer.skip(['whitespace', 'newline'])
     while token != 'end of stream':
         if token == 'comment':

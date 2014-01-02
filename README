@@ -7,15 +7,17 @@ RULES_FILE: A file containing token names and pattern definitions
 OUTPUT_DIR: An existing directory to which the state machine code is written.
 
 Optional arguments:
--n DOT_FILE, --print-nfa DOT_FILE - Print a GraphViz(.dot) representation of the lexical analyzer's NFA
--d DOT_FILE, --print-dfa DOT_FILE - Print a GraphViz(.dot) representation of the lexical analyzer's DFA
--m DOT_FILE, --print 
+-n DOT_FILE, --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
+-d DOT_FILE, --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
+-m DOT_FILE, --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
 
 Rules file:
 The rules file is a simple format which describes the lexical analyzer as a set of token definitions, one on each line. The token definitions are described the following way:
 TOKEN_ID: PATTERN
 
 Where TOKEN_ID is an alphanumeric ID, and pattern is a regular expression. Additionally any text on a line after "#" is considered a comment.
+
+If a piece of text matches two rules, then the rule appearing first is assumed.
 
 Regular expression rules:
 Poodle-Lex patterns use a similar regular expression syntax to the IEEE POSIX ERE standard. The pattern will match the characters present, and the following special characters can be used to define more complex patterns:
@@ -44,3 +46,7 @@ The following named character classes are also supported:
 "[:space:]" - Whitespace characters ([ \t\r\n\v\f])
 "[:upper:]" - Uppercase characters ([A-Z])
 "[:xdigit:]" - Hexadecimal digits ([A-Fa-f0-9])
+
+Output:
+When run, the program generates a class, Poodle.LexicalAnalyzer, which consumes a stream and produces 
+"tokens", a structure containing a token ID and the token's matching text.

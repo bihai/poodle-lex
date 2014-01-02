@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+import string
 import Regex
 from RegexExceptions import *
 
@@ -198,9 +199,13 @@ class RegexParser(object):
             if self.text[self.index] == u'^':
                 inverse = True
                 self.index += 1
+            elif self.text[self.index] == u':':
+                self.index += 1
+                return self.parse_named_character_class()            
             characters = list(self.parse_character_range().characters)
             while self.text[self.index] != u']':
                 characters.extend(self.parse_character_range().characters)
+            
         self.expect(u']')
         
         if inverse:
@@ -208,6 +213,33 @@ class RegexParser(object):
         else:
             return Regex.Literal(characters)
     
+    def parse_named_character_class(self):
+        classes = {
+            u"alnum": unicode(string.ascii_letters + string.digits),
+            u"word": unicode(string.ascii_letters + string.digits + "_"),
+            u"alpha": unicode(string.ascii_letters),
+            u"blank": u" \t",
+            u"cntrl": u"".join([unichr(i) for i in range(0, 32)]),
+            u"digit": unicode(string.digits),
+            u"graph": u"".join([unichr(i) for i in range(33, 128)]),
+            u"lower": unicode(string.ascii_lowercase),
+            u"print": u"".join([unichr(i) for i in range(32, 128)]),
+            u"punct": u"][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-",
+            u"space": unicode(string.whitespace),
+            u"xdigit": unicode(string.hexdigits)
+        }
+        class_name = ""
+        while self.index < len(self.text) and self.text[self.index] in string.ascii_letters:
+            class_name += self.text[self.index]
+            self.index += 1
+        self.expect(":")
+        self.expect("]")
+        
+        if class_name in classes:
+            return Regex.Literal(classes[class_name])
+        else:
+            raise RegexParserException("Character class '%s' not recognized" % class_name)
+
     def parse_character_range(self):
         """
         Parse a range (e.g. a-z) expression from the string at its current index

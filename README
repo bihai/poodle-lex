@@ -1,0 +1,46 @@
+Poodle-Lex is a lexical analyzer generator, similar to lex.
+
+Usage: python __main__.py RULES_FILE OUTPUT_DIR [Optional arguments]
+
+Required arguments:
+RULES_FILE: A file containing token names and pattern definitions
+OUTPUT_DIR: An existing directory to which the state machine code is written.
+
+Optional arguments:
+-n DOT_FILE, --print-nfa DOT_FILE - Print a GraphViz(.dot) representation of the lexical analyzer's NFA
+-d DOT_FILE, --print-dfa DOT_FILE - Print a GraphViz(.dot) representation of the lexical analyzer's DFA
+-m DOT_FILE, --print 
+
+Rules file:
+The rules file is a simple format which describes the lexical analyzer as a set of token definitions, one on each line. The token definitions are described the following way:
+TOKEN_ID: PATTERN
+
+Where TOKEN_ID is an alphanumeric ID, and pattern is a regular expression. Additionally any text on a line after "#" is considered a comment.
+
+Regular expression rules:
+Poodle-Lex patterns use a similar regular expression syntax to the IEEE POSIX ERE standard. The pattern will match the characters present, and the following special characters can be used to define more complex patterns:
+".": Matches any character, defined as any character appearing in the lexical analyzer.
+"[...]": Matches one of any characters inside of the brackets
+"[^...]": Matches all but one of any characters inside the brackets, limited to other characters in the lexical analyzer.
+"{m, n}": Matches the previous item if it repeats a minimum of m times and a maximum of n times.
+"*": Matches the prevous item if it appears zero or more times in a row.
+"+": Matches the previous item if it appears one or more times in a row.
+"?": Matches the previous item if it appears zero or one times.
+"(...)": Matches the patern within the parenthesis.
+"\": Matches the next character literally
+"|": Matches either the previous item or the next item.
+
+The following named character classes are also supported:
+"[:alnum:]" - Alphanumeric characters ([A-Za-z0-9])
+"[:word:]" - Alphanumeric characters + "_" ([A-Za-z0-9_])
+"[:alpha:]" - Alphabetical characters ([A-Za-z])
+"[:blank:]" - Space and tab ([ \t])
+"[:cntrl:]" - ASCII control characters ([\x01-\x1F])
+"[:digit:]" - Numerical digits ([0-9])
+"[:graph:]" - Visible characters ([\x21-\x7F])
+"[:lower:]" - Lowercase characters ([a-z])
+"[:print:]" - Printable characters ([\x20-\x7F])
+"[:punct:]" - Punctuation ([\]\[\!\"\#\$\%\&\'\(\)\*\+\,\.\/\:\;\<\=\>\?\@\\\^\_\`\{\|\}\~\-])
+"[:space:]" - Whitespace characters ([ \t\r\n\v\f])
+"[:upper:]" - Uppercase characters ([A-Z])
+"[:xdigit:]" - Hexadecimal digits ([A-Fa-f0-9])

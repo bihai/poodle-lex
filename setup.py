@@ -19,6 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import os.path
+import platform
 from cx_Freeze import setup,Executable
 
 includefiles = [
@@ -57,7 +58,9 @@ includefiles = [
 includes = []
 excludes = []
 packages = ['blist']
-
+target_name = "Poodle-Lex"
+if platform.system() == "Windows":
+    target_name += ".exe"
 setup(
     name = 'Poodle-Lex',
     version = '0.5',
@@ -65,5 +68,5 @@ setup(
     author = 'Parker Michaels',
     author_email = 'parkertomatoes@gmail.com',
     options = {'build_exe': {'excludes':excludes,'packages':packages,'include_files':includefiles}}, 
-    executables = [Executable('__main__.py', targetName="Poodle-Lex.exe")]
+    executables = [Executable('__main__.py', targetName=target_name)]
 )

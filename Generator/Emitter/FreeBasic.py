@@ -50,15 +50,16 @@ class FreeBasic(object):
         """
         Maps all states to an enum element in the FreeBasic source code.
         """
-        for state in self.dfa:
-            initial_id = "".join([i.title() for i in sorted(list(state.ids))])
-            id = initial_id
-            n = 1
-            while id in self.ids.values():
-                id = "%s%d" % (initial_id, n)
-                n += 1
-            self.ids[state] = id
         self.ids[self.dfa.start_state] = "InitialState"
+        for state in self.dfa:
+            if state != self.dfa.start_state:
+                initial_id = "".join([i.title() for i in sorted(list(state.ids))])
+                id = initial_id
+                n = 1
+                while id in self.ids.values():
+                    id = "%s%d" % (initial_id, n)
+                    n += 1
+                self.ids[state] = id
         
     def emit(self, header_file, source_file):
         """
@@ -119,16 +120,32 @@ class FreeBasic(object):
                 else:
                     return "%d To %d" % range
             
-            # first, group edges by destination
-            edge_groups = collections.defaultdict(list)
-            for edge, destination in state.edges.iteritems():
-                edge_groups[destination].append(edge)
-            
-            # for each group of edges, lump ranges (e.g. "1 to 4") together
-            for destination, edges in edge_groups.iteritems():
-                edge_codepoints = sorted([ord(edge) for edge in edges])
-                code.line("Case %s" % ", ".join([format_case(range) for range in ranges(edge_codepoints)]))
+            def emit_check_zero(invalid_otherwise):
+                code.line("If Stream->IsEndOfStream() Then")
+                code.indent()
+                code.line("Return Poodle.Token(Poodle.Token.EndOfStream, UnicodeText())")
+                code.dedent()
+                if invalid_otherwise:
+                    code.line("Else")
+                    code.indent()
+                    code.line("Return Poodle.Token(Poodle.Token.InvalidCharacter, Text)")
+                    code.dedent()
+                code.line("End If")
+                
+            found_zero = False
+            for destination, edges in state.edges.iteritems():
+                code.line("Case %s" % ", ".join([format_case(i) for i in edges]))
+                if state == self.dfa.start_state:
+                    if 0 in zip(*iter(edges))[0]:
+                        # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
+                        found_zero = True
+                        emit_check_zero(invalid_otherwise=False)
                 code.line("State = Poodle.%s" % self.ids[destination])
+                code.line()
+            
+            if state == self.dfa.start_state and not found_zero:
+                code.line("Case 0")
+                emit_check_zero(invalid_otherwise=True)
                 code.line()
             
             # else case (return token if in final state

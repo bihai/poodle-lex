@@ -21,15 +21,16 @@
 import collections
 import itertools
 import Automata
+from CoverageSet import CoverageSet
 
 class NonDeterministicState(object):
     """
     Represents a state in a non-deterministic finite automata (NFA)
     @ivar ids: set of strings with rule ids of possible matches to which this state could lead
     @ivar final_ids: set of strings which contain, if the state is an end state, rule ids of the matching rules.
-    @ivar edges: dict representing a state transition table.
-        Keys are strings represent edges eminating from this state
-        Values are NonDeterministicState objects representing destination states for each transition.
+    @ivar edges: dict representing a state transition table, with each item representing an edge in the graph.
+        Keys are NonDeterministicFiniteState objects representing the destination state for an edge
+        Values are CoverageSet objects representing the values which lead to the corresponding destination.
     @ivar epsilon: set of NonDeterministicState objects representing the destinations of epsilon edges eminating from this state.
     """
     def __init__(self):
@@ -37,7 +38,7 @@ class NonDeterministicState(object):
         self.final_ids = set()
         
         # edges = dict(edge -> set(sink states))
-        self.edges = dict()
+        self.edges = collections.defaultdict(CoverageSet)
         
         # epsilon_edges = set(sink states)
         self.epsilon_edges = set()
@@ -62,11 +63,11 @@ class NonDeterministicFiniteAutomata(object):
                 if destination not in visited:
                     visited.add(destination)
                     state_queue.appendleft(destination)
-            for destination_set in next_state.edges.itervalues():
-                for destination in destination_set:
-                    if destination not in visited:
-                        visited.add(destination)
-                        state_queue.appendleft(destination)
+            for destination in next_state.edges.iterkeys():
+                if destination not in visited:
+                    visited.add(destination)
+                    state_queue.appendleft(destination)
+                    
             yield next_state
         
     def __repr__(self):
@@ -88,11 +89,6 @@ class NonDeterministicFiniteAutomata(object):
             if len(state.epsilon_edges) > 0:
                 descriptions.extend([unicode('    %d -> %d [label="&epsilon;"]') % (state_index, states.index(i)) for i in state.epsilon_edges])
 
-            def ranges(i):
-                for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
-                    b = list(b)
-                    yield b[0][1], b[-1][1]
-            
             def format_codepoint(codepoint):
                 if codepoint == ord('"'):
                     return "'\\\"'"
@@ -106,17 +102,9 @@ class NonDeterministicFiniteAutomata(object):
                     return "%s" % format_codepoint(range[0])
                 else:
                     return "%s-%s" % tuple([format_codepoint(i) for i in range])
-            
-            # first, group edges by destination
-            edge_groups = collections.defaultdict(list)
-            for edge, destination_set in state.edges.iteritems():
-                for destination in destination_set:
-                    edge_groups[destination].append(edge)
-            
-            # for each group of edges, lump ranges (e.g. "1-4") together
-            for destination, edges in edge_groups.iteritems():
-                edge_codepoints = sorted([ord(edge) for edge in edges])
-                edge_label = ", ".join([format_case(range) for range in ranges(edge_codepoints)])
+                    
+            for destination, edges in state.edges.iteritems():
+                edge_label = ", ".join([format_case(i) for i in edges])
                 descriptions.append('    %d -> %d [label="%s"]' % (state_index, states.index(destination), edge_label))
 
         return "digraph {\n%s\n}\n" % "\n".join(descriptions)
@@ -139,10 +127,15 @@ class NonDeterministicFiniteAutomata(object):
                 if state_machines[i].end_state in state.epsilon_edges:
                     state.epsilon_edges.remove(state_machines[i].end_state)
                     state.epsilon_edges.add(state_machines[i+1].start_state)
-                for letter, next_state_set in state.edges.iteritems():
-                    if state_machines[i].end_state in next_state_set:
-                        state.edges[letter].remove(state_machines[i].end_state)
-                        state.edges[letter].add(state_machines[i+1].start_state)
+                discarded_states = set()
+                new_edge = CoverageSet()
+                for destination, edge in state.edges.iteritems():
+                    if destination == state_machines[i].end_state:
+                        discarded_states.add(destination)
+                        new_edge.update(edge)
+                state.edges[state_machines[i+1].start_state].update(new_edge)
+                for discarded_state in discarded_states:
+                    del state.edges[discarded_state]
         state_machines[0].end_state = state_machines[-1].end_state
         return state_machines[0]
     

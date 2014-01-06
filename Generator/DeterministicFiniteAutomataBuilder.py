@@ -19,6 +19,8 @@
 # DEALINGS IN THE SOFTWARE.
 
 import Automata
+import itertools
+from CoverageSet import CoverageSet
 
 class EpsilonClosureCrawler(object):
     """
@@ -80,31 +82,20 @@ class DeterministicFiniteAutomataBuilder(object):
         # Any DFA state containing the NFA's end state is an end state
         if self.nfa_state_machine.end_state in state_id:
             self.states[state_id].is_final = True
-            
-        # Find possible edges
-        edge_set = set()
-        for nfa_state in state_id:
-            edge_set.update(set(nfa_state.edges.keys()))
         
-        # To find the destination state for each edge:
-        # 1) Get a set of destination NFA state for that edge in each NFA state in the DFA state
-        # 2) Find the epsilon closure for that set of NFA states.
-        for edge in edge_set:
-            destination_nfa_states = set()
-            for nfa_state in state_id:
-                if edge in nfa_state.edges:
-                    destination_nfa_states.update(nfa_state.edges[edge])
+        # For each set of epsilon-closed NFA states, find the set of states that each edge leads to and recurse.
+        merged_transitions = itertools.chain(*[i.edges.iteritems() for i in state_id])
+        pairs = iter((edge, destination) for destination, edge in merged_transitions)
+        for (min_v, max_v), destination_nfa_states in CoverageSet.segments(*pairs):
             destination_state_id = frozenset(EpsilonClosureCrawler(destination_nfa_states).get_states())
-            
             if destination_state_id not in self.states:
                 self.states[destination_state_id] = Automata.DeterministicState()
                 for nfa_state in destination_state_id:
                     self.states[destination_state_id].ids.update(nfa_state.ids)
                     self.states[destination_state_id].final_ids.update(nfa_state.final_ids)
                 self.crawl(destination_state_id)
-            
-            self.states[state_id].edges[edge] = self.states[destination_state_id]
-                
+            self.states[state_id].edges[self.states[destination_state_id]].add(min_v, max_v)
+                    
     def get(self):
         """
         Return the DFA created from the NFA passed into __init__

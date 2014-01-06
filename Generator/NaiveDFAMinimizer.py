@@ -19,6 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import Automata
+from CoverageSet import CoverageSet
 
 def pair_id(i, j):
     """
@@ -37,7 +38,7 @@ def minimize(state_machine):
     """
     states = [state for state in state_machine]
     is_distinct = set()
-   
+    
     # Step 1: mark final/non-final pairs of states as distinct
     for i in range(len(states)):
         for j in range(i):
@@ -53,18 +54,19 @@ def minimize(state_machine):
             for j in range(i):
                 if pair_id(i, j) not in is_distinct:
                     # States are distinct if alphabets not the same
-                    if set(states[i].edges.keys()) != set(states[j].edges.keys()):
+                    if set(states[i].edges.itervalues()) != set(states[j].edges.itervalues()):
                         is_distinct.add(pair_id(i, j))
                         change_occurred = True
                         continue
                         
                     # States are distinct if each has an identical edge to distinct states
-                    for letter in states[i].edges.iterkeys():
-                        destination_i = states.index(states[i].edges[letter])
-                        destination_j = states.index(states[j].edges[letter])
+                    for destination, edge in states[i].edges.iteritems():
+                        destination_i = states.index(destination)
+                        destination_j = states.index(next(k for k, v in states[j].edges.iteritems() if v == edge))
                         if pair_id(destination_i, destination_j) in is_distinct:
                             is_distinct.add(pair_id(i, j))
                             change_occurred = True
+                            break
     
     # Step 3: Group non-distinct states
     non_distinct_pairs = set()
@@ -87,8 +89,20 @@ def minimize(state_machine):
     # Step 4: Merge non-distinct states
     for group in non_distinct_groups:
         if states.index(state_machine.start_state) in group:
-            state_macine.start_state = states[group[0]]
+            state_machine.start_state = states[group[0]]
         for state in states:
-            for edge, destination_state in state.edges.iteritems():
+            duplicate_destinations = set()
+            new_edge = CoverageSet()
+            has_edge_to_group = False
+            for destination_state, edge in state.edges.iteritems():
                 if states.index(destination_state) in group:
-                    state.edges[edge] = states[group[0]]
+                    new_edge.update(edge)
+                    has_edge_to_group = True
+                    if destination_state != states[group[0]]:
+                        duplicate_destinations.add(destination_state)
+            for destination in duplicate_destinations:
+                del state.edges[destination]
+            if has_edge_to_group:
+                state.edges[states[group[0]]].update(new_edge)
+            
+                    

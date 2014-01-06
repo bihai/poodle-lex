@@ -21,21 +21,23 @@
 #include "UTF8Stream.bi"
 #include "LexicalAnalyzer.bi"
 
-Dim As Poodle.Token.TokenID ExpectedTokens(0 to 6) = { _
+Dim As Poodle.Token.TokenID ExpectedTokens(0 to 7) = { _
     Poodle.Token.Float, _
     Poodle.Token.Keyword, _
     Poodle.Token.Whitespace, _
     Poodle.Token.Integer_, _
+    Poodle.Token.Quote, _
     Poodle.Token.Identifier, _
     Poodle.Token.Newline, _
     Poodle.Token.EndOfStream _
 }
 
-Dim As String ExpectedTexts(0 to 6) = { _
+Dim As String ExpectedTexts(0 to 7) = { _
     "123.45", _
     "K€yword", _
     "    ", _
     "12345", _
+    Chr(34) + "A quote" + Chr(34), _
     "Hello", _
     Chr(13) + Chr(10), _
     "" _
@@ -49,7 +51,7 @@ End If
 
 Var LexicalAnalyzer = Poodle.LexicalAnalyzer(@InputFile)
 Dim As Integer FoundMismatch = 0
-For i As Integer = 0 To 6
+For i As Integer = 0 To 7
     Var Token = LexicalAnalyzer.GetToken()
     If ExpectedTokens(i) <> Token.Id Then
         Print "Token mismatch: expected "; Str(ExpectedTokens(i)); ", found "; Token.id

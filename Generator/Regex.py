@@ -18,6 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+from CoverageSet import CoverageSet
+
 class Literal(object):
     """
     Visitable regular expression object repesenting one or more characters
@@ -27,10 +29,10 @@ class Literal(object):
         """
         @param characters: sting containing the characters represented by this expression.
         """
-        self.characters = characters
+        self.characters = CoverageSet(characters)
 
     def __repr__(self):
-        return "Literal(%s)" % self.characters
+        return "Literal(%s)" % ", ".join(["%d-%d" % (m, n) for m, n in self.characters])
         
     def accept(self, visitor):
         visitor.visit_literal(self)
@@ -44,10 +46,10 @@ class LiteralExcept(object):
         """
         @param characters: string containing the characters excluded by this expression.
         """
-        self.characters = characters
+        self.characters = CoverageSet(characters)        
  
     def __repr__(self):
-        return "LiteralExcept(%s)" % self.characters
+        return "LiteralExcept(%s)" % ", ".join(["%d-%d" % (m, n) for m, n in self.characters])
  
     def accept(self, visitor):
         visitor.visit_literal_except(self)

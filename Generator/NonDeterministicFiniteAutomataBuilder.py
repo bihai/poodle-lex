@@ -38,8 +38,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
         @param literal: a Regex.Literal object representing the literal to convert.
         """
         state_machine = Automata.NonDeterministicFiniteAutomata()
-        for character in literal.characters:
-            state_machine.start_state.edges[character] = set([state_machine.end_state])
+        state_machine.start_state.edges[state_machine.end_state].update(literal.characters)
         self.state_machines.append(state_machine)
  
     def visit_literal_except(self, literal_except):
@@ -48,13 +47,9 @@ class NonDeterministicFiniteAutomataBuilder(object):
             Pushes the NFA onto a stack.
         @param literal: a Regex.LiteralExcept object representing the inverse literal to convert.
         """
-        alphabet = set(string.printable)
-        for character in literal_except.characters:
-            alphabet.remove(character)
-            
         state_machine = Automata.NonDeterministicFiniteAutomata()
-        for character in alphabet:
-            state_machine.start_state.edges[character] = set([state_machine.end_state])
+        state_machine.start_state.edges[state_machine.end_state].add(1, 0x10FFFF)
+        state_machine.start_state.edges[state_machine.end_state].difference_update(literal_except.characters)
         self.state_machines.append(state_machine)        
  
     def visit_repetition(self, repetition):

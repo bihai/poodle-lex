@@ -41,8 +41,8 @@ class LexicalAnalyzerLexer(object):
         ("colon", r"\:"),
         ("i", r"i"),
         ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
-        ("literalsingle", r"'(?:\\.|[^\\'])*'"),
-        ("literaldouble", r'"(?:\\.|[^\\"])*"')
+        ("literalsingle", r"'(?:''|[^'])*'"),
+        ("literaldouble", r'"(?:""|[^"])*"')
     ]
     _pattern = "|".join(["(?P<%s>%s)" % (key, value) for key, value in _patterns])
     _regex = re.compile(_pattern, re.UNICODE or re.MULTILINE)

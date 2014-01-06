@@ -1,4 +1,4 @@
-Poodle-Lex is a lexical analyzer generator, similar to lex.
+Poodle-Lex is a lexical analyzer generator, similar to lex and its variants.
 
 Usage: python __main__.py RULES_FILE OUTPUT_DIR [Optional arguments]
 
@@ -10,20 +10,22 @@ Optional arguments:
 -n DOT_FILE, --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
 -d DOT_FILE, --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
 -m DOT_FILE, --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
+-e ENCODING, --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
 
 Rules file:
 The rules file is a simple format which describes the lexical analyzer as a set of token definitions, one on each line. The token definitions are described the following way:
 TOKEN_ID: PATTERN
 
 Where TOKEN_ID is an alphanumeric ID, and pattern is a regular expression. Additionally any text on a line after "#" is considered a comment.
+PATTERN must be surrounded by either single or double quotes. Quotes can be escaped by using double-quotes ("" or '') inside of the pattern. If an "i" appears in front of the opening quote, then the pattern will be interpreted as case-insensitive for ASCII Latin characters.
 
 If a piece of text matches two rules, then the rule appearing first is assumed.
 
 Regular expression rules:
 Poodle-Lex patterns use a similar regular expression syntax to the IEEE POSIX ERE standard. The pattern will match the characters present, and the following special characters can be used to define more complex patterns:
-".": Matches any character, defined as any character appearing in the lexical analyzer.
+".": Matches any Unicode codepoint.
 "[...]": Matches one of any characters inside of the brackets
-"[^...]": Matches all but one of any characters inside the brackets, limited to other characters in the lexical analyzer.
+"[^...]": Matches all Unicode codepoints except any characters inside the brackets.
 "{m, n}": Matches the previous item if it repeats a minimum of m times and a maximum of n times.
 "*": Matches the prevous item if it appears zero or more times in a row.
 "+": Matches the previous item if it appears one or more times in a row.
@@ -48,5 +50,19 @@ The following named character classes are also supported:
 "[:xdigit:]" - Hexadecimal digits ([A-Fa-f0-9])
 
 Output:
-When run, the program generates a class, Poodle.LexicalAnalyzer, which consumes a stream and produces 
-"tokens", a structure containing a token ID and the token's matching text.
+When run, the program generates a FreeBASIC class, Poodle.LexicalAnalyzer, which consumes a stream of Unicode codepoints and produces 
+"tokens", a structure containing a token ID and the token's matching text. Also include is code to read UTF and ASCII encoded text and a small demonstration.
+
+Example:
+Run the following code from the location of __main__.py:
+mkdir Output
+python __main__.py Test/Test.rules Output
+cd Output/Test
+
+If on Linux:
+./make_test.sh
+./Test
+
+If on Windows:
+make_test
+Test

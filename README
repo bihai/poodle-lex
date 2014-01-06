@@ -54,15 +54,27 @@ When run, the program generates a FreeBASIC class, Poodle.LexicalAnalyzer, which
 "tokens", a structure containing a token ID and the token's matching text. Also include is code to read UTF and ASCII encoded text and a small demonstration.
 
 Example:
-Run the following code from the location of __main__.py:
+The following generates, compiles, and executes a simple test application on Linux and Windows.
+Python 2.7 and FreeBASIC >= 0.90.1 should be installed prior to running. cx_Freeze is required to use setup.py.
+
+Windows:
+1) Add the Poodle-Lex installation directory to your PATH environment variable
+2) Copy "Test\Test.rules" from the installation directory to any folder
+3) Navigate to that folder in the command prompt
+4) Enter the following:
+mkdir Output
+Poodle-Lex Test.rules Output
+cd Output\Test
+make_test
+Test
+
+Linux:
+1) Sync the source
+2) Install python 2.7
+3) install blist (Ubuntu: sudo apt-get install python-blist)
+4) Enter the following from the source directory
 mkdir Output
 python __main__.py Test/Test.rules Output
 cd Output/Test
-
-If on Linux:
 ./make_test.sh
 ./Test
-
-If on Windows:
-make_test
-Test

@@ -18,17 +18,22 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import string
 import Regex
+import string
 from RegexExceptions import *
 
 class RegexParser(object):
     """
     Converts a string containing a regular expression into a visitable regular expression object.
     """
-    lowercase = u'abcdefghijklmnopqrstuvwxyz'
-    upper = u'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    number = u'0123456789'
+    lowercase = (ord('a'), ord('z'))
+    uppercase = (ord('A'), ord('Z'))
+    digits = (ord('0'), ord('9'))
+    underscore = (ord('_'), ord('_'))
+    carriage_return = (13, 13)
+    line_feed = (10, 10)
+    tab = (ord('\t'), ord('\t'))
+    space = ((ord(' '), ord(' ')))
     special = u'(){[.^$*+?|'
     
     def __init__(self, text, is_case_insensitive=False):
@@ -122,38 +127,40 @@ class RegexParser(object):
         Parse a single character from the string, from its current index into a literal expression
         @return: a Regex.Literal or Regex.LiteralExcept object representing the character.
         """
-        
         def get_literal(character, is_case_insensitive):
             if is_case_insensitive and not suppress_case_insensitive:
                 lowercase = character.lower()
                 uppercase = character.upper()
                 if lowercase != uppercase:
-                    return Regex.Literal(lowercase + uppercase)
-            return Regex.Literal(character)
+                    return Regex.Literal([(ord(lowercase), ord(lowercase)), (ord(uppercase), ord(uppercase))])
+            return Regex.Literal([(ord(character), ord(character))])
                 
-        if self.text[self.index] == u'\\':
+        if self.text[self.index] == u'.':
+            self.index += 1
+            return Regex.Literal([(1, 0x10FFFF)])
+        elif self.text[self.index] == u'\\':
             self.index += 2
             if self.text[self.index-1] == u'w':
-                return Regex.Literal(RegexParser.upper + RegexParser.lower + RegexParser.number + u'_')
+                return Regex.Literal([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
             elif self.text[self.index-1] == u'W':
-                return Regex.LiteralExcept(RegexParser.upper + RegexParser.lower + RegexParser.number + u'_')
+                return Regex.LiteralExcept([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
             elif self.text[self.index-1] == u'r':
-                return Regex.Literal(u'\r')
+                return Regex.Literal([RegexParser.carriage_return])
             elif self.text[self.index-1] == u'n':
-                return Regex.Literal(u'\n')
+                return Regex.Literal([RegexParser.line_feed])
             elif self.text[self.index-1] == u't':
-                return Regex.Literal(u'\t')
+                return Regex.Literal([RegexParser.tab])
             elif self.text[self.index-1] == u's':
-                return Regex.Literal(u' ')
+                return Regex.Literal([RegexParser.space])
             elif self.text[self.index-1] == u'd':
-                return Regex.Literal(RegexParser.number)
+                return Regex.Literal([RegexParser.digits])
             else:
                 return get_literal(self.text[self.index-1], self.is_case_insensitive)
 
         else:
             self.index += 1
             if self.text[self.index-1] in RegexParser.special:
-                raise RegexParserInvalidCharacter(character)
+                raise RegexParserInvalidCharacter(self.text[self.index-1])
             return get_literal(self.text[self.index-1], self.is_case_insensitive)
             
     def parse_repetition(self, child):
@@ -202,31 +209,30 @@ class RegexParser(object):
             elif self.text[self.index] == u':':
                 self.index += 1
                 return self.parse_named_character_class()            
-            characters = list(self.parse_character_range().characters)
+            characters = self.parse_character_range().characters
             while self.text[self.index] != u']':
-                characters.extend(self.parse_character_range().characters)
-            
+                characters.update(self.parse_character_range().characters)
         self.expect(u']')
         
         if inverse:
-            return Regex.LiteralExcept(characters)
+            return Regex.LiteralExcept([i for i in characters])
         else:
-            return Regex.Literal(characters)
+            return Regex.Literal([i for i in characters])
     
     def parse_named_character_class(self):
         classes = {
-            u"alnum": unicode(string.ascii_letters + string.digits),
-            u"word": unicode(string.ascii_letters + string.digits + "_"),
-            u"alpha": unicode(string.ascii_letters),
-            u"blank": u" \t",
-            u"cntrl": u"".join([unichr(i) for i in range(0, 32)]),
-            u"digit": unicode(string.digits),
-            u"graph": u"".join([unichr(i) for i in range(33, 128)]),
-            u"lower": unicode(string.ascii_lowercase),
-            u"print": u"".join([unichr(i) for i in range(32, 128)]),
-            u"punct": u"][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-",
-            u"space": unicode(string.whitespace),
-            u"xdigit": unicode(string.hexdigits)
+            u"alnum": [RegexParser.lowercase, RegexParser.uppercase, RegexParser.digits],
+            u"word": [RegexParser.lowercase, RegexParser.uppercase, RegexParser.digits, RegexParser.underscore],
+            u"alpha": [RegexParser.uppercase, RegexParser.lowercase],
+            u"blank": [RegexParser.space, RegexParser.tab],
+            u"cntrl": [(0, 31)],
+            u"digit": [RegexParser.digits],
+            u"graph": [(33, 127)],
+            u"lower": [RegexParser.lowercase],
+            u"print": [(32, 127)],
+            u"punct": [(ord(i), ord(i)) for i in "][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-"],
+            u"space": [(ord(i), ord(i)) for i in string.whitespace],
+            u"xdigit": [RegexParser.digits, (ord('a'), ord('f')), (ord('A'), ord('F'))]
         }
         class_name = ""
         while self.index < len(self.text) and self.text[self.index] in string.ascii_letters:
@@ -253,18 +259,19 @@ class RegexParser(object):
             return start_literal
         
         # Range must be two single characters with the end having a larger value than the start
-        start_ordinal = ord(start_literal.characters[0])
-        end_ordinal = ord(end_literal.characters[0])
         if len(start_literal.characters) > 1 or len(end_literal.characters) > 1:
             raise RegexParserInvalidCharacterRange(start_literal.characters, end_literal.characters)
-        elif start_ordinal > end_ordinal:
-            raise RegexParserInvalidCharacterRange(start_literal.characters[0], end_literal.characters[0])
-            
-        start_literal.characters = u''.join([unichr(i) for i in range(start_ordinal, end_ordinal+1)])
+        start_ordinal = next(iter(start_literal.characters))[0]
+        end_ordinal = next(iter(end_literal.characters))[0]
+        if start_ordinal > end_ordinal:
+            raise RegexParserInvalidCharacterRange(unichr(start_ordinal), unichr(end_ordinal))
+        
         if self.is_case_insensitive:
-            characters = set(start_literal.characters.upper())
-            characters.update(set(start_literal.characters.lower()))
-            start_literal.characters = "".join(characters)
-            
-        return start_literal
+            lower_start = ord(unichr(start_ordinal).lower())
+            lower_end = ord(unichr(end_ordinal).lower())
+            upper_start = ord(unichr(start_ordinal).upper())
+            upper_end = ord(unichr(end_ordinal).upper())
+            return Regex.Literal([(lower_start, lower_end), (upper_start, upper_end)])
+        else:
+            return Regex.Literal([(start_ordinal, end_ordinal)])
         

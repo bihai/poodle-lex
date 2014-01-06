@@ -49,9 +49,6 @@ Function Poodle.LexicalAnalyzer.GetToken() As Poodle.Token
     Dim State As Poodle.LexicalAnalyzerState = Poodle.$INITIAL_STATE
     Dim Text As Poodle.UnicodeText
     Do
-        If This.Stream->IsEndOfStream() Then
-            Return Poodle.Token(Poodle.Token.EndOfStream, UnicodeText())
-        End If
         Select Case State:
             $STATE_MACHINE
         End Select

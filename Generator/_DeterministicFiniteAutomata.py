@@ -19,23 +19,24 @@
 # DEALINGS IN THE SOFTWARE.
 
 import collections
-import Automata
-from DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
 import itertools
+import Automata
+from CoverageSet import CoverageSet
+from DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
 
 class DeterministicState(object):
     """
     Represents a state in a deterministed finite automata (DFA)
     @ivar edges: dict representing a state transition table. 
-        Keys represent edges eminating from this class. 
-        Values represent destination state for the edge
+        Keys are DeterministicState objects which represent destination states for an edge in the graph.
+        Values are CoverageSet objects which representing the values which lead to the corresponding destination.
     @ivar is_final: boolean which is true if the state may be used as a final state
     @ivar ids: set of string with ids of possible rule matches in which this state could result.
     @ivar final_ids: if this is a final state, this field contains a set of strings with the ids of rules which were matched.
     """
     def __init__(self):
-        # edges = dict(character -> sink state)
-        self.edges = {}
+        # edges = dict(sink state -> edges leading to that state)
+        self.edges = collections.defaultdict(CoverageSet)
         self.is_final = False
         self.ids = set()
         self.final_ids = set()
@@ -53,7 +54,7 @@ class DeterministicFiniteAutomata(object):
         visited = set([self.start_state])
         while len(state_queue) > 0:
             next_state = state_queue.pop()
-            for destination in next_state.edges.itervalues():
+            for destination in next_state.edges.iterkeys():
                 if destination not in visited:
                     visited.add(destination)
                     state_queue.appendleft(destination)
@@ -69,26 +70,18 @@ class DeterministicFiniteAutomata(object):
         descriptions = []
         descriptions.append('    %d [label="start", shape=none];' % len(states))
         for state in states:
-            if len(state.final_ids) > 0 and not state.is_final:
-                descriptions.append('    %d [label="%d\\n(%s)"];' % (states.index(state), states.index(state), ", ".join([i for i in state.final_ids])))
+            if len(state.ids) > 0 and not state.is_final:
+                descriptions.append('    %d [label="%d\\n(%s)"];' % (states.index(state), states.index(state), ", ".join(state.ids)))
             elif len(state.final_ids) == 0 and state.is_final:
                 descriptions.append('    %d [shape=octagon];' % (states.index(state)))
             elif len(state.final_ids) > 0 and state.is_final:
-                descriptions.append('    %d [label="%d\\n(%s)",shape=octagon];' % (states.index(state), states.index(state), ", ".join([i for i in state.final_ids])))
+                descriptions.append('    %d [label="%d\\n(%s)",shape=octagon];' % (states.index(state), states.index(state), ", ".join(state.final_ids)))
             
-        for state in [i for i in states if i.is_final == True]:
-            descriptions.append('    %d [shape=octagon];' % states.index(state))        
-        
         descriptions.append('    %d -> %d' % (len(states), start_state_index))
         
         for state in states:
             state_index = states.index(state)
             state_description = ""
-            
-            def ranges(i):
-                for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
-                    b = list(b)
-                    yield b[0][1], b[-1][1]
             
             def format_codepoint(codepoint):
                 if codepoint == ord('"'):
@@ -104,15 +97,8 @@ class DeterministicFiniteAutomata(object):
                 else:
                     return "%s-%s" % tuple([format_codepoint(i) for i in range])
             
-            # first, group edges by destination
-            edge_groups = collections.defaultdict(list)
-            for edge, destination in state.edges.iteritems():
-                edge_groups[destination].append(edge)
-            
-            # for each group of edges, lump ranges (e.g. "1-4") together
-            for destination, edges in edge_groups.iteritems():
-                edge_codepoints = sorted([ord(edge) for edge in edges])
-                edge_label = ", ".join([format_case(range) for range in ranges(edge_codepoints)])
+            for destination, edges in state.edges.iteritems():
+                edge_label = ", ".join([format_case(i) for i in edges])
                 descriptions.append('    %d -> %d [label="%s"]' % (state_index, states.index(destination), edge_label))
            
         return "digraph {\n%s\n}\n" % "\n".join(descriptions)
@@ -142,8 +128,8 @@ class DeterministicFiniteAutomata(object):
             new_states[state].is_final = state.is_final
             new_states[state].ids = state.ids
             new_states[state].final_ids = state.final_ids
-            for edge, destination in state.edges.iteritems():
-                new_states[state].edges[edge] = new_states[destination]
+            for destination, edges in state.edges.iteritems():
+                new_states[state].edges[new_states[destination]].update(edges)
         self_copy = DeterministicFiniteAutomata()
         self_copy.start_state = new_states[self.start_state]
         return self_copy

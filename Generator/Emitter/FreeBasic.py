@@ -21,6 +21,7 @@
 import os
 import os.path
 import re
+import sys
 import StringIO
 import collections
 import itertools
@@ -34,7 +35,9 @@ class FreeBasic(object):
     @ivar ids: a dict mapping states to an enum element in the FreeBasic source
     @ivar dfa: the deterministic finite automata (DFA) repesenting the lexical analyzer.
     """
-    source_dir = os.path.dirname(os.path.realpath(__file__))
+    source_dir = os.path.join(os.path.dirname(os.path.realpath(sys.executable)), 'Generator', 'Emitter')
+    if getattr(sys, 'frozen', None) is None:
+        source_dir = os.path.dirname(os.path.realpath(__file__))
     bi_template_file = os.path.join(source_dir, "Template", "LexicalAnalyzer.bi")
     bas_template_file = os.path.join(source_dir, "Template", "LexicalAnalyzer.bas")
     

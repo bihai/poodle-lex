@@ -41,7 +41,10 @@ arguments = arg_parser.parse_args()
 
 # Copy non-generated files over
 try:
-    this_folder = os.path.dirname(os.path.normcase(os.path.realpath(__file__)))
+    this_file = sys.executable
+    if getattr(sys, 'frozen', None) is None:
+        this_file = __file__
+    this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
     dirs = [
         ("Test",),
         ("Stream",),
@@ -78,18 +81,19 @@ try:
     ]
     if not os.path.exists(arguments.OUTPUT_DIR):
         sys.stderr.write("Output directory not found\n")
-        exit()
+        sys.exit()
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
         sys.stderr.write("Output directory cannot be same as executable directory\n")
-        exit()
+        sys.exit()
     for dirname in dirs:
         if not os.path.exists(os.path.join(arguments.OUTPUT_DIR, *dirname)):
             os.mkdir(os.path.join(arguments.OUTPUT_DIR, *dirname))
     for file in files:
         shutil.copy(os.path.join(this_folder, *file), os.path.join(arguments.OUTPUT_DIR, *file))
-except IOError:
-    sys.stderr.write("Unable to write to output directroy because of an error\n")
-    exit()
+except IOError as e:
+    sys.stderr.write("Unable to write to output directory because of an error\n")
+    raise e
+    sys.exit()
 
 try:
     lexer = LexicalAnalyzer.parse(arguments.RULES_FILE, arguments.encoding)
@@ -124,4 +128,3 @@ except RegexParserException as e:
 
 except LexicalAnalyzerParserException as e:
     sys.stderr.write("Error parsing rules file: %s\n" % e.message)
-

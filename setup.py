@@ -24,6 +24,10 @@ from cx_Freeze import setup,Executable
 includefiles = [
     os.path.join('Generator', 'Emitter', 'Template', 'LexicalAnalyzer.bas'),
     os.path.join('Generator', 'Emitter', 'Template', 'LexicalAnalyzer.bi'),
+    os.path.join('Stream', 'Windows', 'MemoryMapWindows.bi'),
+    os.path.join('Stream', 'Windows', 'MemoryMapWindows.bas'),
+    os.path.join('Stream', 'Linux', 'MemoryMapLinux.bi'),
+    os.path.join('Stream', 'Linux', 'MemoryMapLinux.bas'),
     os.path.join('Stream', 'MemoryMap.bas'),
     os.path.join('Stream', 'MemoryMap.bi'),
     os.path.join('Stream', 'Unicode.bas'),

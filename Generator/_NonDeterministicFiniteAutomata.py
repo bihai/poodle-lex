@@ -143,7 +143,7 @@ class NonDeterministicFiniteAutomata(object):
     def alternate(state_machines):
         """
         Merges a list of state machines by alternating them. 
-            Effectively creates a new initial state with epsilong edges to each automata'a initial state, 
+            Effectively creates a new initial state with epsilon edges to each automata'a initial state, 
             and a final state with epsilon edges from each automata's final state.
             State machines are consumed and cannot be used after calling this function
         @param state_machines: a list of NonDeterministicFiniteAutomata objects representing the state machines to be merged.

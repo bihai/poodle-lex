@@ -23,11 +23,11 @@ from CoverageSet import CoverageSet
 class Literal(object):
     """
     Visitable regular expression object repesenting one or more characters
-    @ivar characters: sting containing the characters represented by this expression.
+    @ivar characters: list of two-number tuples, each representing a range of Unicode codepoints covered by this literal.
     """
     def __init__(self, characters):
         """
-        @param characters: sting containing the characters represented by this expression.
+        @param characters: list of two-number tuples, each representing a range of Unicode codepoints covered by this literal.
         """
         self.characters = CoverageSet(characters)
 
@@ -40,11 +40,11 @@ class Literal(object):
 class LiteralExcept(object):
     """
     Visitable regular expression object representing "all except" one or more characters.
-    @ivar characters: string containing the characters excluded by this expression.
+    @ivar characters: list of two-number tuples, each representing a range of Unicode codepoints excluded by this literal.
     """
     def __init__(self, characters):
         """
-        @param characters: string containing the characters excluded by this expression.
+        @param characters: list of two-number tuples, each representing a range of Unicode codepoints excluded by this literal.
         """
         self.characters = CoverageSet(characters)        
  

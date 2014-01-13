@@ -26,6 +26,9 @@ class CoverageSet(object):
 	Uses a set of intervals to define a numerical space. Stored as a sorted list
 	"""
 	def __init__(self, intervals=[]):
+        """
+        @param intervals: a list of tuples, each with a minimum number and a maximum number representing a range of values covered by the set.
+        """
 		self.intervals = blist.sortedlist()
 		self.dirty = False
 		for min_v, max_v in intervals:
@@ -43,6 +46,9 @@ class CoverageSet(object):
 				break
 	
 	def merge_adjacent(self):
+        """
+        Internal method, merges intervals for which the maximum of one interval is one less than the minimum of another interval.
+        """
 		if len(self.intervals) < 4:
 			return
 		i = len(self.intervals)-4
@@ -53,9 +59,11 @@ class CoverageSet(object):
 				del self.intervals[i:i+4]
 				self.add(min_v, max_v)
 			i -= 2
-					
 	
 	def remove_overlap(self):
+        """
+        Internal method. Merges overlapping intervals.
+        """
 		reverse_enumerate = lambda l: itertools.izip(xrange(len(l)-1, -1, -1), reversed(l))
 		if self.dirty:
 			level = 0
@@ -77,10 +85,23 @@ class CoverageSet(object):
 		return False
 
 	def add(self, min_v, max_v):
+        """
+        Addes an ranges of values to the set's coverage.
+        
+        @param min_v: the inclusive minimum value covered by the range.
+        @param max_v: the inclusive maximum value covered by the range.
+        """
 		self.intervals.update(((min_v, 0), (max_v, 1)))
 		self.dirty = True
 		
 	def remove(self, min_v, max_v):
+        """
+        Removes a range of values to the set's coverage. 
+        Any invervals that intersect this range will either be shortened or removed.
+        
+        @param min_v: the inclusive minimum value of the range to be removed.
+        @param max_v: the inclusive maximum value of the range to be removed.
+        """
 		self.remove_overlap()
 		before_min = self.intervals.bisect_left((min_v, 0))
 		after_max = self.intervals.bisect_right((max_v, 1))
@@ -102,11 +123,21 @@ class CoverageSet(object):
 				self.intervals.add((min_v - 1, 1))
 
 	def update(self, *other_coverage_sets):
+        """
+        Adds to the set's coverage the values covered by one or more other CoverageSet objects.
+        
+        @param other_coverage_sets: one or more CoverageSet objects, the coverage of which will be added to this object.
+        """
 		for coverage_set in other_coverage_sets:
 			self.intervals.update(coverage_set.intervals)
 		self.dirty = True
 		
 	def difference_update(self, *other_coverage_sets):
+        """
+        Removes from the set's coverage the values covered by one or more other CoverageSet object.
+        
+        @param other_coverage_sets: one or more CoverageSet objects, the coverage of which will be removed from this object.
+        """
 		for coverage_set in other_coverage_sets:
 			coverage_set.remove_overlap()
 			for i in xrange(0, len(coverage_set.intervals), 2):
@@ -132,11 +163,13 @@ class CoverageSet(object):
 				return "'%s'" % chr(codepoint)
 			else:
 				return "0x%x" % codepoint
+                
 		def remove_duplicates(intervals):
 			if intervals[0] == intervals[1]:
 				return format_codepoint(intervals[0])
 			else:
 				return "%s-%s" % tuple([format_codepoint(i) for i in intervals])
+                
 		self.remove_overlap()
 		return "CoverageSet([%s]" % ", ".join([repr(remove_duplicates(i)) for i in self])
 	
@@ -144,6 +177,11 @@ class CoverageSet(object):
 		return str(self)
 	
 	def intersection_update(self, *other_coverage_sets):
+        """
+        Removes all values from this set's coverage, except for those which are also covered by one or more other CoverageSet objects 
+        
+        @param other_coverage_sets: one or more other CoverageSet objects.
+        """
 		reverse_enumerate = lambda l: itertools.izip(xrange(len(l)-1, -1, -1), reversed(l))
 		self.update(*other_coverage_sets)
 		IDLE=0
@@ -176,24 +214,46 @@ class CoverageSet(object):
 		self.intervals = new_intervals
 		
 	def union(self, *other_coverage_sets):
+        """
+        Returns a new CoverageSet object that covers this object's values, as well as the values covered by one or more other CoverageSet objects.
+        
+        @param other_coverage_sets: one or more other CoverageSet objects.
+        """
 		new_coverage_set = CoverageSet()
 		new_coverage_set.update(self)
 		new_coverage_set.update(*other_coverage_sets)
 		return new_coverage_set
 		
 	def difference(self, *other_coverage_sets):
+        """
+        Returns a new CoverageSet object that covers the values covered by this set, except for those covered by one or more other CoverageSet objects.
+        
+        @param other_coverage_sets: one or more other CoverageSet objects.
+        """
 		new_coverage_set = CoverageSet()
 		new_coverage_set.update(self)
 		new_coverage_set.difference_update(*other_coverage_sets)
 		return new_coverage_set
 	
 	def intersection(self, *other_coverage_sets):
+        """
+        Returns a new CoverageSet object that covers only the values covered by this object and one or more other CoverageSet objects.
+        
+        @param other_coverage_sets: one or more other CoverageSet objects.
+        """
 		new_coverage_set = CoverageSet()
 		new_coverage_set.update(self)
 		new_coverage_set.intersection_update(*other_coverage_sets)
 	
 	@staticmethod
 	def segments(*coverage_sets_and_ids):
+        """
+        Returns an iterator which returns a a tuple with two elements, or each range of values for which the coverage changes for one or more CoverageSet objects. 
+        The first element is another tuple which represents a range of values.
+        The second element is a set of ids which represent the CoverageSet objects which cover the range from the first element.
+        
+        @param coverage_sets_and_ids: one or more CoverageSet objects
+        """
 		for coverage_set, set_id in coverage_sets_and_ids:
 			coverage_set.remove_overlap()
 		endpoint_lists_with_ids = [zip(coverage_set.intervals, [set_id]*len(coverage_set.intervals)) for coverage_set, set_id in coverage_sets_and_ids]

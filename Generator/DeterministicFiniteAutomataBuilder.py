@@ -24,8 +24,8 @@ from CoverageSet import CoverageSet
 
 class EpsilonClosureCrawler(object):
     """
-    Class which, given a set of NFA states, can be used to find the epsilong closure of those states, 
-        which is all the states reachable through epsilong edges.
+    Class which, given a set of NFA states, can be used to find the epsilon closure of those states, 
+        which is all the states reachable through epsilon edges.
     """
     def __init__(self, nfa_state_set):
         self.states = []
@@ -44,7 +44,7 @@ class EpsilonClosureCrawler(object):
 
     def get_states(self):
         """
-        Returns the states found through epsilong closure.
+        Returns the states found through epsilon closure.
         @return: array of NonDeterministicState objects containing the results of the search.
         """
         return self.states

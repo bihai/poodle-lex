@@ -152,7 +152,7 @@ class LexicalAnalyzer(object):
     def get_nfa(self):
         """
         Gets the NFA from the lexical analyzer
-        @return: a NonDeterministicFiniteAutomata object repesenting the lexical analyzer.
+        @return: a NonDeterministicFiniteAutomata object representing the lexical analyzer.
         """
         self.check_final()
         return self._nfa

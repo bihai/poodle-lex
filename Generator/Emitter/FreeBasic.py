@@ -33,7 +33,7 @@ class FreeBasic(object):
     Emits a lexical analyzer as FreeBasic source code.
     @ivar lexical_analyzer: the lexical analyzer to emit
     @ivar ids: a dict mapping states to an enum element in the FreeBasic source
-    @ivar dfa: the deterministic finite automata (DFA) repesenting the lexical analyzer.
+    @ivar dfa: the deterministic finite automata (DFA) representing the lexical analyzer.
     """
     source_dir = os.path.join(os.path.dirname(os.path.realpath(sys.executable)), 'Generator', 'Emitter')
     if getattr(sys, 'frozen', None) is None:

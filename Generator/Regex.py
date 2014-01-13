@@ -22,7 +22,7 @@ from CoverageSet import CoverageSet
 
 class Literal(object):
     """
-    Visitable regular expression object repesenting one or more characters
+    Visitable regular expression object representing one or more characters
     @ivar characters: list of two-number tuples, each representing a range of Unicode codepoints covered by this literal.
     """
     def __init__(self, characters):

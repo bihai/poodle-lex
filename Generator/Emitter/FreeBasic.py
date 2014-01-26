@@ -40,6 +40,16 @@ class FreeBasic(object):
         source_dir = os.path.dirname(os.path.realpath(__file__))
     bi_template_file = os.path.join(source_dir, "Template", "LexicalAnalyzer.bi")
     bas_template_file = os.path.join(source_dir, "Template", "LexicalAnalyzer.bas")
+    debug_bi_template_file = os.path.join(source_dir, "Template", "DebugToken.bi")
+    debug_bi_template_file = os.path.join(source_dir, "Template", "DebugToken.bas")
+    reserved_keywords = [
+        'if', 'then', 'else', 'elseif', 'for', 'next', 'do', 'loop',
+        'while', 'wend', 'goto', 'sub', 'function', 'end', 'type', 'is',
+        'and', 'or', 'xor', 'not', 'goto', 'property', 'constructor', 'destructor',
+        'namespace', 'string', 'integer', 'double', 'single', 'byte', 'ptr', 'any',
+        'byref', 'byval', 'as', 'ubyte', 'short', 'ushort', 'uinteger', 'long',
+        'ulong', 'longint', 'ulongint', 'cast', 'len'
+    ]
     
     def __init__(self, lexical_analyzer):
         """
@@ -47,6 +57,7 @@ class FreeBasic(object):
         """
         self.lexical_analyzer = lexical_analyzer
         self.ids = {}
+        self.rule_ids = {}
         self.dfa = None
         
     def map_state_ids(self):
@@ -59,10 +70,22 @@ class FreeBasic(object):
                 initial_id = "".join([i.title() for i in sorted(list(state.ids))])
                 id = initial_id
                 n = 1
-                while id in self.ids.values():
+                while id in self.ids.values() or id.lower() in FreeBasic.reserved_keywords:
                     id = "%s%d" % (initial_id, n)
                     n += 1
                 self.ids[state] = id
+                
+    def map_rule_names(self):
+        """
+        Maps all rule names to an enum element in the FreeBasic source code
+        """
+        for rule in self.lexical_analyzer.rules:
+            rule_id = rule.id.title()
+            n = 1
+            while rule_id in self.rule_ids.values() or rule_id.lower() in FreeBasic.reserved_keywords:
+                rule_id = '%s%d' % (rule.id.title(), n)
+                n += 1
+            self.rule_ids[rule.id.title()] = rule_id
         
     def emit(self, header_file, source_file):
         """
@@ -74,12 +97,15 @@ class FreeBasic(object):
             self.lexical_analyzer.finalize()
         self.dfa = self.lexical_analyzer.get_min_dfa()
         self.map_state_ids()
-
+        self.map_rule_names()
+        
         # Emit lexical analyzer header
         for stream, token, indent in FileTemplate(FreeBasic.bi_template_file, header_file):
             if token == 'ENUM_TOKEN_IDS':
                 for rule in self.lexical_analyzer.rules:
-                    stream.write(" "*indent + rule.id.title() + "\n")
+                    stream.write(" "*indent + self.rule_ids[rule.id.title()] + "\n")
+            elif token == "TOKEN_IDNAMES_LIMIT":
+                stream.write(str(len(self.lexical_analyzer.rules)+1))
             else:
                 raise Exception('Unrecognized token in header template: "%s"' % token)
         
@@ -92,9 +118,15 @@ class FreeBasic(object):
                 stream.write(self.ids[self.dfa.start_state])
             elif token == 'STATE_MACHINE':
                 self.generate_state_machine(stream, indent)
+            elif token == "TOKEN_IDNAMES_LIMIT":
+                stream.write(str(len(self.lexical_analyzer.rules)+1))
+            elif token == "TOKEN_IDNAMES":
+                rule_id_list = [self.rule_ids[rule.id.title()] for rule in self.lexical_analyzer.rules]
+                formatted_ids = ", _\n".join(" "*indent + "@\"%s\"" % rule_id for rule_id in rule_id_list)
+                stream.write(formatted_ids + "_ \n")
             else:
                 raise Exception('Unrecognized token in source template: "%s"' % token)
-    
+        
     def generate_state_machine(self, stream, indent):
         """
         Generates a state machine in FreeBasic source code represented by two tiers of "Select Case" statemenets.
@@ -126,7 +158,7 @@ class FreeBasic(object):
             def emit_check_zero(invalid_otherwise):
                 code.line("If Stream->IsEndOfStream() Then")
                 code.indent()
-                code.line("Return Poodle.Token(Poodle.Token.EndOfStream, UnicodeText())")
+                code.line("Return Poodle.Token(Poodle.Token.EndOfStream, Poodle.Unicode.Text())")
                 code.dedent()
                 if invalid_otherwise:
                     code.line("Else")
@@ -156,7 +188,7 @@ class FreeBasic(object):
             if len(state.final_ids) > 0:
                 tokens_by_priority = [rule.id for rule in self.lexical_analyzer.rules]
                 token = min(state.final_ids, key = lambda x: tokens_by_priority.index(x)).title()
-                code.line("Return Poodle.Token(Poodle.Token.%s, Text)" % token)
+                code.line("Return Poodle.Token(Poodle.Token.%s, Text)" % self.rule_ids[token])
             else:
                 code.line("Text.Append(This.Character)")
                 code.line("This.Character = This.Stream->GetCharacter()")

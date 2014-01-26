@@ -36,7 +36,7 @@ Namespace Poodle
         Declare Constructor()
         Declare Constructor(Filename As String)
         Declare Constructor(ByVal CharacterData As Unsigned Byte Pointer, ByVal SizeInBytes As Unsigned LongInt) 
-        Declare Virtual Function GetCharacter() As UnicodeCodepoint
+        Declare Virtual Function GetCharacter() As Unicode.Codepoint
         Declare Property ByteOrder(ByVal As ByteOrderType)
         Declare Property ByteOrder() As ByteOrderType
         

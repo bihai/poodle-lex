@@ -29,13 +29,13 @@ Constructor Poodle.ASCIIStream(CharacterData As Unsigned Byte Pointer, SizeInByt
     Base(CharacterData, SizeInBytes)
 End Constructor
 
-Function Poodle.ASCIIStream.GetCharacter() As Poodle.UnicodeCodepoint
+Function Poodle.ASCIIStream.GetCharacter() As Poodle.Unicode.Codepoint
     If This.Status = CharacterStream.CharacterStreamInvalid Then
-        Return Poodle.UnicodeInvalidCharacter
+        Return Poodle.Unicode.InvalidCharacter
     End If
     
     If This.Index >= This.Size Then
-        Return Poodle.UnicodeNullCharacter
+        Return Poodle.Unicode.NullCharacter
     End If
     
     This.Index += 1

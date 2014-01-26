@@ -100,7 +100,7 @@ class RegexParser(object):
             return Regex.Repetition(child, 0, 1)
         elif self.text[self.index] == u'{':
             self.index += 1
-            return self.parse_range(child)
+            return self.parse_repetition(child)
         else:
             return child
             
@@ -115,7 +115,8 @@ class RegexParser(object):
         
         elif self.text[self.index] == u'(':
             self.index += 1
-            child = self.parse()
+            if self.index < len(self.text):
+                child = self.parse()
             self.expect(u')')
             return child
             
@@ -140,6 +141,8 @@ class RegexParser(object):
             return Regex.Literal([(1, 0x10FFFF)])
         elif self.text[self.index] == u'\\':
             self.index += 2
+            if self.index-1 >= len(self.text):
+                self.expect(u'character')
             if self.text[self.index-1] == u'w':
                 return Regex.Literal([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
             elif self.text[self.index-1] == u'W':
@@ -180,6 +183,8 @@ class RegexParser(object):
         Parse an integer from the string at its current index.
         @return: the integer parsed from the string.
         """
+        if self.index >= len(self.text):
+            self.expect('integer')
         if self.text[self.index] not in RegexParser.number:
             raise RegexParserExpected(u'number', self.text, self.index)
         while self.text[self.index] in RegexParser.number:

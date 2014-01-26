@@ -19,15 +19,24 @@
 ' DEALINGS IN THE SOFTWARE.
 
 #include "Unicode.bi"
-#include "UnicodeConstants.bi"
 
-Constructor Poodle.UnicodeText()
+Dim Shared Poodle.Unicode.InvalidCharacter As Const Integer = &hFFFF
+Dim Shared Poodle.Unicode.NullCharacter As Const Integer = &h0000
+
+Constructor Poodle.Unicode.Text()
     This.InternalData = 0
     This.Capacity = 0
     This.InternalLength = 0
 End Constructor
 
-Constructor Poodle.UnicodeText(ByRef Rhs As Poodle.UnicodeText)
+Constructor Poodle.Unicode.Text(ByRef Value As Const String, ByRef _Encoding As Poodle.Unicode.StringEncoding)
+    Dim Index As Integer = 0
+    While Index < Len(Value)
+        This.Append(_Encoding.Decode(Value, Index))
+    Wend
+End Constructor
+
+Constructor Poodle.Unicode.Text(ByRef Rhs As Poodle.Unicode.Text)
     This.InternalData = Rhs.InternalData
     This.Capacity = Rhs.Capacity
     This.InternalLength = Rhs.InternalLength
@@ -36,7 +45,16 @@ Constructor Poodle.UnicodeText(ByRef Rhs As Poodle.UnicodeText)
     Rhs.InternalLength = 0
 End Constructor
 
-Operator Poodle.UnicodeText.Let(ByRef Rhs As Poodle.UnicodeText)
+Constructor Poodle.Unicode.Text(ByRef Rhs As Const Poodle.Unicode.Text)
+    This.InternalData = New Unicode.Codepoint[Rhs.Capacity]
+    For i As Integer = 0 To Rhs.InternalLength-1
+        This.InternalData[i] = Rhs.InternalData[i]
+    Next i
+    This.Capacity = Rhs.Capacity
+    This.InternalLength = Rhs.InternalLength
+End Constructor
+
+Operator Poodle.Unicode.Text.Let(ByRef Rhs As Poodle.Unicode.Text)
     This.InternalData = Rhs.InternalData
     This.Capacity = Rhs.Capacity
     This.InternalLength = Rhs.InternalLength
@@ -45,15 +63,24 @@ Operator Poodle.UnicodeText.Let(ByRef Rhs As Poodle.UnicodeText)
     Rhs.InternalLength = 0
 End Operator    
 
-Destructor Poodle.UnicodeText()
+Operator Poodle.Unicode.Text.Let(ByRef Rhs As Const Poodle.Unicode.Text)
+    This.InternalData = New Poodle.Unicode.Codepoint[Rhs.Capacity]
+    For i As Integer = 0 To Rhs.InternalLength-1
+        This.InternalData[i] = Rhs.InternalData[i]
+    Next i
+    This.Capacity = Rhs.Capacity
+    This.InternalLength = Rhs.InternalLength
+End Operator
+
+Destructor Poodle.Unicode.Text()
     If This.InternalData <> 0 Then
         Delete[] This.InternalData
     End If
 End Destructor
 
-Function Poodle.UnicodeText.Append(ByVal Character As UnicodeCodepoint) As Integer
+Function Poodle.Unicode.Text.Append(ByVal Character As Unicode.Codepoint) As Integer
     If Capacity = 0 Then
-        This.InternalData = New UnicodeCodepoint[16]
+        This.InternalData = New Poodle.Unicode.Codepoint[16]
         If This.InternalData = 0 Then Return 0
         This.Capacity = 16
     End If
@@ -61,7 +88,7 @@ Function Poodle.UnicodeText.Append(ByVal Character As UnicodeCodepoint) As Integ
     If This.InternalLength >= 1024 Then Return 0
     
     If This.InternalLength >= This.Capacity Then
-        Var NewText = New UnicodeCodepoint[This.Capacity*2]
+        Var NewText = New Poodle.Unicode.Codepoint[This.Capacity*2]
         If NewText = 0 Then Return 0
         For i As Integer = 0 To This.InternalLength - 1
             NewText[i] = This.InternalData[i]
@@ -77,39 +104,18 @@ Function Poodle.UnicodeText.Append(ByVal Character As UnicodeCodepoint) As Integ
     Return 1
 End Function
 
-Property Poodle.UnicodeText.Length() As Integer
+Property Poodle.Unicode.Text.Length() As Integer
     Return This.InternalLength
 End Property
 
-Property Poodle.UnicodeText.Data() As UnicodeCodepoint Pointer
+Property Poodle.Unicode.Text.Data() As Poodle.Unicode.Codepoint Pointer
     Return This.InternalData
 End Property
 
-Function Poodle.UnicodeText.ToUtf8String() As String
-    Dim UTF8String As String
-    For i As Integer = 0 To This.InternalLength - 1
-        Var CodePoint = This.InternalData[i]
-        Dim As Unsigned Byte Character(0 To 3)
-        Select Case CodePoint
-            Case 0 To &h7f
-            UTF8String += Chr(Cast(Unsigned Byte, CodePoint))
-            
-            Case &h80 To &h7ff
-            UTF8String += Chr(Poodle.UTF8HeadByteHeaderValue(2) Or Cast(Unsigned Byte, CodePoint Shr 6))
-            UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, ((CodePoint Shr 0) And Cast(Poodle.UnicodeCodePoint, Poodle.UTF8TailByteMask))))
-            
-            Case &h800 To &hffff
-            UTF8String += Chr(Poodle.UTF8HeadByteHeaderValue(3) Or Cast(Unsigned Byte, CodePoint Shr 12))
-            UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 6) And Poodle.UTF8TailByteMask))
-            UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 0) And Poodle.UTF8TailByteMask))
-            
-            Case &h10000 To &h1fffff
-            UTF8String += Chr(Poodle.UTF8HeadByteHeaderValue(4) Or Cast(Unsigned Byte, CodePoint Shr 18))
-            UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 12) And Poodle.UTF8TailByteMask))
-            UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 6) And Poodle.UTF8TailByteMask))
-            UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 0) And Poodle.UTF8TailByteMask))
-        End Select
+Function Poodle.Unicode.Text.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+    Dim EncodedString As String = ""
+    For i As Integer = 0 To This.InternalLength-1
+        _Encoding.Encode(EncodedString, This.InternalData[i])
     Next i
-    
-    Return UTF8String
+    Return EncodedString
 End Function

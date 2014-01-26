@@ -26,13 +26,19 @@
 #include "CharacterStreamFromFile.bi"
 
 Namespace Poodle
+    Type UTF8StringEncoding Extends Unicode.StringEncoding
+        Public:
+        Declare Virtual Function Decode(ByRef As Const String, ByRef As Integer) As Unicode.Codepoint
+        Declare Virtual Sub Encode(ByRef As String, ByVal As Unicode.Codepoint)
+    End Type
+
     '' Streams UTF-8 characters from a file
     Type UTF8Stream Extends CharacterStreamFromFile
         Public:
         Declare Constructor()
         Declare Constructor(Filename As String)
         Declare Constructor(ByVal CharacterData As Unsigned Byte Pointer, ByVal SizeInBytes As Unsigned LongInt) 
-        Declare Virtual Function GetCharacter() As UnicodeCodepoint
+        Declare Virtual Function GetCharacter() As Unicode.Codepoint
     End Type
 End Namespace
 

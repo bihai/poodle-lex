@@ -21,11 +21,7 @@
 #ifndef POODLE_UNICODECONSTANTS_BI
 #define POODLE_UNICODECONSTANTS_BI
 
-#include "Unicode.bi"
-
 Namespace Poodle
-    Extern UnicodeInvalidCharacter As Const UnicodeCodepoint
-    Extern UnicodeNullCharacter As Const UnicodeCodepoint
     Extern UTF8HeadByteHeaderMask(1 To 4) As Const Unsigned Byte
     Extern UTF8HeadByteHeaderValue(1 To 4) As Const Unsigned Byte
     Extern UTF8HeadByteMask(1 To 4) As Const Unsigned Byte

@@ -25,12 +25,38 @@ Constructor Poodle.Token()
     This.Id = Poodle.Token.InvalidCharacter
 End Constructor
 
-Constructor Poodle.Token(ByVal Id As Poodle.Token.TokenId, ByVal Text As Poodle.UnicodeText)
+Constructor Poodle.Token(ByVal Id As Poodle.Token.TokenId, ByVal Text As Poodle.Unicode.Text)
     This.Id = Id
     This.Text = Text
 End Constructor
 
-Constructor Poodle.LexicalAnalyzer(Stream As CharacterStream Ptr)
+Function Poodle.Token.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+    Dim EncodedString As String
+    Dim UnicodeString(1 To 3) As Poodle.Unicode.Text = { _
+        Poodle.Unicode.Text("Token("), _
+        Poodle.Unicode.Text(", '"), _
+        Poodle.Unicode.Text("')") _
+    }
+    EncodedString += UnicodeString(1).ToString(_Encoding)
+    EncodedString += This.GetIdAsString(_Encoding)
+    EncodedString += UnicodeString(2).ToString(_Encoding)
+    EncodedString += This.Text.ToString(_Encoding)
+    EncodedString += UnicodeString(3).ToString(_Encoding)
+    Return EncodedString
+End Function
+
+Function Poodle.Token.GetIdAsString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+    Var Text = Poodle.Unicode.Text(*Poodle.Token.IdNames(This.Id))
+    Return Text.ToString(_Encoding)
+End Function
+
+Dim Poodle.Token.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = { _
+    @"InvalidCharacter", _
+    @"EndOfStream", _
+    $TOKEN_IDNAMES
+}
+
+Constructor Poodle.LexicalAnalyzer(Stream As CharacterStream Pointer)
     This.Stream = Stream
     This.Character = Stream->GetCharacter()
 End Constructor
@@ -47,7 +73,7 @@ End Namespace
 
 Function Poodle.LexicalAnalyzer.GetToken() As Poodle.Token
     Dim State As Poodle.LexicalAnalyzerState = Poodle.$INITIAL_STATE
-    Dim Text As Poodle.UnicodeText
+    Dim Text As Poodle.Unicode.Text
     Do
         Select Case State:
             $STATE_MACHINE
@@ -56,3 +82,4 @@ Function Poodle.LexicalAnalyzer.GetToken() As Poodle.Token
         This.Character = This.Stream->GetCharacter()
     Loop
 End Function
+

@@ -65,17 +65,17 @@ Sub Poodle.UTF32Stream.DetectByteOrder()
     End If
 End Sub
 
-Function Poodle.UTF32Stream.GetCharacter() As Poodle.UnicodeCodepoint
+Function Poodle.UTF32Stream.GetCharacter() As Poodle.Unicode.Codepoint
     If This.Status = CharacterStream.CharacterStreamInvalid Then
-        Return Poodle.UnicodeInvalidCharacter
+        Return Poodle.Unicode.InvalidCharacter
     End If
     
     If This.Index+3 >= This.Size Then
         This.Index = This.Size
-        Return Poodle.UnicodeNullCharacter
+        Return Poodle.Unicode.NullCharacter
     End If
 
-    Dim Character As UnicodeCodepoint
+    Dim Character As Unicode.Codepoint
     If This.ByteOrder = Poodle.UTF32Stream.UTF32BigEndian Then
         Character = _
             (Cast(Integer, This.CharacterData[This.Index]) Shl 24) Or _

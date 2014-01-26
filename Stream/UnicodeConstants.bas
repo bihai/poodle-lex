@@ -20,9 +20,6 @@
 
 #include "UnicodeConstants.bi"
 
-Dim Shared Poodle.UnicodeInvalidCharacter As Const Integer = &hFFFF
-Dim Shared Poodle.UnicodeNullCharacter As Const Integer = &h0000
-
 Dim Shared Poodle.UTF8TailByteHeaderMask As Const Unsigned Byte = &b11000000
 Dim Shared Poodle.UTF8TailByteHeaderValue As Const Unsigned Byte = &b10000000
 Dim Shared Poodle.UTF8TailByteMask As Const Unsigned Byte = &b00111111

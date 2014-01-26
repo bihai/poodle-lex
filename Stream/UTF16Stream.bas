@@ -61,13 +61,13 @@ Sub Poodle.UTF16Stream.DetectByteOrder()
     End If
 End Sub
 
-Function Poodle.UTF16Stream.GetCharacter() As Poodle.UnicodeCodepoint
+Function Poodle.UTF16Stream.GetCharacter() As Poodle.Unicode.Codepoint
     If This.Status = CharacterStream.CharacterStreamInvalid Then
-        Return Poodle.UnicodeInvalidCharacter
+        Return Poodle.Unicode.InvalidCharacter
     End If
     
     If This.Index+1 >= This.Size Then
-        Return Poodle.UnicodeNullCharacter
+        Return Poodle.Unicode.NullCharacter
     End If
 
     Dim Lead As Unsigned Short
@@ -82,7 +82,7 @@ Function Poodle.UTF16Stream.GetCharacter() As Poodle.UnicodeCodepoint
         Case &hD800 To &hDFFF
         If This.Index+3 >= This.Size Then
             This.Index += 4
-            Return Poodle.UnicodeInvalidCharacter
+            Return Poodle.Unicode.InvalidCharacter
         End If
         If This.ByteOrder = UTF16BigEndian Then
             Trail = (Cast(Unsigned Short, This.CharacterData[This.Index+2]) Shl 8) + This.CharacterData[This.Index+3]

@@ -22,24 +22,38 @@
 #define POODLE_UNICODE_BI
 
 Namespace Poodle
-    Type UnicodeCodepoint As Integer
-
-    Type UnicodeText
-        Public:
-        Declare Constructor()
-        Declare Constructor(ByRef Rhs As UnicodeText)
-        Declare Operator Let(ByRef Rhs As UnicodeText)
-        Declare Property Length As Integer
-        Declare Property Data As UnicodeCodepoint Pointer
-        Declare Function Append(ByVal Character As UnicodeCodepoint) As Integer
-        Declare Function ToUTF8String As String
-        Declare Destructor()
+    Namespace Unicode
+        Type Codepoint As Integer
+        Extern InvalidCharacter As Const Codepoint
+        Extern NullCharacter As Const Codepoint
         
-        Private:
-        InternalData As UnicodeCodepoint Pointer
-        Capacity As Integer
-        InternalLength As Integer
-    End Type
+        Type StringEncoding Extends Object
+            Declare Abstract Function Decode(ByRef As Const String, ByRef As Integer) As Codepoint
+            Declare Abstract Sub Encode(ByRef As String, ByVal As Codepoint)
+        End Type
+        
+        Extern DefaultStringEncoding As StringEncoding Pointer ' UTF8
+        
+        Type Text Extends Object
+            Public:
+            Declare Constructor()
+            Declare Constructor(ByRef Rhs As Text)
+            Declare Constructor(ByRef Rhs As Const Text)
+            Declare Constructor(ByRef As Const String, ByRef As StringEncoding = *DefaultStringEncoding)
+            Declare Operator Let(ByRef Rhs As Text)
+            Declare Operator Let(ByRef Rhs As Const Text)
+            Declare Property Length As Integer
+            Declare Property Data As Codepoint Pointer
+            Declare Function Append(ByVal Character As Codepoint) As Integer
+            Declare Function ToString(ByRef As StringEncoding = *DefaultStringEncoding) As String
+            Declare Destructor()
+            
+            Private:
+            InternalData As Unicode.Codepoint Pointer
+            Capacity As Integer
+            InternalLength As Integer
+        End Type
+    End Namespace
 End Namespace
 
 #endif

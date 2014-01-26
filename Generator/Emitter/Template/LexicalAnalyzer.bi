@@ -26,16 +26,23 @@
 
 Namespace Poodle
     Type Token
+        Public:
         Enum TokenId
             InvalidCharacter
             EndOfStream
             $ENUM_TOKEN_IDS
         End Enum
         Id As TokenId
-        Text As UnicodeText
+        Text As Unicode.Text
+        
         
         Declare Constructor()
-        Declare Constructor(ByVal Id As TokenId, ByVal Text As UnicodeText)
+        Declare Constructor(ByVal Id As TokenId, ByVal Text As Unicode.Text)
+        Declare Function ToString(ByRef _Encoding As Unicode.StringEncoding = *Unicode.DefaultStringEncoding) As String
+        Declare Function GetIdAsString(ByRef _Encoding As Unicode.StringEncoding = *Unicode.DefaultStringEncoding) As String
+        
+        Private:
+        Static IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer 
     End Type
 
     Type LexicalAnalyzer Extends Object
@@ -46,7 +53,7 @@ Namespace Poodle
         
         Private:
         Stream As CharacterStream Ptr
-        Character As UnicodeCodePoint
+        Character As Unicode.CodePoint
     End Type
 
 End Namespace

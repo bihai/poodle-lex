@@ -39,10 +39,10 @@ class LexicalAnalyzerLexer(object):
         ("whitespace", r"[ \t]+"),
         ("newline", r"\r\n|\r|\n"),
         ("colon", r"\:"),
-        ("i", r"i"),
         ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
         ("literalsingle", r"'(?:''|[^'])*'"),
-        ("literaldouble", r'"(?:""|[^"])*"')
+        ("literaldouble", r'"(?:""|[^"])*"'),
+        ("plus", r'\+')
     ]
     _pattern = "|".join(["(?P<%s>%s)" % (key, value) for key, value in _patterns])
     _regex = re.compile(_pattern, re.UNICODE or re.MULTILINE)
@@ -54,6 +54,8 @@ class LexicalAnalyzerLexer(object):
         with open(file, 'r') as f:
             self.source = f.read().decode(encoding)
         self.generator = self._tokens()
+        self.token = None
+        self.text = None
         
     def __iter__(self):
         return self
@@ -69,8 +71,8 @@ class LexicalAnalyzerLexer(object):
         Wrapper around the built-in next() function which returns 'end of stream' if there are no more tokens.
         @return: tuple pair for the next token containing a string with the class of token, and the token text
         """
-        token, text = next(self.generator, ('end of stream', 'end of stream'))
-        return token, text
+        self.token, self.text = next(self.generator, ('end of stream', 'end of stream'))
+        return self.token, self.text
             
     def skip(self, tokens):
         """
@@ -78,37 +80,34 @@ class LexicalAnalyzerLexer(object):
         @param tokens: array of strings containing token classes to skip over
         @return: tuple pair for the next non-skipped token containing a string with the class of token, and a string with the token text
         """
-        token, text = self.get_next()
-        while token in tokens:
-            token, text = self.get_next()
-        return token, text
+        if self.token is None:
+            self.get_next()
+        while self.token in tokens:
+            self.get_next()
+        return self.token, self.text
                 
-    def expect_one_of(self, expected_tokens, existing_token=None, existing_text=None):
+    def expect_one_of(self, expected_tokens):
         """
         Checks if the next token is one of a set of token classes. Raises exception if token doesn't match.
         If existin_token and existing_text are provided they will be checked. Otherwise, a token will be pulled from the iterator.
         @param expected_tokens: array of strings containing valid token classes for the next token
-        @param existing_token: string containing token class of next token. Optional.
-        @param existing_text: string containing matchin text of the next token. Optional.
         @return: tuple pair for the token being checked containing a string with the class of token, and a string with the token text.
         """
-        if existing_token is not None:
-            token, text = (existing_token, existing_text)
-        else:
-            token, text = self.get_next()
-        if token not in expected_tokens:
-            raise LexicalAnalyzerParserException("Expected %s, found '%s'" % (" or ".join(['%s' % i for i in expected_tokens]), text))
-        return token, text
+        if self.token is None:
+            self.get_next()
+        if self.token not in expected_tokens:
+            raise LexicalAnalyzerParserException("Expected %s, found '%s'" % (" or ".join(['%s' % i for i in expected_tokens]), self.text))
+        old_token, old_text = self.token, self.text
+        self.get_next()
+        return old_token, old_text
         
-    def expect(self, expected_token, existing_token=None, existing_text=None):
+    def expect(self, expected_token):
         """
         Check if the next token matches a specific class. Wrapper arond expect_one_of or a single valid class
         @param expected_token: string containing valid token class for the next token
-        @param existing_token: string containing the token class of the next token. Optional
-        @param existing_text: string containing the text of the next token. Optional.
         @return string containing text for the token being checked.
         """
-        return self.expect_one_of([expected_token], existing_token, existing_text)[1]
+        return self.expect_one_of([expected_token])[1]
         
         
     def _tokens(self):
@@ -134,31 +133,47 @@ def parse(file, encoding):
         2. a string containing the rule pattern
         3. a boolean which is true of the rule is case insensitive
     """
-    file_lexer = LexicalAnalyzerLexer(file, encoding)
-    token, text = file_lexer.skip(['whitespace', 'newline'])
-    while token != 'end of stream':
-        if token == 'comment':
-            # Skip commented lines
-            file_lexer.expect_one_of(['newline', 'end of stream'])
-            
-        elif token == 'identifier':
-            rule_name = text
-            try:
-                rule_is_case_insensitive = False
-                rule_pattern = ""
-                file_lexer.expect('colon')
-                token, text = file_lexer.skip(['whitespace'])
-                if token == 'i':
-                    rule_is_case_insensitive = True
-                    token, text = file_lexer.get_next()
-                token, text = file_lexer.expect_one_of(['literalsingle', 'literaldouble'], token, text)
-                rule_pattern = text[1:-1]
-                token, text = file_lexer.skip(['whitespace', 'comment'])
-                file_lexer.expect_one_of(['newline', 'end of stream'], token, text)
+    def parse_literal(file_lexer):
+        token, text = file_lexer.expect_one_of(['literalsingle', 'literaldouble'])
+        if token == 'literalsingle':
+            return text[1:-1].replace("''", "'")
+        else:
+            return text[1:-1].replace('""', '"')
 
-            except LexicalAnalyzerParserException as e:
-                raise LexicalAnalyzerParserException("In rule '%s', %s" % (rule_name, e.message))
-                
-            yield rule_name, rule_pattern, rule_is_case_insensitive
-            
-        token, text = file_lexer.skip(['whitespace', 'newline'])
+    def parse_rule(file_lexer):
+        rule_name = file_lexer.text
+        try:
+            file_lexer.get_next()
+            rule_is_case_insensitive = False
+            rule_pattern = ""
+            file_lexer.skip(['whitespace'])
+            file_lexer.expect('colon')
+            file_lexer.skip(['whitespace'])
+            if file_lexer.token == 'identifier' and file_lexer.text == 'i':
+                rule_is_case_insensitive = True
+                file_lexer.get_next()
+            rule_pattern = parse_literal(file_lexer)
+            file_lexer.skip(['whitespace'])
+            while file_lexer.token == 'plus':
+                file_lexer.get_next()
+                file_lexer.skip(['whitespace', 'comment', 'newline'])
+                rule_pattern += parse_literal(file_lexer)
+                file_lexer.skip(['whitespace'])
+            file_lexer.skip(['comment'])
+            file_lexer.expect_one_of(['newline', 'end of stream'])
+            return rule_name, rule_pattern, rule_is_case_insensitive
+        except LexicalAnalyzerParserException as e:
+            raise LexicalAnalyzerParserException("In rule '%s', %s" % (rule_name, e.message))
+
+    file_lexer = LexicalAnalyzerLexer(file, encoding)
+    file_lexer.skip(['whitespace', 'newline'])
+    while file_lexer.token != 'end of stream':
+        if file_lexer.token == 'comment':
+            file_lexer.get_next()
+            file_lexer.expect_one_of(['newline', 'end of stream'])
+        elif file_lexer.token == 'identifier':
+            yield parse_rule(file_lexer)
+        else:
+            raise LexicalAnalyzerParserException("Expected rule, found '%s'" % file_lexer.text)
+
+        file_lexer.skip(['whitespace', 'newline'])

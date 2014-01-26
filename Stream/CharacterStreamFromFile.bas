@@ -48,7 +48,7 @@ Constructor Poodle.CharacterStreamFromFile(CharacterData As Unsigned Byte Pointe
     This.CharacterData = CharacterData
     This.Size = SizeInBytes
     This.Index = 0
-    If CharacterData = 0 Then
+    If CharacterData <> 0 Then
         This.Status = Poodle.CharacterStream.CharacterStreamValid
     Else
         This.Size = 0

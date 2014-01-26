@@ -34,7 +34,7 @@ Namespace Poodle
         
         Declare Abstract Function IsEndOfStream() As Integer
         Declare Abstract Function GetStatus() As CharacterStreamStatus
-        Declare Abstract Function GetCharacter() As UnicodeCodepoint
+        Declare Abstract Function GetCharacter() As Unicode.Codepoint
         Declare Virtual Destructor()
     End Type
 End Namespace

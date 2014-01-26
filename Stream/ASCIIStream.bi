@@ -30,7 +30,7 @@ Namespace Poodle
         Public:
         Declare Constructor(Filename As String)
         Declare Constructor(ByVal CharacterData As Unsigned Byte Pointer, ByVal SizeInBytes As Unsigned LongInt)
-        Declare Virtual Function GetCharacter() As UnicodeCodepoint
+        Declare Virtual Function GetCharacter() As Unicode.Codepoint
     End Type
 End Namespace
 

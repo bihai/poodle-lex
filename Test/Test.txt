@@ -1,1 +1,8 @@
-123.45K€yword    12345"A quote"Hello
+#include <stdlib.h>
+#include <stdio.h>
+ 
+int main(int argc, char* argv[])
+{
+  printf("Goodbye, World!\n");
+  return EXIT_SUCCESS;
+}

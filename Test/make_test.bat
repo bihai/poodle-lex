@@ -1,1 +1,0 @@
-fbc -i ../Stream -i .. -x Test.exe Test.bas ../Stream/CharacterStream.bas ../Stream/CharacterStreamFromFile.bas ../Stream/MemoryMap.bas ../Stream/Windows/MemoryMapWindows.bas ../Stream/Utf8Stream.bas ../Stream/UTF16Stream.Bas ../Stream/UTF32Stream.bas ../Stream/ASCIIStream.bas ../Stream/UnicodeConstants.bas ../Stream/Unicode.bas ../LexicalAnalyzer.bas

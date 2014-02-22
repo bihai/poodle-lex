@@ -1,1 +1,0 @@
-fbc -i ../Stream -i .. -x Test Test.bas ../Stream/CharacterStream.bas ../Stream/CharacterStreamFromFile.bas ../Stream/MemoryMap.bas ../Stream/Linux/MemoryMapLinux.bas ../Stream/UTF8Stream.bas ../Stream/UTF16Stream.bas ../Stream/UTF32Stream.bas ../Stream/ASCIIStream.bas ../Stream/UnicodeConstants.bas ../Stream/Unicode.bas ../LexicalAnalyzer.bas

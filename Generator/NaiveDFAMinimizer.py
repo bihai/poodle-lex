@@ -54,7 +54,9 @@ def minimize(state_machine):
             for j in range(i):
                 if pair_id(i, j) not in is_distinct:
                     # States are distinct if alphabets not the same
-                    if set(states[i].edges.itervalues()) != set(states[j].edges.itervalues()):
+                    i_alphabet = CoverageSet.union(*states[i].edges.itervalues())
+                    j_alphabet = CoverageSet.union(*states[j].edges.itervalues())
+                    if i_alphabet != j_alphabet:
                         is_distinct.add(pair_id(i, j))
                         change_occurred = True
                         continue
@@ -62,7 +64,12 @@ def minimize(state_machine):
                     # States are distinct if each has an identical edge to distinct states
                     for destination, edge in states[i].edges.iteritems():
                         destination_i = states.index(destination)
-                        destination_j = states.index(next(k for k, v in states[j].edges.iteritems() if v == edge))
+                        destination_j_index = next((k for k, v in states[j].edges.iteritems() if (v in edge) or (edge in v)), None)
+                        if destination_j_index is None:
+                            is_distinct.add(pair_id(i, j))
+                            change_occurred = True
+                            break
+                        destination_j = states.index(destination_j_index)
                         if pair_id(destination_i, destination_j) in is_distinct:
                             is_distinct.add(pair_id(i, j))
                             change_occurred = True

@@ -87,7 +87,7 @@ class DeterministicFiniteAutomata(object):
                 if codepoint == ord('"'):
                     return "'\\\"'"
                 if codepoint in xrange(32, 127):
-                    return "'%s'" % chr(codepoint)
+                    return "'%s'" % chr(codepoint).replace("\\", "\\\\")
                 else:
                     return "0x%x" % codepoint
             
@@ -159,3 +159,39 @@ class DeterministicFiniteAutomata(object):
                 source_nfa_state.edges[edge].add(dfa_state.nfa_proxy)
     
         return nfa_state_machine
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+        
+    def __eq__(self, other):
+        # Iterate both DFAs simultaneously, return false if something doesn't match
+        state_map = {self.start_state: other.start_state}
+        state_queue = collections.deque([(self.start_state, other.start_state)])
+
+        while len(state_queue) > 0:
+            self_state, other_state = state_queue.pop()
+            if len(self_state.edges) != len(other_state.edges):
+                return False
+            for self_destination, self_edge in self_state.edges.iteritems():
+                if self_destination in state_map:
+                    # We have visited this destination - Make sure edges leading to it are identical
+                    other_destination = state_map[self_destination]
+                    if other_destination not in other_state.edges:
+                        return False
+                    if other_state.edges[other_destination] != self_edge:
+                        return False
+                else:
+                    # We have not visited this destination - Search for matching edge in other DFA
+                    other_destination = None
+                    for possible_destination, other_edge in other_state.edges.iteritems():
+                        if (other_edge == self_edge and 
+                            frozenset(self_destination.final_ids) == frozenset(possible_destination.final_ids) and
+                            self_destination.is_final == possible_destination.is_final):
+                            state_map[self_destination] = possible_destination
+                            other_destination = possible_destination
+                            break
+                    if other_destination is None:
+                        return False
+                    state_queue.appendleft((self_destination, other_destination))    
+                    
+        return True

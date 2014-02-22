@@ -35,13 +35,13 @@ class FreeBasic(object):
     @ivar ids: a dict mapping states to an enum element in the FreeBasic source
     @ivar dfa: the deterministic finite automata (DFA) representing the lexical analyzer.
     """
+    template_dir = ('Template', 'FreeBasic')
     source_dir = os.path.join(os.path.dirname(os.path.realpath(sys.executable)), 'Generator', 'Emitter')
     if getattr(sys, 'frozen', None) is None:
         source_dir = os.path.dirname(os.path.realpath(__file__))
-    bi_template_file = os.path.join(source_dir, "Template", "LexicalAnalyzer.bi")
-    bas_template_file = os.path.join(source_dir, "Template", "LexicalAnalyzer.bas")
-    debug_bi_template_file = os.path.join(source_dir, "Template", "DebugToken.bi")
-    debug_bi_template_file = os.path.join(source_dir, "Template", "DebugToken.bas")
+    source_dir = os.path.join(source_dir, '..', '..', *template_dir)
+    bi_template_file = os.path.join(source_dir, "LexicalAnalyzer.bi")
+    bas_template_file = os.path.join(source_dir, "LexicalAnalyzer.bas")
     reserved_keywords = [
         'if', 'then', 'else', 'elseif', 'for', 'next', 'do', 'loop',
         'while', 'wend', 'goto', 'sub', 'function', 'end', 'type', 'is',
@@ -196,3 +196,37 @@ class FreeBasic(object):
             
             code.dedent()
             code.line("End Select")
+    
+    output_dirs = [
+        ("Demo",),
+        ("Stream",),
+        ("Stream", "Windows"),
+        ("Stream", "Linux")
+    ]
+    files_to_copy = [
+        ("Stream", "Windows", "MemoryMapWindows.bas"),
+        ("Stream", "Windows", "MemoryMapWindows.bi"),
+        ("Stream", "Linux", "MemoryMapLinux.bas"),
+        ("Stream", "Linux", "MemoryMapLinux.bi"),
+        ("Stream", "ASCIIStream.bas"),
+        ("Stream", "ASCIIStream.bi"),
+        ("Stream", "CharacterStream.bas"),
+        ("Stream", "CharacterStream.bi"),
+        ("Stream", "CharacterStreamFromFile.bas"),
+        ("Stream", "CharacterStreamFromFile.bi"),
+        ("Stream", "MemoryMap.bas"),
+        ("Stream", "MemoryMap.bi"),
+        ("Stream", "Unicode.bas"),
+        ("Stream", "Unicode.bi"),
+        ("Stream", "UnicodeConstants.bas"),
+        ("Stream", "UnicodeConstants.bi"),
+        ("Stream", "UTF8Stream.bas"),
+        ("Stream", "UTF8Stream.bi"),
+        ("Stream", "UTF16Stream.bas"),
+        ("Stream", "UTF16Stream.bi"),
+        ("Stream", "UTF32Stream.bas"),
+        ("Stream", "UTF32Stream.bi"),
+        ("Demo", "Demo.bas"),
+        ("Demo", "make_demo.bat"),
+        ("Demo", "make_demo.sh")
+    ]

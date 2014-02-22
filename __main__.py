@@ -45,51 +45,19 @@ try:
     if getattr(sys, 'frozen', None) is None:
         this_file = __file__
     this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
-    dirs = [
-        ("Test",),
-        ("Stream",),
-        ("Stream", "Windows"),
-        ("Stream", "Linux")
-    ]
-    files = [
-        ("Stream", "Windows", "MemoryMapWindows.bas"),
-        ("Stream", "Windows", "MemoryMapWindows.bi"),
-        ("Stream", "Linux", "MemoryMapLinux.bas"),
-        ("Stream", "Linux", "MemoryMapLinux.bi"),
-        ("Stream", "ASCIIStream.bas"),
-        ("Stream", "ASCIIStream.bi"),
-        ("Stream", "CharacterStream.bas"),
-        ("Stream", "CharacterStream.bi"),
-        ("Stream", "CharacterStreamFromFile.bas"),
-        ("Stream", "CharacterStreamFromFile.bi"),
-        ("Stream", "MemoryMap.bas"),
-        ("Stream", "MemoryMap.bi"),
-        ("Stream", "Unicode.bas"),
-        ("Stream", "Unicode.bi"),
-        ("Stream", "UnicodeConstants.bas"),
-        ("Stream", "UnicodeConstants.bi"),
-        ("Stream", "UTF8Stream.bas"),
-        ("Stream", "UTF8Stream.bi"),
-        ("Stream", "UTF16Stream.bas"),
-        ("Stream", "UTF16Stream.bi"),
-        ("Stream", "UTF32Stream.bas"),
-        ("Stream", "UTF32Stream.bi"),
-        ("Test", "Test.bas"),
-        ("Test", "Test.txt"),
-        ("Test", "make_test.bat"),
-        ("Test", "make_test.sh")
-    ]
+    
     if not os.path.exists(arguments.OUTPUT_DIR):
         sys.stderr.write("Output directory not found\n")
         sys.exit()
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
         sys.stderr.write("Output directory cannot be same as executable directory\n")
         sys.exit()
-    for dirname in dirs:
+    for dirname in FreeBasic.output_dirs:
         if not os.path.exists(os.path.join(arguments.OUTPUT_DIR, *dirname)):
             os.mkdir(os.path.join(arguments.OUTPUT_DIR, *dirname))
-    for file in files:
-        shutil.copy(os.path.join(this_folder, *file), os.path.join(arguments.OUTPUT_DIR, *file))
+    template_folder = os.path.join(this_folder, *FreeBasic.template_dir)
+    for file in FreeBasic.files_to_copy:
+        shutil.copy(os.path.join(template_folder, *file), os.path.join(arguments.OUTPUT_DIR, *file))
 except IOError as e:
     sys.stderr.write("Unable to write to output directory because of an error\n")
     raise e

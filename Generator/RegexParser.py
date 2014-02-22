@@ -18,6 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
+from CoverageSet import CoverageSet
 import Regex
 import string
 from RegexExceptions import *
@@ -34,7 +35,7 @@ class RegexParser(object):
     line_feed = (10, 10)
     tab = (ord('\t'), ord('\t'))
     space = ((ord(' '), ord(' ')))
-    special = u'(){[.^$*+?|'
+    special = u'(){[.^$*+?|:'
     
     def __init__(self, text, is_case_insensitive=False):
         """
@@ -50,7 +51,10 @@ class RegexParser(object):
         Parse the string from its current index and return a regular expression
         @return: a visitable regular expression object from the Regex package
         """
-        return self.parse_alternation()
+        regex_object = self.parse_alternation()
+        if self.index < len(self.text):
+            self.expect(u'end of pattern')
+        return regex_object
         
     def parse_alternation(self):
         """
@@ -58,8 +62,7 @@ class RegexParser(object):
         @return: a visitable regular expression object from the Regex package.
         """
         concatenations = [self.parse_concatenation()]
-        while self.index < len(self.text) and self.text[self.index] == u'|':
-            self.index += 1
+        while self.get_next_if(u'|'):
             concatenations.append(self.parse_concatenation())
         if len(concatenations) > 1:
             return Regex.Alternation(concatenations)
@@ -71,11 +74,9 @@ class RegexParser(object):
         Parse the string from its current index into a concatenation or an expression that can be contained by an concatenation.
         @return: a visitable regular expression object from the Regex package.
         """
-        repetitions = []
-        while self.text[self.index] not in (u'|', u')'):
+        repetitions = [self.parse_qualified()]
+        while self.next_is_not(u'|)'):
             repetitions.append(self.parse_qualified())
-            if self.index == len(self.text):
-                break
         if len(repetitions) > 1:
             return Regex.Concatenation(repetitions)
         else:
@@ -87,19 +88,13 @@ class RegexParser(object):
         @return: a visitable regular expression object from the Regex package.
         """
         child = self.parse_character()
-        if self.index == len(self.text):
-            return child
-        if self.text[self.index] == u'*':
-            self.index += 1
+        if self.get_next_if(u'*'):
             return Regex.Repetition(child, 0, Regex.Repetition.Infinity)
-        elif self.text[self.index] == u'+':
-            self.index += 1
+        elif self.get_next_if(u'+'):
             return Regex.Repetition(child, 1, Regex.Repetition.Infinity)
-        elif self.text[self.index] == u'?':
-            self.index += 1
+        elif self.get_next_if(u'?'):
             return Regex.Repetition(child, 0, 1)
-        elif self.text[self.index] == u'{':
-            self.index += 1
+        elif self.get_next_if(u'{'):
             return self.parse_repetition(child)
         else:
             return child
@@ -109,14 +104,11 @@ class RegexParser(object):
         Parse the string from its current index ino a character set or a sub-expression
         @return: a visitable regular expression object from the Regex package.
         """
-        if self.text[self.index] == u'[':
-            self.index += 1
+        if self.get_next_if(u'['):
             return self.parse_character_class()
         
-        elif self.text[self.index] == u'(':
-            self.index += 1
-            if self.index < len(self.text):
-                child = self.parse()
+        elif self.get_next_if(u'('):
+            child = self.parse_alternation()
             self.expect(u')')
             return child
             
@@ -135,36 +127,31 @@ class RegexParser(object):
                 if lowercase != uppercase:
                     return Regex.Literal([(ord(lowercase), ord(lowercase)), (ord(uppercase), ord(uppercase))])
             return Regex.Literal([(ord(character), ord(character))])
-                
-        if self.text[self.index] == u'.':
-            self.index += 1
+
+        if self.get_next_if(u'.'):
             return Regex.Literal([(1, 0x10FFFF)])
-        elif self.text[self.index] == u'\\':
-            self.index += 2
-            if self.index-1 >= len(self.text):
-                self.expect(u'character')
-            if self.text[self.index-1] == u'w':
+        elif self.get_next_if(u'\\'):
+            if self.get_next_if(u'w'):
                 return Regex.Literal([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
-            elif self.text[self.index-1] == u'W':
+            elif self.get_next_if(u'W'):
                 return Regex.LiteralExcept([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
-            elif self.text[self.index-1] == u'r':
+            elif self.get_next_if(u'r'):
                 return Regex.Literal([RegexParser.carriage_return])
-            elif self.text[self.index-1] == u'n':
+            elif self.get_next_if(u'n'):
                 return Regex.Literal([RegexParser.line_feed])
-            elif self.text[self.index-1] == u't':
+            elif self.get_next_if(u't'):
                 return Regex.Literal([RegexParser.tab])
-            elif self.text[self.index-1] == u's':
+            elif self.get_next_if(u's'):
                 return Regex.Literal([RegexParser.space])
-            elif self.text[self.index-1] == u'd':
+            elif self.get_next_if(u'd'):
                 return Regex.Literal([RegexParser.digits])
             else:
-                return get_literal(self.text[self.index-1], self.is_case_insensitive)
-
+                return get_literal(self.get_next(), self.is_case_insensitive)
         else:
-            self.index += 1
-            if self.text[self.index-1] in RegexParser.special:
-                raise RegexParserInvalidCharacter(self.text[self.index-1])
-            return get_literal(self.text[self.index-1], self.is_case_insensitive)
+            character = self.get_next()
+            if character in RegexParser.special:
+                raise RegexParserInvalidCharacter(character)
+            return get_literal(character, self.is_case_insensitive)
             
     def parse_repetition(self, child):
         """
@@ -183,13 +170,10 @@ class RegexParser(object):
         Parse an integer from the string at its current index.
         @return: the integer parsed from the string.
         """
-        if self.index >= len(self.text):
-            self.expect('integer')
-        if self.text[self.index] not in RegexParser.number:
-            raise RegexParserExpected(u'number', self.text, self.index)
-        while self.text[self.index] in RegexParser.number:
-            number += self.text[self.index]
-            self.index += 1
+        if not self.next_is(RegexParser.digits):
+            self.expect(u'integer')
+        while self.next_is(RegexParser.digits):
+            number += self.get_next()
         return int(number)
     
     def expect(self, character):
@@ -197,26 +181,58 @@ class RegexParser(object):
         Raise an exception if the character at the current index of the string is not a specific value.
         @param character: the value that the current character should be.
         """
-        if self.index >= len(self.text) or self.text[self.index] != character:
+        if not self.next_is(character):
             raise RegexParserExpected(unicode(character), self.text, self.index)
         self.index += 1
+        
+    def get_next(self):
+        """
+        Returns the next character, advances the stream, and throws an exception if at the end of the pattern
+        @return: String containing the next character
+        """
+        if self.index >= len(self.text):
+            self.expect('character')
+        self.index += 1
+        return unicode(self.text[self.index-1])
+        
+    def get_next_if(self, characters):
+        """
+        Advances the sream if the next character is one of a set of characters
+        @param characters: A string containing the characters for which to check
+        @return: Boolean if the next character is one of characters
+        """
+        if self.next_is(characters):
+            self.get_next()
+            return True
+        return False
+        
+    def next_is(self, characters):
+        """
+        Returns true if the next character is at the current index of the string is one of a set of characters. False if not.
+        @param character: the value that the current character should be.
+        @return: True if the next characters is in the expected set, False otherwise or if at end of string
+        """
+        return self.index < len(self.text) and self.text[self.index] in characters
+    
+    def next_is_not(self, characters):
+        """
+        Returns true if the next character is not end-of-string and is not one of a set of characters. False if not
+        @param character: the value that the current character should not be.
+        @return: True if the next character is not in the expected set, Fase otherwise or if at end of string
+        """
+        return self.index < len(self.text) and self.text[self.index] not in characters
         
     def parse_character_class(self):
         """
         Parse a character class ([...]) expression from the string at its current index.
         @return: a Regex.Literal or Regex.LiteralExcept object representing the characters
         """
-        if self.index < len(self.text):
-            inverse = False
-            if self.text[self.index] == u'^':
-                inverse = True
-                self.index += 1
-            elif self.text[self.index] == u':':
-                self.index += 1
-                return self.parse_named_character_class()            
-            characters = self.parse_character_range().characters
-            while self.text[self.index] != u']':
-                characters.update(self.parse_character_range().characters)
+        inverse = False
+        if self.get_next_if(u'^'):
+            inverse = True
+        characters = self.parse_character_range().characters
+        while self.next_is_not(u']'):
+            characters.update(self.parse_character_range().characters)
         self.expect(u']')
         
         if inverse:
@@ -239,10 +255,10 @@ class RegexParser(object):
             u"space": [(ord(i), ord(i)) for i in string.whitespace],
             u"xdigit": [RegexParser.digits, (ord('a'), ord('f')), (ord('A'), ord('F'))]
         }
+        self.expect(u':')
         class_name = ""
-        while self.index < len(self.text) and self.text[self.index] in string.ascii_letters:
-            class_name += self.text[self.index]
-            self.index += 1
+        while self.next_is(string.ascii_letters):
+            class_name += self.get_next()
         self.expect(":")
         self.expect("]")
         
@@ -256,9 +272,10 @@ class RegexParser(object):
         Parse a range (e.g. a-z) expression from the string at its current index
         @return: a string containing all the characters in the range
         """
+        if self.get_next_if(u'['):
+            return self.parse_named_character_class()
         start_literal = self.parse_literal(True)
-        if self.text[self.index] == u'-':
-            self.index += 1
+        if self.get_next_if(u'-'):
             end_literal = self.parse_literal(True)
         else:
             return start_literal

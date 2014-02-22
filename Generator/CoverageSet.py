@@ -44,6 +44,9 @@ class CoverageSet(object):
                 yield (min_v, max_v)
             except StopIteration:
                 break
+                
+    def is_empty(self):
+        return len(self.intervals) >= 2
     
     def merge_adjacent(self):
         """
@@ -183,6 +186,8 @@ class CoverageSet(object):
         @param other_coverage_sets: one or more other CoverageSet objects.
         """
         reverse_enumerate = lambda l: itertools.izip(xrange(len(l)-1, -1, -1), reversed(l))
+        for other_coverage_set in other_coverage_sets:
+            other_coverage_set.remove_overlap()
         self.update(*other_coverage_sets)
         IDLE=0
         EXPECT_MAX=1
@@ -212,38 +217,43 @@ class CoverageSet(object):
                 else:
                     state = IDLE
         self.intervals = new_intervals
-        
-    def union(self, *other_coverage_sets):
+    
+    @staticmethod
+    def union(*coverage_sets):
         """
-        Returns a new CoverageSet object that covers this object's values, as well as the values covered by one or more other CoverageSet objects.
+        Returns a new CoverageSet object that covers all the values covered by one or more other CoverageSet objects.
         
         @param other_coverage_sets: one or more other CoverageSet objects.
         """
         new_coverage_set = CoverageSet()
-        new_coverage_set.update(self)
-        new_coverage_set.update(*other_coverage_sets)
+        new_coverage_set.update(*coverage_sets)
         return new_coverage_set
         
-    def difference(self, *other_coverage_sets):
+    @staticmethod
+    def difference(first_coverage_set, *other_coverage_sets):
         """
-        Returns a new CoverageSet object that covers the values covered by this set, except for those covered by one or more other CoverageSet objects.
+        Returns a new CoverageSet object that covers the values covered by a set, except for those covered by one or more other CoverageSet objects.
         
-        @param other_coverage_sets: one or more other CoverageSet objects.
+        @param first_coverage_set: CoverageSet object representing a range of values
+        @param other_coverage_sets: CoverageSet objects representing ranges of values to exclude
         """
         new_coverage_set = CoverageSet()
-        new_coverage_set.update(self)
+        new_coverage_set.update(first_coverage_set)
         new_coverage_set.difference_update(*other_coverage_sets)
         return new_coverage_set
     
-    def intersection(self, *other_coverage_sets):
+    @staticmethod
+    def intersection(*coverage_sets):
         """
-        Returns a new CoverageSet object that covers only the values covered by this object and one or more other CoverageSet objects.
+        Returns a new CoverageSet object that covers only the values covered by all of the input CoverageSet objects.
         
-        @param other_coverage_sets: one or more other CoverageSet objects.
+        @param coverage_sets: CoverageSet objects representing the ranges of values to intersect
         """
         new_coverage_set = CoverageSet()
-        new_coverage_set.update(self)
-        new_coverage_set.intersection_update(*other_coverage_sets)
+        if len(coverage_sets) != 0:
+            new_coverage_set.update(coverage_sets[0])
+            new_coverage_set.intersection_update(*coverage_sets[1:])
+        return new_coverage_set
     
     @staticmethod
     def segments(*coverage_sets_and_ids):
@@ -267,13 +277,13 @@ class CoverageSet(object):
         for (value, is_end), set_id in unified_iter:
             if level > 0 and ((last_value, last_is_end) != (value, is_end)):
                 if is_end == 0 and last_is_end == 0:
-                    yield (last_value, value-1), set_ids
+                    yield (last_value, value-1), frozenset(set_ids)
                 elif is_end == 0 and last_is_end == 1:
-                    yield (last_value+1, value-1), set_ids
+                    yield (last_value+1, value-1), frozenset(set_ids)
                 elif is_end == 1 and last_is_end == 0:
-                    yield (last_value, value), set_ids
+                    yield (last_value, value), frozenset(set_ids)
                 elif is_end == 1 and last_is_end == 1:
-                    yield (last_value+1, value), set_ids
+                    yield (last_value+1, value), frozenset(set_ids)
             if is_end == 0:
                 level += 1
                 set_ids.add(set_id)
@@ -283,11 +293,14 @@ class CoverageSet(object):
             last_value, last_is_end = value, is_end
         
     def __contains__(self, value):
-        self.remove_overlap()
-        before_min = self.intervals.bisect_left((value, 1))
-        if before_min == len(self.intervals):
-            return False
-        return self.intervals[before_min][1] == 1
+        if isinstance(value, CoverageSet):
+            return CoverageSet.intersection(self, value) == value
+        else:
+            self.remove_overlap()
+            before_min = self.intervals.bisect_left((value, 1))
+            if before_min == len(self.intervals):
+                return False
+            return self.intervals[before_min][1] == 1
         
     def __len__(self):
         self.remove_overlap()

@@ -90,8 +90,8 @@ class NonDeterministicFiniteAutomata(object):
                 descriptions.extend([unicode('    %d -> %d [label="&epsilon;"]') % (state_index, states.index(i)) for i in state.epsilon_edges])
 
             def format_codepoint(codepoint):
-                if codepoint == ord('"'):
-                    return "'\\\"'"
+                if codepoint in [ord('\\'), ord('"')]:
+                    return "'\\%s'" % chr(codepoint)
                 elif codepoint in xrange(32, 127):
                     return "'%s'" % chr(codepoint)
                 else:
@@ -127,15 +127,9 @@ class NonDeterministicFiniteAutomata(object):
                 if state_machines[i].end_state in state.epsilon_edges:
                     state.epsilon_edges.remove(state_machines[i].end_state)
                     state.epsilon_edges.add(state_machines[i+1].start_state)
-                discarded_states = set()
-                new_edge = CoverageSet()
-                for destination, edge in state.edges.iteritems():
-                    if destination == state_machines[i].end_state:
-                        discarded_states.add(destination)
-                        new_edge.update(edge)
-                state.edges[state_machines[i+1].start_state].update(new_edge)
-                for discarded_state in discarded_states:
-                    del state.edges[discarded_state]
+                if state_machines[i].end_state in state.edges:
+                    state.edges[state_machines[i+1].start_state].update(state.edges[state_machines[i].end_state])
+                    del state.edges[state_machines[i].end_state]
         state_machines[0].end_state = state_machines[-1].end_state
         return state_machines[0]
     

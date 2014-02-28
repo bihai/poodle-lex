@@ -48,7 +48,8 @@ class FreeBasic(object):
         'and', 'or', 'xor', 'not', 'goto', 'property', 'constructor', 'destructor',
         'namespace', 'string', 'integer', 'double', 'single', 'byte', 'ptr', 'any',
         'byref', 'byval', 'as', 'ubyte', 'short', 'ushort', 'uinteger', 'long',
-        'ulong', 'longint', 'ulongint', 'cast', 'len'
+        'ulong', 'longint', 'ulongint', 'cast', 'len', 'case', 'const', 'continue',
+        'enum', 'extern', 'int', 'return', 'static', 'union', 'unsigned'
     ]
     
     def __init__(self, lexical_analyzer):

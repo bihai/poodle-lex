@@ -19,6 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import Automata
+import itertools
 from CoverageSet import CoverageSet
 
 def pair_id(i, j):
@@ -35,17 +36,16 @@ def minimize(state_machine):
         which compares the distinctiveness of every pair of states. The automata passed 
         in is modified and nothing is returned.
     @param state_machine: a DeterministicFiniteAutomata object representing the DFA to minimize.
-    """
+    """   
     states = [state for state in state_machine]
     is_distinct = set()
     
     # Step 1: mark final/non-final pairs of states as distinct
     for i in range(len(states)):
         for j in range(i):
-            if pair_id(i, j) not in is_distinct:
-                if states[i].final_ids != states[j].final_ids:
-                    is_distinct.add(pair_id(i, j))
-                    
+            if states[i].final_ids != states[j].final_ids:
+                is_distinct.add(pair_id(i, j))
+                
     # Step 2: compare destinations for each alphabet to determine that they are unique
     change_occurred = True
     while change_occurred:
@@ -53,28 +53,23 @@ def minimize(state_machine):
         for i in range(len(states)):
             for j in range(i):
                 if pair_id(i, j) not in is_distinct:
-                    # States are distinct if alphabets not the same
-                    i_alphabet = CoverageSet.union(*states[i].edges.itervalues())
-                    j_alphabet = CoverageSet.union(*states[j].edges.itervalues())
-                    if i_alphabet != j_alphabet:
-                        is_distinct.add(pair_id(i, j))
-                        change_occurred = True
-                        continue
+                    all_edges = itertools.chain(states[i].edges.itervalues(), states[j].edges.itervalues())
+                    for (min_v, max_v), ids in CoverageSet.segments(*((edge, index) for index, edge in enumerate(all_edges))):
+                        destination_i = next((k for k, v in states[i].edges.iteritems() if min_v in v), None)
+                        destination_j = next((k for k, v in states[j].edges.iteritems() if min_v in v), None)
                         
-                    # States are distinct if each has an identical edge to distinct states
-                    for destination, edge in states[i].edges.iteritems():
-                        destination_i = states.index(destination)
-                        destination_j_index = next((k for k, v in states[j].edges.iteritems() if (v in edge) or (edge in v)), None)
-                        if destination_j_index is None:
+                        # States are distinct if alphabets not the same
+                        if destination_i is None or destination_j is None:
                             is_distinct.add(pair_id(i, j))
                             change_occurred = True
-                            break
-                        destination_j = states.index(destination_j_index)
-                        if pair_id(destination_i, destination_j) in is_distinct:
-                            is_distinct.add(pair_id(i, j))
-                            change_occurred = True
-                            break
-    
+                        else:
+                            # States are distinct if they has an identical edges to distinct states
+                            destination_index_i = states.index(destination_i)
+                            destination_index_j = states.index(destination_j)
+                            if pair_id(destination_index_i, destination_index_j) in is_distinct:
+                                is_distinct.add(pair_id(i, j))
+                                change_occurred = True
+
     # Step 3: Group non-distinct states
     non_distinct_pairs = set()
     for i in range(len(states)):
@@ -87,29 +82,34 @@ def minimize(state_machine):
         found = False
         for group in non_distinct_groups:
             if i in group or j in group:
-                group.append(i)
-                group.append(j)
+                group.add(i)
+                group.add(j)
                 found = True             
         if not found:
-            non_distinct_groups.append([i, j])
+            non_distinct_groups.append(set([i, j]))
    
     # Step 4: Merge non-distinct states
+    state_to_merged = {}
+    for i in xrange(len(non_distinct_groups)):
+        non_distinct_groups[i] = list(non_distinct_groups[i])
     for group in non_distinct_groups:
-        if states.index(state_machine.start_state) in group:
-            state_machine.start_state = states[group[0]]
+        for state_index, state in [(i, states[i]) for i in group]:
+            state_to_merged[state] = states[group[0]]
+    for state in states:
+        if state not in state_to_merged:
+            state_to_merged[state] = state
+    for group in non_distinct_groups:
+        to_merge = [states[i] for i in group[1:]]
+        merge_into = states[group[0]]
+        for state in to_merge:
+            for destination, edge in state.edges.iteritems():
+                merge_into.edges[state_to_merged[destination]].update(edge)
+        for edge in merge_into.edges.itervalues():
+            edge.remove_overlap()
         for state in states:
-            duplicate_destinations = set()
-            new_edge = CoverageSet()
-            has_edge_to_group = False
-            for destination_state, edge in state.edges.iteritems():
-                if states.index(destination_state) in group:
-                    new_edge.update(edge)
-                    has_edge_to_group = True
-                    if destination_state != states[group[0]]:
-                        duplicate_destinations.add(destination_state)
-            for destination in duplicate_destinations:
-                del state.edges[destination]
-            if has_edge_to_group:
-                state.edges[states[group[0]]].update(new_edge)
-            
-                    
+            for destination in state.edges.keys():
+                if destination in to_merge:
+                    state.edges[merge_into].update(state.edges[destination])
+                    del state.edges[destination]
+        if state_machine.start_state in to_merge:
+            state_machine.start_state = merge_into

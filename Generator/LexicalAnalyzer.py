@@ -23,6 +23,7 @@ from RegexExceptions import *
 from NonDeterministicFiniteAutomataBuilder import NonDeterministicFiniteAutomataBuilder
 from DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
 import NaiveDFAMinimizer
+import HopcroftDFAMinimizer
 import Automata
 import LexicalAnalyzerParser
 
@@ -61,23 +62,28 @@ class LexicalAnalyzer(object):
     @ivar rules: a list of tuple pairs, which each tuple pair representing a rule. 
         Each rule tuple contains a string for the rule id, and a Rule object representing the rule.
         The smaller the index of the rule, the higher priority the rule is.    
-    
     """
-    def __init__(self, rules=[]):
+    def __init__(self, rules=[], minimizer=HopcroftDFAMinimizer.minimize):
+        """
+        @param rules: a list of tuple pairs, which each tuple pair representing a rule. 
+        @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft's algorithm by default
+        """
         self.rules = []
         for rule in rules:
             self.add_rule(rule[0], rule[1])
         self._finalized = False
         self._nfa = None
         self._dfa = None
+        self._minimizer = minimizer
         
     @staticmethod
-    def parse(file, encoding):
+    def parse(file, encoding, minimizer=HopcroftDFAMinimizer.minimize):
         """
         Creates a lexical analyzer from a rules definition file
         @param file: string containing the file name of the rules definition file.
+        @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft algorithm by default.
         """
-        lexer = LexicalAnalyzer()
+        lexer = LexicalAnalyzer(minimizer=minimizer)
         for rule_id, pattern, is_case_insensitive in LexicalAnalyzerParser.parse(file, encoding):
             lexer.add_rule(rule_id, pattern, is_case_insensitive)
         return lexer
@@ -116,7 +122,7 @@ class LexicalAnalyzer(object):
         self._nfa = Automata.NonDeterministicFiniteAutomata.alternate(rule_nfas)
         self._dfa = DeterministicFiniteAutomataBuilder(self._nfa).get()
         self._min_dfa = self._dfa.copy()
-        NaiveDFAMinimizer.minimize(self._min_dfa)
+        self._minimizer(self._min_dfa)
         self._finalized = True
         
     def check_final(self):

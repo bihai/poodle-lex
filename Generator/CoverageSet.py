@@ -156,7 +156,8 @@ class CoverageSet(object):
         return not (self == other_coverage_set)
         
     def __hash__(self):
-        return hash(frozenset(i for i in self))
+        self.remove_overlap()
+        return hash(tuple(sorted(i for i in self)))
     
     def __str__(self):
         def format_codepoint(codepoint):
@@ -258,11 +259,15 @@ class CoverageSet(object):
     @staticmethod
     def segments(*coverage_sets_and_ids):
         """
-        Returns an iterator which returns a a tuple with two elements, or each range of values for which the coverage changes for one or more CoverageSet objects. 
-        The first element is another tuple which represents a range of values.
-        The second element is a set of ids which represent the CoverageSet objects which cover the range from the first element.
-        
-        @param coverage_sets_and_ids: one or more CoverageSet objects
+        Takes in one or more CoverageSet objects mapped to identifiers, and returns contiguious 
+            numerical intervals which are covered by one or more of the coverage sets, along with 
+            a list of identifiers representing CoverageSet objects which cover each interval.
+        @param coverage_sets_and_ids: one or more tuples with the first element being a CoverageSet
+            objects, and the second being an identifier for the coverage set.
+        @return: an iterator which returns a tuple with two elements. The first element of 
+            each tuple is a tuple with two integers representing respectively the inclusive minimum 
+            value and inclusive maximum value of the interval. The second element is a list of 
+            identifiers, each representing a CoverageSet object that covers the interval.
         """
         for coverage_set, set_id in coverage_sets_and_ids:
             coverage_set.remove_overlap()
@@ -275,15 +280,20 @@ class CoverageSet(object):
         level = 1
         set_ids = set([set_id])
         for (value, is_end), set_id in unified_iter:
-            if level > 0 and ((last_value, last_is_end) != (value, is_end)):
-                if is_end == 0 and last_is_end == 0:
-                    yield (last_value, value-1), frozenset(set_ids)
-                elif is_end == 0 and last_is_end == 1:
-                    yield (last_value+1, value-1), frozenset(set_ids)
-                elif is_end == 1 and last_is_end == 0:
+            if level > 0:
+                if value == last_value + 1 and is_end == 0 and last_is_end == 1:
+                    pass
+                elif value == last_value and is_end == 1 and last_is_end == 0:
                     yield (last_value, value), frozenset(set_ids)
-                elif is_end == 1 and last_is_end == 1:
-                    yield (last_value+1, value), frozenset(set_ids)
+                elif value != last_value:
+                    if is_end == 0 and last_is_end == 0:
+                        yield (last_value, value-1), frozenset(set_ids)
+                    elif is_end == 0 and last_is_end == 1:
+                        yield (last_value+1, value-1), frozenset(set_ids)
+                    elif is_end == 1 and last_is_end == 0:
+                        yield (last_value, value), frozenset(set_ids)
+                    elif is_end == 1 and last_is_end == 1:
+                        yield (last_value+1, value), frozenset(set_ids)
             if is_end == 0:
                 level += 1
                 set_ids.add(set_id)

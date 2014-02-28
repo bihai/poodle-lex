@@ -75,7 +75,7 @@ class DeterministicFiniteAutomata(object):
             elif len(state.final_ids) == 0 and state.is_final:
                 descriptions.append('    %d [shape=octagon];' % (states.index(state)))
             elif len(state.final_ids) > 0 and state.is_final:
-                descriptions.append('    %d [label="%d\\n(%s)",shape=octagon];' % (states.index(state), states.index(state), ", ".join(state.final_ids)))
+                descriptions.append('    %d [label="%d\\n(%s)\\n(%s)",shape=octagon];' % (states.index(state), states.index(state), ", ".join(state.ids), ", ".join(state.final_ids)))
             
         descriptions.append('    %d -> %d' % (len(states), start_state_index))
         
@@ -171,14 +171,25 @@ class DeterministicFiniteAutomata(object):
         while len(state_queue) > 0:
             self_state, other_state = state_queue.pop()
             if len(self_state.edges) != len(other_state.edges):
+                print "a"
                 return False
             for self_destination, self_edge in self_state.edges.iteritems():
                 if self_destination in state_map:
                     # We have visited this destination - Make sure edges leading to it are identical
                     other_destination = state_map[self_destination]
                     if other_destination not in other_state.edges:
+                        print "b"
                         return False
                     if other_state.edges[other_destination] != self_edge:
+                        print "LHS State: f(%s), i(%s)" % (", ".join(self_state.final_ids), ", ".join(self_state.ids))
+                        for edge in self_state.edges.itervalues():
+                            edge.remove_overlap()
+                            print "   ", edge
+                        print "RHS State: f(%s), i(%s)" % (", ".join(other_state.final_ids), ", ".join(other_state.ids))
+                        for edge in other_state.edges.itervalues():
+                            edge.remove_overlap()
+                            print "   ", edge
+                        
                         return False
                 else:
                     # We have not visited this destination - Search for matching edge in other DFA
@@ -191,7 +202,8 @@ class DeterministicFiniteAutomata(object):
                             other_destination = possible_destination
                             break
                     if other_destination is None:
+                        print "d"
                         return False
                     state_queue.appendleft((self_destination, other_destination))    
-                    
         return True
+        

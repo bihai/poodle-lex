@@ -23,6 +23,8 @@ from Generator.LexicalAnalyzer import LexicalAnalyzer
 from Generator.Emitter.FreeBasic import FreeBasic
 from Generator.RegexParser import RegexParser
 from Generator.RegexExceptions import *
+from Generator import NaiveDFAMinimizer
+from Generator import HopcroftDFAMinimizer
 import argparse
 import re
 import sys
@@ -37,7 +39,18 @@ arg_parser.add_argument("-e", "--encoding", help="Rules file encoding", default=
 arg_parser.add_argument("-n", "--print-nfa", help="Print a graph of the NFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-d", "--print-dfa", help="Print a graph of the non-minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
+arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Valid values are 'hopcroft' by default, and 'polynomial'", default="hopcroft", metavar="ALGORITHM")
 arguments = arg_parser.parse_args()
+
+# Check minimizer
+valid_minimizers = {
+    "hopcroft": HopcroftDFAMinimizer.minimize,
+    "polynomial": NaiveDFAMinimizer.minimize
+}
+if arguments.minimizer not in valid_minimizers:
+    sys.stderr.write("Minimizer '%s' not recognized\n" % arguments.minimizer)
+    exit()
+minimizer = valid_minimizers[arguments.minimizer]
 
 # Copy non-generated files over
 try:
@@ -52,6 +65,7 @@ try:
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
         sys.stderr.write("Output directory cannot be same as executable directory\n")
         sys.exit()
+    
     for dirname in FreeBasic.output_dirs:
         if not os.path.exists(os.path.join(arguments.OUTPUT_DIR, *dirname)):
             os.mkdir(os.path.join(arguments.OUTPUT_DIR, *dirname))
@@ -64,7 +78,7 @@ except IOError as e:
     sys.exit()
 
 try:
-    lexer = LexicalAnalyzer.parse(arguments.RULES_FILE, arguments.encoding)
+    lexer = LexicalAnalyzer.parse(arguments.RULES_FILE, arguments.encoding, minimizer=minimizer)
     lexer.finalize()
     
     # Export automata if requested

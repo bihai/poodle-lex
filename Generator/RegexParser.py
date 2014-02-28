@@ -31,9 +31,11 @@ class RegexParser(object):
     uppercase = (ord('A'), ord('Z'))
     digits = (ord('0'), ord('9'))
     underscore = (ord('_'), ord('_'))
-    carriage_return = (13, 13)
+    tab = (9, 9)
     line_feed = (10, 10)
-    tab = (ord('\t'), ord('\t'))
+    vertical_tab = (11, 11)
+    form_feed = (12, 12)
+    carriage_return = (13, 13)
     space = ((ord(' '), ord(' ')))
     special = u'(){[.^$*+?|:'
     
@@ -145,6 +147,10 @@ class RegexParser(object):
                 return Regex.Literal([RegexParser.space])
             elif self.get_next_if(u'd'):
                 return Regex.Literal([RegexParser.digits])
+            elif self.get_next_if(u'v'):
+                return Regex.Literal([RegexParser.vertical_tab])
+            elif self.get_next_if(u'f'):
+                return Regex.Literal([RegexParser.vertical_tab])
             else:
                 return get_literal(self.get_next(), self.is_case_insensitive)
         else:
@@ -170,9 +176,10 @@ class RegexParser(object):
         Parse an integer from the string at its current index.
         @return: the integer parsed from the string.
         """
-        if not self.next_is(RegexParser.digits):
+        number = ''
+        if not self.next_is(string.digits):
             self.expect(u'integer')
-        while self.next_is(RegexParser.digits):
+        while self.next_is(string.digits):
             number += self.get_next()
         return int(number)
     
@@ -265,7 +272,7 @@ class RegexParser(object):
         if class_name in classes:
             return Regex.Literal(classes[class_name])
         else:
-            raise RegexParserException("Character class '%s' not recognized" % class_name)
+            raise RegexParserExceptionInternal("Character class '%s' not recognized" % class_name)
 
     def parse_character_range(self):
         """

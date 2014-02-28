@@ -1,0 +1,123 @@
+# Comments and whitespace
+Comment: '' + 
+    '/\*.*\*/' +  '|' + # Multiline comments
+    '//[^\r\n]*'        # Single line comments
+Whitespace: '[ \t\v\n\f]+'
+    
+# Keywords
+Auto: 'auto'
+Break: 'break'
+Case: 'case'
+Char: 'char'
+Const: 'const'
+Continue: 'continue'
+Default: 'default'
+Do: 'do'
+Double: 'double'
+Else: 'else'
+Enum: 'enum'
+Extern: 'extern'
+Float: 'float'
+For: 'for'
+Goto: 'goto'
+If: 'if'
+Int: 'int'
+Long: 'long'
+Register: 'register'
+Return: 'return'
+Short: 'short'
+Signed: 'signed'
+SizeOf: 'sizeof'
+Static: 'static'
+Struct: 'struct'
+Switch: 'switch'
+Typedef: 'typedef'
+Union: 'union'
+Unsigned: 'unsigned'
+Void: 'void'
+Volatile: 'volatile'
+While: 'while'
+Identifier: '[[:alpha:]_][[:word:]]*'
+
+# Constants and Literals
+Constant: '(' +
+    # Integer constants
+    '(' +
+        '(0[xX][[:xdigit:]])' + '|' +                 # Hexadecimal integer
+        '(0[[:digit:]]+)' + '|' +                     # Octal integer
+        '[[:digit:]]+' +                              # Plain 'ol integer
+    ')([uU][lL]?|[lL][uU]?)?' +                        # Integer suffix
+')|(' +
+    # Floating point constants
+    '(' +
+        '[[:digit:]]+[Ee][\+\-]?[[:digit:]]+' + '|' + # Integer with exponential part
+        '(' + 
+            '(' + 
+                '[[:digit:]]+\.[[:digit:]]*' + '|' +  # Decimal numbers
+                '[[:digit:]]*\.[[:digit:]]+' +        #
+            ')' + '([Ee][\+\-]?[[:digit:]]+)?' +      # Optional exponential part
+        ')' + 
+    ')[lLfF]?' +                                      # Floating point suffix
+')|(' +
+    # Character constant
+    "L?'(" +
+        "[^\\']" + '|' +                              # Character
+        '\\[abfnrtv"''\\\?]' + '|' +                  # Basic escape sequence
+        '\\[0-7]{1,3}' + '|' +                        # Octal escape sequence
+        '\\x[[:xdigit:]]+' +                        # Hexadecimal escape sequence
+    ")'" +
+')'
+StringLiteral: 'L?"(' + 
+    '[^\\"]' + '|' +                              # Character
+    '\\[abfnrtv"''\\\?]' + '|' +                  # Basic escape sequence
+    '\\[0-7]{1,3}' + '|' +                        # Octal escape sequence
+    '\\x[[:xdigit:]]+' +                        # Hexadecimal escape sequence
+')*"'
+
+# Operators
+Ellipsis: '\.\.\.'
+RightAssign: '\>\>='
+LeftAssign: '\<\<\='
+AddAssign: '\+='
+SubtractAssign: '\-='
+MultiplyAssign: '\*='
+DivideAssign: '/='
+ModulusAssign: '%='
+AndAssign: '&='
+XorAssign: '\^='
+OrAssign: '\|='
+ShiftRight: '\>\>'
+ShiftLeft: '\<\<'
+Increment: '\+\+'
+Decrement: '\-\-'
+StructureDereference: '\-\>' 
+BooleanAnd: '&&'
+BooleanOr: '\|\|'
+LessThanOrEqualTo: '\<='
+GreaterThanOrEqualTo: '\>='
+EqualTo: '=='
+NotEqualTo: '!='
+Semicolon: ';'
+OpenScope: '\{'
+CloseScope: '\}'
+Comma: ','
+Colon: '\:'
+Assign: '='
+OpenParenthesis: '\('
+CloseParenthesis: '\)'
+OpenSquareBracket: '\['
+CloseSquareBracket: '\]'
+Period: '\.'
+BitwiseAnd: '&'
+BooleanNot: '!'
+BitwiseNot: '~'
+Subtract: '\-'
+Add: '\+'
+Multiply: '\*'
+Divide: '/'
+Modulus: '%'
+LessThan: '\<'
+GreaterThan: '\>'
+BitwiseXor: '\^'
+BitwiseOr: '\|'
+TernarySelect: '\?'

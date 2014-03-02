@@ -169,6 +169,8 @@ class RegexParser(object):
         self.expect(u',')
         last = self.parse_integer()
         self.expect(u'}')
+        if first > last:
+            raise RegexParserExceptionInternal("Minimum repetition (%d) cannot be larger than maximum repetition (%d)." % (first, last))
         return Regex.Repetition(child, first, last)
     
     def parse_integer(self):

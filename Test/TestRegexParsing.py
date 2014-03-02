@@ -49,7 +49,7 @@ class TestRegexParser(unittest.TestCase):
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{1,").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{1,").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{1,2").parse)
-        self.assertRaises(RegexParserExpected, RegexParser(u"Hello{20,1}").parse)
+        self.assertRaises(RegexParserExceptionInternal, RegexParser(u"Hello{20,1}").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{a,1}").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{1,a}").parse)
         

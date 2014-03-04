@@ -1,0 +1,16 @@
+Poodle-Lex Changelist
+
+Version 0.9a:
+    Features:
+        - Support for multi-line strings and string concatenation
+        - Support for different DFA minimization algorithms
+        - Addition of Hopcroft DFA minimizer
+        - Addition of Examples folder
+        
+    Bug fixes:
+        - Addition of unit tests for stability
+        - Fixed coherency issues with the DFA minimizer
+        - Fixed issues where regular expression parser would break if expected characters after end of string
+
+Version 0.5a:
+    Initial version

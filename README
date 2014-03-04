@@ -7,17 +7,20 @@ RULES_FILE: A file containing token names and pattern definitions
 OUTPUT_DIR: An existing directory to which the state machine code is written.
 
 Optional arguments:
--n DOT_FILE, --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
--d DOT_FILE, --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
--m DOT_FILE, --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
--e ENCODING, --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
+-n DOT_FILE,  --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
+-d DOT_FILE,  --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
+-m DOT_FILE,  --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
+-e ENCODING,  --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
+-i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well
 
 Rules file:
 The rules file is a simple format which describes the lexical analyzer as a set of token definitions, one on each line. The token definitions are described the following way:
 TOKEN_ID: PATTERN
 
-Where TOKEN_ID is an alphanumeric ID, and pattern is a regular expression. Additionally any text on a line after "#" is considered a comment.
+Where TOKEN_ID is an alphanumeric ID, and PATTERN is a regular expression. Additionally any text on a line after "#" is considered a comment.
 PATTERN must be surrounded by either single or double quotes. Quotes can be escaped by using double-quotes ("" or '') inside of the pattern. If an "i" appears in front of the opening quote, then the pattern will be interpreted as case-insensitive for ASCII Latin characters.
+
+PATTERN may consist of multiple strings, concatenated by "+". If a line ends with "+", then the expression may extend over multiple lines.
 
 If a piece of text matches two rules, then the rule appearing first is assumed.
 
@@ -34,7 +37,7 @@ Poodle-Lex patterns use a similar regular expression syntax to the IEEE POSIX ER
 "\": Matches the next character literally
 "|": Matches either the previous item or the next item.
 
-The following named character classes are also supported:
+The following named character classes are also supported within a character class:
 "[:alnum:]" - Alphanumeric characters ([A-Za-z0-9])
 "[:word:]" - Alphanumeric characters + "_" ([A-Za-z0-9_])
 "[:alpha:]" - Alphabetical characters ([A-Za-z])
@@ -59,22 +62,23 @@ Python 2.7 and FreeBASIC >= 0.90.1 should be installed prior to running. cx_Free
 
 Windows:
 1) Add the Poodle-Lex installation directory to your PATH environment variable
-2) Copy "Test\Test.rules" from the installation directory to any folder
+2) Copy any .rules files in the "Example" folder from the installation directory to any folder
 3) Navigate to that folder in the command prompt
-4) Enter the following:
+4) Enter the following, replacing RULES_FILE with the name of the rules file being used:
 mkdir Output
-Poodle-Lex Test.rules Output
-cd Output\Test
-make_test
-Test
+Poodle-Lex RULES_FILE Output
+cd Output\Demo
+make_demo
+Demo
 
 Linux:
 1) Sync the source
 2) Install python 2.7
 3) install blist (Ubuntu: sudo apt-get install python-blist)
-4) Enter the following from the source directory
+4) Navigate to the source directory
+4) Enter the following, replacing RULES_FILE with the nae of the rules file being used:
 mkdir Output
-python __main__.py Test/Test.rules Output
-cd Output/Test
-./make_test.sh
-./Test
+python __main__.py RULES_FILE Output
+cd Output/Demo
+./make_demo.sh
+./Demo

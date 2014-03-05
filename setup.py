@@ -51,7 +51,9 @@ includefiles = [
     os.path.join('Template', 'FreeBasic', 'Demo', 'make_demo.sh'),
     os.path.join('Template', 'FreeBasic', 'Demo', 'Demo.bas'),
     os.path.join('Example', 'CLexer', 'CLexer.rules'),
+    os.path.join('Example', 'CLexer', 'HelloWorld.c'),
     os.path.join('Example', 'SimpleLexer', 'SimpleLexer.rules'),
+    os.path.join('Example', 'SimpleLexer', 'SimpleLexerText.txt'),
     'README',
     'LICENSE',
     'CHANGELIST'

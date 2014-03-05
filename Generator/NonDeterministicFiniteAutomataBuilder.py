@@ -81,8 +81,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
             for state_machine in state_machines:
                 state_machine.start_state.epsilon_edges.add(state_machine.end_state)
             state_machine = Automata.NonDeterministicFiniteAutomata.concatenate(state_machines)
-            #state_machine.start_state.epsilon_edges.add(state_machine.end_state)
-        
+            
         # Prepend minimal repetition 
         if repetition_min > 0:
             head_state_machines = [copy.deepcopy(child_state_machine) for i in xrange(repetition_min)]

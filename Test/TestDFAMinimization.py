@@ -90,9 +90,10 @@ class TestDFAMinimization(unittest.TestCase):
         HopcroftLexer = LexicalAnalyzer.parse("TestDFAMinimization.rules", "utf8", minimizer=HopcroftDFAMinimizer.minimize)
         NaiveLexer.finalize()
         HopcroftLexer.finalize()
+        final_state_count_expected = 224
         self.assertEqual(NaiveLexer.get_min_dfa(), HopcroftLexer.get_min_dfa())
-        self.assertEqual(len([state for state in NaiveLexer.get_min_dfa()]), 218)
-        self.assertEqual(len([state for state in HopcroftLexer.get_min_dfa()]), 218)
+        self.assertEqual(len([state for state in NaiveLexer.get_min_dfa()]), final_state_count_expected)
+        self.assertEqual(len([state for state in HopcroftLexer.get_min_dfa()]), final_state_count_expected)
         
 if __name__ == '__main__':
     unittest.main()

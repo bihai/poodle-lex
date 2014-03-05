@@ -85,6 +85,8 @@ def minimize(state_machine):
             for state in group[1:]:
                 for destination, edge in state.edges.iteritems():
                     group[0].edges[destination].update(edge)
+            for edge in group[0].edges.itervalues():
+                edge.remove_overlap()
             for state in states:
                 for destination_state in state.edges.keys():
                     if destination_state in to_merge:

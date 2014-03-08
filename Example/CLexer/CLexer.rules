@@ -2,7 +2,7 @@
 Comment: '' + 
     '/\*.*\*/' +  '|' + # Multiline comments
     '//[^\r\n]*'        # Single line comments
-Whitespace: '[ \t\v\n\f]+'
+Skip Whitespace: '[ \t\v\n\f]+'
 PPDirective: "#([^\r\n]|\\(\r|\n|\r\n))*"
 
 # Keywords
@@ -41,6 +41,10 @@ While: 'while'
 Identifier: '[[:alpha:]_][[:word:]]*'
 
 # Constants and Literals
+Let FloatingPoint = "" +
+    "[[:digit:]]*\.[[:digit:]]+" + "|" + 
+    "[[:digit:]]+\.[[:digit:]]*"
+Let ScientificNotation = "[Ee][\+\-]?[[:digit:]]+"
 Constant: '(' +
     # Integer constants
     '(' +
@@ -51,13 +55,8 @@ Constant: '(' +
 ')|(' +
     # Floating point constants
     '(' +
-        '[[:digit:]]+[Ee][\+\-]?[[:digit:]]+' + '|' + # Integer with exponential part
-        '(' + 
-            '(' + 
-                '[[:digit:]]+\.[[:digit:]]*' + '|' +  # Decimal numbers
-                '[[:digit:]]*\.[[:digit:]]+' +        #
-            ')' + '([Ee][\+\-]?[[:digit:]]+)?' +      # Optional exponential part
-        ')' + 
+        '[[:digit:]]+{ScientificNotation}' + '|' + # Integer with exponential part
+        '{FloatingPoint}{ScientificNotation}?' +  
     ')[lLfF]?' +                                      # Floating point suffix
 ')|(' +
     # Character constant
@@ -123,3 +122,4 @@ GreaterThan: '\>'
 BitwiseXor: '\^'
 BitwiseOr: '\|'
 TernarySelect: '\?'
+Let suffix = 'lower'

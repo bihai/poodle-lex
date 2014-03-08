@@ -73,7 +73,7 @@ class Alternation(object):
         
 class Concatenation(object):
     """
-    Visitable regular expression object representing a concatentation of one or more sub-expressions
+    Visitable regular expression object representing a concatenation of one or more sub-expressions
     @ivar children: a list containing visitable regular expression objects representing the concatenated sub-expressions.
     """
     def __init__(self, children):
@@ -86,7 +86,7 @@ class Concatenation(object):
         return "Concatenation(%s)" % ", ".join([repr(i) for i in self.children])
         
     def accept(self, visitor):
-        visitor.visit_concatentation(self)
+        visitor.visit_concatenation(self)
         
 class Repetition(object):
     """
@@ -119,3 +119,12 @@ class Repetition(object):
     def accept(self, visitor):
         visitor.visit_repetition(self)
  
+class Variable(object):
+    def __init__(self, name):
+        self.name = name
+        
+    def __repr__(self):
+        return "Variable(%s)" % self.name
+        
+    def accept(self, visitor):
+        visitor.visit_variable(self)

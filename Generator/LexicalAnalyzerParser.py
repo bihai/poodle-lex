@@ -39,6 +39,7 @@ class LexicalAnalyzerLexer(object):
         ("whitespace", r"[ \t]+"),
         ("newline", r"\r\n|\r|\n"),
         ("colon", r"\:"),
+        ("equals", r"="),
         ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
         ("literalsingle", r"'(?:''|[^'])*'"),
         ("literaldouble", r'"(?:""|[^"])*"'),
@@ -142,12 +143,23 @@ def parse(file, encoding):
 
     def parse_rule(file_lexer):
         rule_name = file_lexer.text
+        rule_is_case_insensitive = False
+        rule_pattern = ""
+        rule_action = None
         try:
             file_lexer.get_next()
-            rule_is_case_insensitive = False
-            rule_pattern = ""
             file_lexer.skip(['whitespace'])
-            file_lexer.expect('colon')
+            token, text = file_lexer.expect_one_of(['colon', 'identifier'])
+            if token == 'identifier':
+                rule_action = rule_name
+                rule_name = text
+                file_lexer.skip(['whitespace'])
+                if rule_action.lower() == 'let':
+                    rule_action = '::define::'
+                    file_lexer.expect('equals')
+                else:
+                    file_lexer.expect('colon')                
+            
             file_lexer.skip(['whitespace'])
             if file_lexer.token == 'identifier' and file_lexer.text == 'i':
                 rule_is_case_insensitive = True
@@ -161,7 +173,7 @@ def parse(file, encoding):
                 file_lexer.skip(['whitespace'])
             file_lexer.skip(['comment'])
             file_lexer.expect_one_of(['newline', 'end of stream'])
-            return rule_name, rule_pattern, rule_is_case_insensitive
+            return rule_name, rule_pattern, rule_is_case_insensitive, rule_action
         except LexicalAnalyzerParserException as e:
             raise LexicalAnalyzerParserException("In rule '%s', %s" % (rule_name, e.message))
 

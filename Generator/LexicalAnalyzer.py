@@ -35,27 +35,44 @@ class LexicalAnalyzerException(Exception):
     def __repr__(self):
         return self.message
 
-class Rule(object):
+class Pattern(object):
+    """
+    Represents a single substitutable variable
+    @ivar pattern: string representing the variable's regular expression pattern
+    @ivar regex: an object from the Regex package representing the rule's regular expression pattern
+    """
+    def __init__(self, pattern, is_case_insensitive=False):
+        """
+        @param pattern: string containing the regular expression pattern
+        @param is_case_insensitive: boolean representing if the pattern is case insensitive
+        """
+        self.pattern = pattern
+        self.is_case_insensitive = is_case_insensitive
+        self.regex = RegexParser(pattern, is_case_insensitive).parse()
+
+        
+class Rule(Pattern):
     """
     Represents a single rule with an id and a regular expression
     @ivar id: string which identifies the rule
     @ivar pattern: string representing the rule's regular expression pattern
     @ivar regex: an object from the Regex package representing the rule's regular expression pattern
-    @ivar nfa: a non-deterministic finite automata representing the rule's regular expression pattern
     """
-    def __init__(self, id, pattern, is_case_insensitive=False):
+    def __init__(self, id, pattern, is_case_insensitive=False, action=None):
         """
         @param id: string containing the id of the rule
         @param pattern: string containing the regular expression pattern of the rule
         @param is_case_insensitive: boolean representing if the pattern is case insensitive
         """
-        self.pattern = pattern
+        Pattern.__init__(self, pattern, is_case_insensitive)
         self.id = id
-        self.regex = RegexParser(pattern, is_case_insensitive).parse()
-        nfa_visitor = NonDeterministicFiniteAutomataBuilder(id)
+        self.action = action
+        
+    def get_nfa(self, defines={}):
+        nfa_visitor = NonDeterministicFiniteAutomataBuilder(self.id, defines)
         self.regex.accept(nfa_visitor)
-        self.nfa = nfa_visitor.get()
-
+        return nfa_visitor.get()
+        
 class LexicalAnalyzer(object):
     """
     Represents a lexical analyzer.
@@ -63,14 +80,18 @@ class LexicalAnalyzer(object):
         Each rule tuple contains a string for the rule id, and a Rule object representing the rule.
         The smaller the index of the rule, the higher priority the rule is.    
     """
-    def __init__(self, rules=[], minimizer=HopcroftDFAMinimizer.minimize):
+    def __init__(self, rules=[], defines={}, minimizer=HopcroftDFAMinimizer.minimize):
         """
         @param rules: a list of tuple pairs, which each tuple pair representing a rule. 
+        @param defines: a dictionary mapping strings represeneting names of substitutable variables to strings representing patterns which substitute them.
         @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft's algorithm by default
         """
         self.rules = []
         for rule in rules:
             self.add_rule(rule[0], rule[1])
+        self.defines = {}
+        for define_name, define_value in defines.iteritems():
+            self.add_define(define_name, define_value)
         self._finalized = False
         self._nfa = None
         self._dfa = None
@@ -84,11 +105,14 @@ class LexicalAnalyzer(object):
         @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft algorithm by default.
         """
         lexer = LexicalAnalyzer(minimizer=minimizer)
-        for rule_id, pattern, is_case_insensitive in LexicalAnalyzerParser.parse(file, encoding):
-            lexer.add_rule(rule_id, pattern, is_case_insensitive)
+        for rule_id, pattern, is_case_insensitive, action in LexicalAnalyzerParser.parse(file, encoding):
+            if action == '::define::':
+                lexer.add_define(rule_id, pattern, is_case_insensitive)
+            else:
+                lexer.add_rule(rule_id, pattern, is_case_insensitive, action)
         return lexer
 
-    def add_rule(self, id, pattern, is_case_insensitive=False):
+    def add_rule(self, id, pattern, is_case_insensitive=False, action=None):
         """
         Adds a rule to the lexical analyzer.
         @param id: string identifying the rule
@@ -103,10 +127,29 @@ class LexicalAnalyzer(object):
             if id in [rule.id for rule in self.rules]:
                 raise Exception("Duplicate rule: '%s'" % id)
             
-            self.rules.append(Rule(id, pattern, is_case_insensitive))
+            self.rules.append(Rule(id, pattern, is_case_insensitive, action))
         except RegexParserExceptionInternal as e:
             raise RegexParserException(id, e.message)
-    
+
+    def add_define(self, id, pattern, is_case_insensitive=False):
+        """
+        Adds a definition for a substitutable variable 
+        @param id: string identifying the varaible
+        @param pattern: string containing the regular expression of the rule's pattern.
+        @param is_case_insensitive: boolean which is true if the pattern should be case insensitive. Optional, false by default.
+        """
+        self.check_not_final()
+        try:
+            if id == '':
+                raise Exception("Can't have empty variable")
+                
+            if id in self.defines:
+                raise Exception("Duplicate variable definition: '%s'" % id)
+            
+            self.defines[id] = Pattern(pattern, is_case_insensitive)
+        except RegexParserExceptionInternal as e:
+            raise RegexParserException(id, e.message, type='variable definition')
+            
     def is_finalized(self):
         """
         @return: boolean which is true if lexical analyzer is finalized.
@@ -118,7 +161,13 @@ class LexicalAnalyzer(object):
         Finalizes the lexical analyzer. Should be called once the rules are all defined.
         """
         self.check_not_final()
-        rule_nfas = [rule.nfa for rule in self.rules]
+        rule_nfas = []
+        for rule in self.rules:
+            try:
+                rule_nfas.append(rule.get_nfa(self.defines))
+            except RegexParserExceptionInternal as e:
+                raise RegexParserException(rule.id, e.message)
+        rule_nfas = [rule.get_nfa(self.defines) for rule in self.rules]
         self._nfa = Automata.NonDeterministicFiniteAutomata.alternate(rule_nfas)
         self._dfa = DeterministicFiniteAutomataBuilder(self._nfa).get()
         self._min_dfa = self._dfa.copy()

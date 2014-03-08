@@ -96,7 +96,9 @@ class RegexParser(object):
             return Regex.Repetition(child, 1, Regex.Repetition.Infinity)
         elif self.get_next_if(u'?'):
             return Regex.Repetition(child, 0, 1)
-        elif self.get_next_if(u'{'):
+        # Need to look ahead two characters because it might be a variable following this one
+        elif self.next_is(u'{') and self.nth_next_is(2, string.digits):
+            self.get_next()
             return self.parse_repetition(child)
         else:
             return child
@@ -113,6 +115,9 @@ class RegexParser(object):
             child = self.parse_alternation()
             self.expect(u')')
             return child
+        
+        elif self.get_next_if(u'{'):
+            return self.parse_variable()
             
         else:
             return self.parse_literal()
@@ -158,7 +163,18 @@ class RegexParser(object):
             if character in RegexParser.special:
                 raise RegexParserInvalidCharacter(character)
             return get_literal(character, self.is_case_insensitive)
-            
+    
+    def parse_variable(self):
+        """
+        Parse a variable instance from the string at its current index
+        @return: a Regex.Variable object representing the variable instance
+        """
+        variable_name = ''
+        while self.next_is(string.ascii_letters):
+            variable_name += self.get_next()
+        self.expect("}")
+        return Regex.Variable(variable_name)
+    
     def parse_repetition(self, child):
         """
         Parse a {min, max} expression from the string at its current index
@@ -221,7 +237,16 @@ class RegexParser(object):
         @param character: the value that the current character should be.
         @return: True if the next characters is in the expected set, False otherwise or if at end of string
         """
-        return self.index < len(self.text) and self.text[self.index] in characters
+        return self.nth_next_is(1, characters)
+        
+    def nth_next_is(self, n, characters):
+        """
+        Looks ahead n characters and returns true if the next nth character of the string is one of a set of characters. False if not.
+        @param n: how many characters to look ahead. Must be greater than 0
+        @param character: the value that the current character should be.
+        @return: True if the next characters is in the expected set, False otherwise or if at end of string
+        """
+        return n > 0 and self.index + n-1 < len(self.text) and self.text[self.index+n-1] in characters
     
     def next_is_not(self, characters):
         """

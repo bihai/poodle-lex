@@ -22,14 +22,16 @@ import Automata
 import Regex
 import copy
 import string
+from RegexVariableResolver import RegexVariableResolver
 
 class NonDeterministicFiniteAutomataBuilder(object):
     """
     Visitor object which converts a regular expression into a non-deterministic finite automata (NFA) graph. 
     """
-    def __init__(self, id):
+    def __init__(self, id, defines={}):
         self.state_machines = []
         self.id = id
+        self.defines = defines
     
     def visit_literal(self, literal):
         """
@@ -93,11 +95,11 @@ class NonDeterministicFiniteAutomataBuilder(object):
                 
         self.state_machines.append(state_machine)
         
-    def visit_concatentation(self, concatenation):
+    def visit_concatenation(self, concatenation):
         """
         Converts a concatenated set of regular expressions into an equivalent NFA graph.
             Pushes the graph onto a stack.
-        @param concatentation: a Regex.Concatenation object representing the set of concatenated expressions.
+        @param concatenation: a Regex.Concatenation object representing the set of concatenated expressions.
         """
         child_state_machines = []
         for child in concatenation.children:
@@ -117,7 +119,15 @@ class NonDeterministicFiniteAutomataBuilder(object):
             child.accept(self)
             child_state_machines.append(self.state_machines.pop())
         self.state_machines.append(Automata.NonDeterministicFiniteAutomata.alternate(child_state_machines))
-    
+
+    def visit_variable(self, variable):
+        """
+        Use a seprate visitor to resolve all variable names 
+        """
+        resolver = RegexVariableResolver(self.defines)
+        variable.accept(resolver)
+        resolver.get().accept(self)
+
     def get(self):
         """
         Returns the NFA graph for the top level regular expression visited by this object.

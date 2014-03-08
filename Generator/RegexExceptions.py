@@ -29,12 +29,13 @@ class RegexParserExceptionInternal(Exception):
         return str(self)
 
 class RegexParserException(Exception):
-    def __init__(self, rule_id, message):
+    def __init__(self, rule_id, message, type='rule'):
         self.rule_id = rule_id
         self.message = message
+        self.type = type
         
     def __str__(self):
-        return "Error parsing rule '%s': %s" % self.rule, self.message
+        return "Error parsing %s '%s': %s" % self.type, self.rule, self.message
     
     def __repr__(self):
         return str(self)
@@ -53,3 +54,11 @@ class RegexParserInvalidCharacterRange(RegexParserExceptionInternal):
 class RegexParserInvalidCharacter(RegexParserExceptionInternal):
     def __init__(self, character):
         self.message = u"Invalid Character: '%s'" % unicode(character)
+
+class RegexParserCircularReference(RegexParserExceptionInternal):
+    def __init__(self, name):
+        self.message = u"Circular reference to variable '%s' not allowed" % name
+        
+class RegexParserUndefinedVariable(RegexParserExceptionInternal):
+    def __init__(self, name):
+        self.message = u"Variable '%s' not defined" % name

@@ -176,6 +176,9 @@ class FreeBasic(object):
                         # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
                         found_zero = True
                         emit_check_zero(invalid_otherwise=False)
+                rules = [rule for rule in self.lexical_analyzer.rules if rule.id in destination.ids]
+                if any([rule.action is not None and rule.action.lower() == 'capture' for rule in rules]):
+                    code.line("Capture = 1")
                 code.line("State = Poodle.%s" % self.ids[destination])
                 code.line()
             
@@ -195,8 +198,10 @@ class FreeBasic(object):
                     code.line("State = Poodle.%s" % self.ids[self.dfa.start_state])
                     code.line("Text = Poodle.Unicode.Text()")
                     code.line("Continue Do")
-                else:
+                elif rule.action is not None and rule.action.lower() == 'capture':
                     code.line("Return Poodle.Token(Poodle.Token.%s, Text)" % self.rule_ids[token])
+                else:
+                    code.line("Return Poodle.Token(Poodle.Token.%s, Poodle.Unicode.Text())" % self.rule_ids[token])
             else:
                 code.line("Text.Append(This.Character)")
                 code.line("This.Character = This.Stream->GetCharacter()")

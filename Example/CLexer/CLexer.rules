@@ -3,7 +3,7 @@ Skip Comment: '' +
     '/\*.*\*/' +  '|' + # Multiline comments
     '//[^\r\n]*'        # Single line comments
 Skip Whitespace: '[ \t\v\n\f]+'
-PPDirective: "#([^\r\n]|\\(\r|\n|\r\n))*"
+Capture PPDirective: "#([^\r\n]|\\(\r|\n|\r\n))*"
 
 # Keywords
 Auto: 'auto'
@@ -38,14 +38,14 @@ Unsigned: 'unsigned'
 Void: 'void'
 Volatile: 'volatile'
 While: 'while'
-Identifier: '[[:alpha:]_][[:word:]]*'
+Capture Identifier: '[[:alpha:]_][[:word:]]*'
 
 # Constants and Literals
 Let FloatingPoint = "" +
     "[[:digit:]]*\.[[:digit:]]+" + "|" + 
     "[[:digit:]]+\.[[:digit:]]*"
 Let ScientificNotation = "[Ee][\+\-]?[[:digit:]]+"
-Constant: '(' +
+Capture Constant: '(' +
     # Integer constants
     '(' +
         '(0[xX][[:xdigit:]])' + '|' +                 # Hexadecimal integer
@@ -67,7 +67,7 @@ Constant: '(' +
         '\\x[[:xdigit:]]+' +                          # Hexadecimal escape sequence
     ")'" +
 ')'
-StringLiteral: 'L?"(' + 
+Capture StringLiteral: 'L?"(' + 
     '[^\\"\r\n]' + '|' +                          # Character
     '\\(\n|\r|\r\n)' + '|' +                      # Multiline string
     '\\[abfnrtv"''\\\?]' + '|' +                  # Basic escape sequence

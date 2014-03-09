@@ -75,10 +75,11 @@ Function Poodle.LexicalAnalyzer.GetToken() As Poodle.Token
     Dim State As Poodle.LexicalAnalyzerState = Poodle.$INITIAL_STATE
     Dim Text As Poodle.Unicode.Text
     Do
+        Dim Capture As Integer = 0
         Select Case State:
             $STATE_MACHINE
         End Select
-        Text.Append(This.Character)
+        If Capture = 1 Then Text.Append(This.Character)
         This.Character = This.Stream->GetCharacter()
     Loop
 End Function

@@ -22,7 +22,16 @@ class TestRegexParser(unittest.TestCase):
                     Regex.Literal([(ord(u"0"), ord(u"9"))]), 1, -1)])])
         parsed = RegexParser(ur"[[:digit:]]+\.[0-9]*|[0-9]*\.[0-9]+").parse()
         self.assertEqual(repr(parsed), repr(expected))
-    
+        
+    def test_variable(self):
+        parsed = RegexParser(ur"[[:alpha:]]{1,32}{Hello}{2,34}").parse()
+        expected = Regex.Concatenation([
+            Regex.Repetition(
+                Regex.Literal([(ord(u"a"), ord(u"z")), (ord(u"A"), ord(u"Z"))]), 1, 32),
+            Regex.Repetition(
+                Regex.Variable("Hello"), 2, 34)])
+        self.assertEqual(repr(parsed), repr(expected))
+        
     def test_syntax_errors(self):
         # Mismatched parenthesis
         self.assertRaises(RegexParserExpected, RegexParser(u"(Hello").parse)
@@ -52,6 +61,10 @@ class TestRegexParser(unittest.TestCase):
         self.assertRaises(RegexParserExceptionInternal, RegexParser(u"Hello{20,1}").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{a,1}").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello{1,a}").parse)
+        
+        # Variables
+        self.assertRaises(RegexParserExpected, RegexParser(u"{Hello").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"{Hello2}").parse)
         
         # Character classes
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello[a").parse)

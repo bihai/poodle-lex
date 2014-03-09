@@ -49,6 +49,9 @@ class Pattern(object):
         self.pattern = pattern
         self.is_case_insensitive = is_case_insensitive
         self.regex = RegexParser(pattern, is_case_insensitive).parse()
+        
+    def __eq__(self, other_pattern):
+        return repr(self.pattern) == repr(other_pattern.pattern)
 
         
 class Rule(Pattern):
@@ -71,8 +74,20 @@ class Rule(Pattern):
         self.action = action
         if action is not None and action.lower() not in Rule._valid_actions:
             raise RegexParserException(id, "Action '%s' not suppported" % action)
+            
+    def __eq__(self, other_rule):
+        same_id = self.id == other_rule.id
+        same_pattern = repr(self.pattern) == repr(other_rule.pattern)
+        same_action = self.action == other_rule.action
+        return same_id and same_pattern and same_action
         
     def get_nfa(self, defines={}):
+        """
+        Convert the pattern for this rule into a new NFA
+        @param defines: a dict mapping strings representing variable names to an object in the 
+            Regex namespace, for variable substitution
+        @return: a NonDeterministicFiniteAutomata object which represents the NFA equivalent of the rule's pattern
+        """
         nfa_visitor = NonDeterministicFiniteAutomataBuilder(self.id, defines)
         self.regex.accept(nfa_visitor)
         return nfa_visitor.get()

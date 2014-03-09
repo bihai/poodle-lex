@@ -45,6 +45,9 @@ Let FloatingPoint = "" +
     "[[:digit:]]*\.[[:digit:]]+" + "|" + 
     "[[:digit:]]+\.[[:digit:]]*"
 Let ScientificNotation = "[Ee][\+\-]?[[:digit:]]+"
+Let EscapedOctal = '\\[0-7]{1,3}'
+Let EscapedCharacter = '\\[abfnrtv"''\\\?]'
+Let EscapedHex = '\\x[[:xdigit:]]+'
 Capture Constant: '(' +
     # Integer constants
     '(' +
@@ -55,24 +58,24 @@ Capture Constant: '(' +
 ')|(' +
     # Floating point constants
     '(' +
-        '[[:digit:]]+{ScientificNotation}' + '|' + # Integer with exponential part
+        '[[:digit:]]+{ScientificNotation}' + '|' +    # Integer with exponential part
         '{FloatingPoint}{ScientificNotation}?' +  
     ')[lLfF]?' +                                      # Floating point suffix
 ')|(' +
     # Character constant
     "L?'(" +
-        "[^\\']" + '|' +                              # Character
-        '\\[abfnrtv"''\\\?]' + '|' +                  # Basic escape sequence
-        '\\[0-7]{1,3}' + '|' +                        # Octal escape sequence
-        '\\x[[:xdigit:]]+' +                          # Hexadecimal escape sequence
+        "[^\\\r\n']" + '|' +                          # Character
+        '{EscapedCharacter}' + '|' +                  # Basic escape sequence
+        '{EscapedOctal}' + '|' +                      # Octal escape sequence
+        '{EscapedHex}' +                              # Hexadecimal escape sequence
     ")'" +
 ')'
 Capture StringLiteral: 'L?"(' + 
-    '[^\\"\r\n]' + '|' +                          # Character
-    '\\(\n|\r|\r\n)' + '|' +                      # Multiline string
-    '\\[abfnrtv"''\\\?]' + '|' +                  # Basic escape sequence
-    '\\[0-7]{1,3}' + '|' +                        # Octal escape sequence
-    '\\x[[:xdigit:]]+' +                          # Hexadecimal escape sequence
+    '[^\\"\r\n]' + '|' +                              # Character
+    '\\(\n|\r|\r\n)' + '|' +                          # Multiline string
+    '{EscapedCharacter}' + '|' +                      # Basic escape sequence
+    '{EscapedOctal}' + '|' +                          # Octal escape sequence
+    '{EscapedHex}' +                                  # Hexadecimal escape sequence
 ')*"'
 
 # Operators

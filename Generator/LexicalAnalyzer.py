@@ -58,6 +58,8 @@ class Rule(Pattern):
     @ivar pattern: string representing the rule's regular expression pattern
     @ivar regex: an object from the Regex package representing the rule's regular expression pattern
     """
+    _valid_actions = set(['skip', 'capture'])
+    
     def __init__(self, id, pattern, is_case_insensitive=False, action=None):
         """
         @param id: string containing the id of the rule
@@ -67,6 +69,8 @@ class Rule(Pattern):
         Pattern.__init__(self, pattern, is_case_insensitive)
         self.id = id
         self.action = action
+        if action is not None and action.lower() not in Rule._valid_actions:
+            raise RegexParserException(id, "Action '%s' not suppported" % action)
         
     def get_nfa(self, defines={}):
         nfa_visitor = NonDeterministicFiniteAutomataBuilder(self.id, defines)

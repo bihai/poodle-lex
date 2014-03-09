@@ -1,5 +1,5 @@
 # Comments, whitespace, and preprocessor
-Comment: '' + 
+Skip Comment: '' + 
     '/\*.*\*/' +  '|' + # Multiline comments
     '//[^\r\n]*'        # Single line comments
 Skip Whitespace: '[ \t\v\n\f]+'

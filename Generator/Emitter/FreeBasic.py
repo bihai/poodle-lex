@@ -189,7 +189,14 @@ class FreeBasic(object):
             if len(state.final_ids) > 0:
                 tokens_by_priority = [rule.id for rule in self.lexical_analyzer.rules]
                 token = min(state.final_ids, key = lambda x: tokens_by_priority.index(x)).title()
-                code.line("Return Poodle.Token(Poodle.Token.%s, Text)" % self.rule_ids[token])
+                rule = [rule for rule in self.lexical_analyzer.rules if rule.id.title() == token][0]
+                if rule.action is not None and rule.action.lower() == 'skip':
+                    # Reset state machine if token is skipped
+                    code.line("State = Poodle.%s" % self.ids[self.dfa.start_state])
+                    code.line("Text = Poodle.Unicode.Text()")
+                    code.line("Continue Do")
+                else:
+                    code.line("Return Poodle.Token(Poodle.Token.%s, Text)" % self.rule_ids[token])
             else:
                 code.line("Text.Append(This.Character)")
                 code.line("This.Character = This.Stream->GetCharacter()")

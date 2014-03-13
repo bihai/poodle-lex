@@ -27,21 +27,15 @@ import collections
 import itertools
 from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
+from PluginTemplate import PluginTemplate
 
-class FreeBasic(object):
+class LanguageEmitter(PluginTemplate):
     """
     Emits a lexical analyzer as FreeBasic source code.
     @ivar lexical_analyzer: the lexical analyzer to emit
     @ivar ids: a dict mapping states to an enum element in the FreeBasic source
     @ivar dfa: the deterministic finite automata (DFA) representing the lexical analyzer.
     """
-    template_dir = ('Template', 'FreeBasic')
-    source_dir = os.path.join(os.path.dirname(os.path.realpath(sys.executable)), 'Generator', 'Emitter')
-    if getattr(sys, 'frozen', None) is None:
-        source_dir = os.path.dirname(os.path.realpath(__file__))
-    source_dir = os.path.join(source_dir, '..', '..', *template_dir)
-    bi_template_file = os.path.join(source_dir, "LexicalAnalyzer.bi")
-    bas_template_file = os.path.join(source_dir, "LexicalAnalyzer.bas")
     reserved_keywords = [
         'if', 'then', 'else', 'elseif', 'for', 'next', 'do', 'loop',
         'while', 'wend', 'goto', 'sub', 'function', 'end', 'type', 'is',
@@ -51,48 +45,26 @@ class FreeBasic(object):
         'ulong', 'longint', 'ulongint', 'cast', 'len', 'case', 'const', 'continue',
         'enum', 'extern', 'int', 'return', 'static', 'union', 'unsigned'
     ]
+    bi_file = "LexicalAnalyzer.bi"
+    bas_file = "LexicalAnalyzer.bas"
     
-    def __init__(self, lexical_analyzer):
+    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory):
         """
-        @param lexical_analyzer: the lexical analyzer to emit as FreeBasic code.
+        @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as FreeBasic code.
+        @param plugin_files_directory: string specifying the location of template files
+        @param output_directory: string specifying the directory where output files should be emitted
         """
         self.lexical_analyzer = lexical_analyzer
+        self.plugin_files_directory = plugin_files_directory
+        self.output_directory = output_directory
         self.ids = {}
         self.rule_ids = {}
         self.dfa = None
-        
-    def map_state_ids(self):
-        """
-        Maps all states to an enum element in the FreeBasic source code.
-        """
-        self.ids[self.dfa.start_state] = "InitialState"
-        for state in self.dfa:
-            if state != self.dfa.start_state:
-                initial_id = "".join([i.title() for i in sorted(list(state.ids))])
-                id = initial_id
-                n = 1
-                while id in self.ids.values() or id.lower() in FreeBasic.reserved_keywords:
-                    id = "%s%d" % (initial_id, n)
-                    n += 1
-                self.ids[state] = id
-                
-    def map_rule_names(self):
-        """
-        Maps all rule names to an enum element in the FreeBasic source code
-        """
-        for rule in self.lexical_analyzer.rules:
-            rule_id = rule.id.title()
-            n = 1
-            while rule_id in self.rule_ids.values() or rule_id.lower() in FreeBasic.reserved_keywords:
-                rule_id = '%s%d' % (rule.id.title(), n)
-                n += 1
-            self.rule_ids[rule.id.title()] = rule_id
-        
-    def emit(self, header_file, source_file):
+    
+    # Public interface
+    def emit(self):
         """
         Emits the lexical analyzer as a FreeBasic header file and source file.
-        @param header_file: the .bi file to which the header code should be emitted.
-        @param source_file: the .bas file to which the source code should be emitted.
         """
         if not self.lexical_analyzer.is_finalized():
             self.lexical_analyzer.finalize()
@@ -101,7 +73,9 @@ class FreeBasic(object):
         self.map_rule_names()
         
         # Emit lexical analyzer header
-        for stream, token, indent in FileTemplate(FreeBasic.bi_template_file, header_file):
+        bi_template_file = os.path.join(self.plugin_files_directory, LanguageEmitter.bi_file)
+        bi_output_file = os.path.join(self.output_directory, LanguageEmitter.bi_file)
+        for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 for rule in self.lexical_analyzer.rules:
                     stream.write(" "*indent + self.rule_ids[rule.id.title()] + "\n")
@@ -111,7 +85,9 @@ class FreeBasic(object):
                 raise Exception('Unrecognized token in header template: "%s"' % token)
         
         # Emit lexical analyzer source
-        for stream, token, indent in FileTemplate(FreeBasic.bas_template_file, source_file):
+        bas_template_file = os.path.join(self.plugin_files_directory, LanguageEmitter.bas_file)
+        bas_output_file = os.path.join(self.output_directory, LanguageEmitter.bas_file)
+        for stream, token, indent in FileTemplate(bas_template_file, bas_output_file):
             if token == 'ENUM_STATE_IDS':
                 for state_id in sorted(list(self.ids.values())):
                     stream.write(" "*indent + state_id + '\n')
@@ -127,6 +103,71 @@ class FreeBasic(object):
                 stream.write(formatted_ids + "_ \n")
             else:
                 raise Exception('Unrecognized token in source template: "%s"' % token)
+
+    def get_output_directories(self):
+        return [os.path.join(*i) for i in [
+            ("Demo",),
+            ("Stream",),
+            ("Stream", "Windows"),
+            ("Stream", "Linux")
+        ]]
+        
+    def get_files_to_copy(self):
+        return [os.path.join(*i) for i in [
+            ("Stream", "Windows", "MemoryMapWindows.bas"),
+            ("Stream", "Windows", "MemoryMapWindows.bi"),
+            ("Stream", "Linux", "MemoryMapLinux.bas"),
+            ("Stream", "Linux", "MemoryMapLinux.bi"),
+            ("Stream", "ASCIIStream.bas"),
+            ("Stream", "ASCIIStream.bi"),
+            ("Stream", "CharacterStream.bas"),
+            ("Stream", "CharacterStream.bi"),
+            ("Stream", "CharacterStreamFromFile.bas"),
+            ("Stream", "CharacterStreamFromFile.bi"),
+            ("Stream", "MemoryMap.bas"),
+            ("Stream", "MemoryMap.bi"),
+            ("Stream", "Unicode.bas"),
+            ("Stream", "Unicode.bi"),
+            ("Stream", "UnicodeConstants.bas"),
+            ("Stream", "UnicodeConstants.bi"),
+            ("Stream", "UTF8Stream.bas"),
+            ("Stream", "UTF8Stream.bi"),
+            ("Stream", "UTF16Stream.bas"),
+            ("Stream", "UTF16Stream.bi"),
+            ("Stream", "UTF32Stream.bas"),
+            ("Stream", "UTF32Stream.bi"),
+            ("Demo", "Demo.bas"),
+            ("Demo", "make_demo.bat"),
+            ("Demo", "make_demo.sh")
+        ]]
+               
+    # Private files
+    def map_state_ids(self):
+        """
+        Maps all states to an enum element in the FreeBasic source code.
+        """
+        self.ids[self.dfa.start_state] = "InitialState"
+        for state in self.dfa:
+            if state != self.dfa.start_state:
+                initial_id = "".join([i.title() for i in sorted(list(state.ids))])
+                id = initial_id
+                n = 1
+                while id in self.ids.values() or id.lower() in LanguageEmitter.reserved_keywords:
+                    id = "%s%d" % (initial_id, n)
+                    n += 1
+                self.ids[state] = id
+                
+    def map_rule_names(self):
+        """
+        Maps all rule names to an enum element in the FreeBasic source code
+        """
+        for rule in self.lexical_analyzer.rules:
+            rule_id = rule.id.title()
+            n = 1
+            while rule_id in self.rule_ids.values() or rule_id.lower() in LanguageEmitter.reserved_keywords:
+                rule_id = '%s%d' % (rule.id.title(), n)
+                n += 1
+            self.rule_ids[rule.id.title()] = rule_id
         
     def generate_state_machine(self, stream, indent):
         """
@@ -209,37 +250,3 @@ class FreeBasic(object):
             
             code.dedent()
             code.line("End Select")
-    
-    output_dirs = [
-        ("Demo",),
-        ("Stream",),
-        ("Stream", "Windows"),
-        ("Stream", "Linux")
-    ]
-    files_to_copy = [
-        ("Stream", "Windows", "MemoryMapWindows.bas"),
-        ("Stream", "Windows", "MemoryMapWindows.bi"),
-        ("Stream", "Linux", "MemoryMapLinux.bas"),
-        ("Stream", "Linux", "MemoryMapLinux.bi"),
-        ("Stream", "ASCIIStream.bas"),
-        ("Stream", "ASCIIStream.bi"),
-        ("Stream", "CharacterStream.bas"),
-        ("Stream", "CharacterStream.bi"),
-        ("Stream", "CharacterStreamFromFile.bas"),
-        ("Stream", "CharacterStreamFromFile.bi"),
-        ("Stream", "MemoryMap.bas"),
-        ("Stream", "MemoryMap.bi"),
-        ("Stream", "Unicode.bas"),
-        ("Stream", "Unicode.bi"),
-        ("Stream", "UnicodeConstants.bas"),
-        ("Stream", "UnicodeConstants.bi"),
-        ("Stream", "UTF8Stream.bas"),
-        ("Stream", "UTF8Stream.bi"),
-        ("Stream", "UTF16Stream.bas"),
-        ("Stream", "UTF16Stream.bi"),
-        ("Stream", "UTF32Stream.bas"),
-        ("Stream", "UTF32Stream.bi"),
-        ("Demo", "Demo.bas"),
-        ("Demo", "make_demo.bat"),
-        ("Demo", "make_demo.sh")
-    ]

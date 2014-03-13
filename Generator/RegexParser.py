@@ -97,7 +97,7 @@ class RegexParser(object):
         elif self.get_next_if(u'?'):
             return Regex.Repetition(child, 0, 1)
         # Need to look ahead two characters because it might be a variable following this one
-        elif self.next_is(u'{') and self.nth_next_is(2, string.digits):
+        elif self.next_is(u'{') and self.nth_next_is_not(2, string.ascii_letters):
             self.get_next()
             return self.parse_repetition(child)
         else:
@@ -247,7 +247,7 @@ class RegexParser(object):
         @return: True if the next characters is in the expected set, False otherwise or if at end of string
         """
         return n > 0 and self.index + n-1 < len(self.text) and self.text[self.index+n-1] in characters
-    
+
     def next_is_not(self, characters):
         """
         Returns true if the next character is not end-of-string and is not one of a set of characters. False if not
@@ -255,6 +255,15 @@ class RegexParser(object):
         @return: True if the next character is not in the expected set, Fase otherwise or if at end of string
         """
         return self.index < len(self.text) and self.text[self.index] not in characters
+        
+    def nth_next_is_not(self, n, characters):
+        """
+        Looks ahead n characters and returns true if the next nth character of the string is not one of a set of characters. False if not.
+        @param n: how many characters to look ahead. Must be greater than 0
+        @param character: the value that the current character should be.
+        @return: True if the next characters is in the expected set, False otherwise or if at end of string
+        """
+        return n > 0 and self.index + n-1 < len(self.text) and self.text[self.index+n-1] not in characters
         
     def parse_character_class(self):
         """

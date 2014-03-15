@@ -6,9 +6,9 @@
             "Source": "Plugins/FreeBasic/FreeBasic.py",
             "Files": "Plugins/FreeBasic/Template"
         },
-        "c++-ascii": {
-            "Source": "Plugins/CPlusPlusAscii/CPlusPlus.py",
-            "Files": "Plugins/CPlusPlusAscii"
+        "c-ascii": {
+            "Source": "Plugins/C-Ascii/C-Ascii.py",
+            "Files": "Plugins/C-Ascii/Template"
         }
     }
 } 

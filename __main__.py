@@ -63,7 +63,7 @@ default_language = None
 try:
     language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
 except Exception as e: 
-   sys.stderr.write("Unable to load plug-in file: %s" % str(e))
+   sys.stderr.write("Unable to load plug-in file: %s\n" % str(e))
    exit()
     
 # Load language plug-in
@@ -76,7 +76,7 @@ try:
     language_plugins[language].load()
     language_plugin = language_plugins[language]
 except Exception as e:
-    sys.stderr.write("Unable to load language plug-in '%s': %s" % (language, str(e)))
+    sys.stderr.write("Unable to load language plug-in '%s': %s\n" % (language, str(e)))
     exit()    
 
 try:

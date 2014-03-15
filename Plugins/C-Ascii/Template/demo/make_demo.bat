@@ -1,0 +1,1 @@
+gcc demo.c ../lexical_analyzer.c -o demo -I..

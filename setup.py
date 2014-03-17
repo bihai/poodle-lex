@@ -23,6 +23,7 @@ import platform
 from cx_Freeze import setup,Executable
 
 includefiles = [
+    os.path.join('Plugins', 'Plugins.json'),
     os.path.join('Plugins', 'FreeBasic', 'FreeBasic.py'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'LexicalAnalyzer.bas'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'LexicalAnalyzer.bi'),
@@ -77,6 +78,15 @@ setup(
     description = 'A lexical analyzer generator with support for multiple languages.',
     author = 'Parker Michaels',
     author_email = 'parkertomatoes@gmail.com',
-    options = {'build_exe': {'excludes':excludes,'packages':packages,'include_files':includefiles}}, 
+    options = {
+        'build_exe': {
+            'excludes':excludes,
+            'packages':packages,
+            'include_files':includefiles
+        },
+        'bdist_msi': {
+            'upgrade_code': '{d7bbdad8-411a-4662-bc31-f5494b9cd11f}'
+        }
+    }, 
     executables = [Executable('__main__.py', targetName=target_name)]
 )

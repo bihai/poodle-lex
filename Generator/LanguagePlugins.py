@@ -70,7 +70,7 @@ def load(base_directory, file, encoding='utf-8'):
     """
     language_plugins = {}
     default_language = None
-    with open("Plugins/Plugins.json") as f:
+    with open(os.path.join(base_directory, file)) as f:
         plugin_file = json.load(f, encoding)
         if "Version" not in plugin_file or not isinstance(plugin_file["Version"], int) or plugin_file["Version"] != 1:
             raise Exception("Language plug-in file version not recognized")
@@ -99,3 +99,4 @@ def load(base_directory, file, encoding='utf-8'):
         if plugin_file["Default"] not in language_plugins:
             raise Exception("Default language is invalid")
     return language_plugins, default_language
+    

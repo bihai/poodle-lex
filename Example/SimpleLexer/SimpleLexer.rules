@@ -1,11 +1,11 @@
 Keyword: i'k€yword'
-Identifier: i'[a-zA-Z][a-zA-Z0-9€_]*'
+Capture Identifier: i'[a-zA-Z][a-zA-Z0-9€_]*'
 
 # Numbers
-Float: '[0-9]+\.[0-9]*|[0-9]*\.[0-9]+'
-Integer: '[[:digit:]]+'
-Quote: '"([^"\\]|\\.)*"'
+Capture Float: '[0-9]+\.[0-9]*|[0-9]*\.[0-9]+'
+Capture Integer: '[[:digit:]]+'
+Capture Quote: '"([^"\\]|\\.)*"'
 
 # Whitespace
 Newline: '\r\n|\r|\n'
-Whitespace: '[\t\s]+'
+Skip Whitespace: '[\t\s]+'

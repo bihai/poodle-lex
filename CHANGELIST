@@ -1,5 +1,12 @@
 Poodle-Lex Changelist
 
+Version 1.0:
+    Features:
+        - Support for variable substitution
+        - Support for skip and capture commands
+        - Support for emitter language plugins
+        - Addition of C emitter
+
 Version 0.9a:
     Features:
         - Support for multi-line strings and string concatenation
@@ -13,4 +20,5 @@ Version 0.9a:
         - Fixed issues where regular expression parser would break if expected characters after end of string
 
 Version 0.5a:
-    Initial version
+    Features:
+        - Initial version

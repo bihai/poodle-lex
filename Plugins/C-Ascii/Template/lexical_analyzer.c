@@ -91,6 +91,10 @@ poodle_token poodle_get_token(FILE* f)
         
         switch(state)
         {
+            case $INVALID_CHAR_STATE:
+                token.id = PTKN_INVALIDCHARACTER;
+                done = 1;
+                break;
             $STATE_MACHINE
         }
     }

@@ -90,6 +90,8 @@ class LanguageEmitter(PluginTemplate):
                 LanguageEmitter.emit_enum_list(stream, indent, list(self.ids.values()))
             elif token == 'INITIAL_STATE':
                 stream.write(self.ids[self.dfa.start_state].upper())
+            elif token == 'INVALID_CHAR_STATE':
+                stream.write('PLA_STATE_INVALIDCHAR')
             elif token == 'STATE_MACHINE':
                 self.generate_state_machine(stream, indent)
             elif token == "TOKEN_IDNAMES":
@@ -130,6 +132,7 @@ class LanguageEmitter(PluginTemplate):
         Maps all states to an enum element in the FreeBasic source code.
         """
         self.ids[self.dfa.start_state] = "PLA_STATE_INITIALSTATE"
+        self.ids[None] = "PLA_STATE_INVALIDCHAR"
         for state in self.dfa:
             if state != self.dfa.start_state:
                 initial_id = "PLA_STATE_" + "_".join([i.upper() for i in sorted(list(state.ids))])
@@ -219,8 +222,7 @@ class LanguageEmitter(PluginTemplate):
                     code.line("token.id = %s;" % self.rule_ids[token])
                     code.line("done = 1;")
             else:
-                code.line("token.id = PTKN_INVALIDCHARACTER;")
-                code.line("done = 1;")
+                code.line("state = PLA_STATE_INVALIDCHAR;")
 
             if len(state.edges) > 0:
                 code.dedent()

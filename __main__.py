@@ -49,7 +49,7 @@ valid_minimizers = {
 }
 if arguments.minimizer not in valid_minimizers:
     sys.stderr.write("Minimizer '%s' not recognized\n" % arguments.minimizer)
-    exit()
+    sys.exit()
 minimizer = valid_minimizers[arguments.minimizer]
 
 # Load language plug-ins file
@@ -64,7 +64,7 @@ try:
     language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
 except Exception as e: 
    sys.stderr.write("Unable to load plug-in file: %s\n" % str(e))
-   exit()
+   sys.exit()
     
 # Load language plug-in
 language = arguments.language
@@ -77,7 +77,7 @@ try:
     language_plugin = language_plugins[language]
 except Exception as e:
     sys.stderr.write("Unable to load language plug-in '%s': %s\n" % (language, str(e)))
-    exit()    
+    sys.exit()    
 
 try:
     lexer = LexicalAnalyzer.parse(arguments.RULES_FILE, arguments.encoding, minimizer=minimizer)
@@ -106,15 +106,15 @@ try:
             sys.stderror.write("Unable to open minimized dfa .dot file\n")
 except RegexParserException as e:
     sys.stderr.write("Unable to parse rule '%s': %s\n" % (e.rule_id, e.message))
-    exit()
+    sys.exit()
     
 except LexicalAnalyzerParserException as e:
     sys.stderr.write("Error parsing rules file: %s\n" % e.message)
-    exit()
+    sys.exit()
     
 except Exception as e:
     sys.stderr.write("Internal error while generating the lexical analyzer: %s" % str(e))
-    exit()    
+    sys.exit()    
 
 # Copy non-generated files over
 try:

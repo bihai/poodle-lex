@@ -1,4 +1,7 @@
-Poodle-Lex is a lexical analyzer generator, similar to lex and its variants.
+Poodle-Lex is a lexical analyzer generator, similar to lex and its variants. 
+It produces source code which scans an input stream and outputs a stream of 
+word units. Features include Unicode support and a platform for supporting 
+arbitrary programming languages through plugins.
 
 Usage: python __main__.py RULES_FILE OUTPUT_DIR [Optional arguments]
 
@@ -11,21 +14,56 @@ Optional arguments:
 -d DOT_FILE,  --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
 -m DOT_FILE,  --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
 -e ENCODING,  --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
+-l LANGUAGE,  --language LANGUAGE - Output emitter language.
 -i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well
 
 Rules file:
-The rules file is a simple format which describes the lexical analyzer as a set of token definitions, one on each line. The token definitions are described the following way:
-TOKEN_ID: PATTERN
+The rules file is a simple format which describes the lexical analyzer as a 
+set of token definitions, one on each line. The rules file consists of three
+types of statements:
+1) Token rules
+2) Variable definitions
+3) Comments
 
-Where TOKEN_ID is an alphanumeric ID, and PATTERN is a regular expression. Additionally any text on a line after "#" is considered a comment.
-PATTERN must be surrounded by either single or double quotes. Quotes can be escaped by using double-quotes ("" or '') inside of the pattern. If an "i" appears in front of the opening quote, then the pattern will be interpreted as case-insensitive for ASCII Latin characters.
+Token rules take the following form:
+[COMMAND] TOKEN_ID: PATTERN
 
-PATTERN may consist of multiple strings, concatenated by "+". If a line ends with "+", then the expression may extend over multiple lines.
+Where TOKEN_ID is an alphanumeric ID, and PATTERN is a regular expression. 
+PATTERN must be surrounded by either single or double quotes. Quotes can be 
+escaped by using double-quotes ("" or '') inside of the pattern. If an "i" 
+appears in front of the opening quote, then the pattern will be interpreted as 
+case-insensitive for ASCII Latin characters.
 
-If a piece of text matches two rules, then the rule appearing first is assumed.
+PATTERN may consist of multiple strings, concatenated by "+". If a line ends 
+with "+", then the expression may extend over multiple lines. If a piece of 
+text matches two rules, then the rule appearing first is used.
 
+COMMAND is an optional word which describes actions to be done with. Commands 
+are case-insensitive, and valid commands are:
+ - Skip: The pattern will be matched, but no token will be produced
+ - Captured: The text of the match will be returned along with the token
+
+Variable definitions take the following form:
+Let VARIABLE_NAME = PATTERN
+
+Variables can be substituted within a pattern, but are not themselves rules.
+VARIABLE_NAME is the name of a variable to define. PATTERN is a pattern in the 
+same format as with token rules.
+
+Finally, any text on a line after "#" is considered a comment. 
+ 
+Language plug-ins:
+As packaged, Poodle-Lex supports the following language arguments
+ - freebasic: FreeBasic language emitter with full Unicode support
+ - c-ascii: C emitter using the stdio interface
+ 
+The default language is freebasic. More languages can be supportd by 
+installing plugins
+ 
 Regular expression rules:
-Poodle-Lex patterns use a similar regular expression syntax to the IEEE POSIX ERE standard. The pattern will match the characters present, and the following special characters can be used to define more complex patterns:
+Poodle-Lex patterns use a regular expression syntax similar to the IEEE POSIX 
+ERE standard. The pattern will match the characters present, and the following 
+special characters can be used to define more complex patterns:
 ".": Matches any Unicode codepoint.
 "[...]": Matches one of any characters inside of the brackets
 "[^...]": Matches all Unicode codepoints except any characters inside the brackets.
@@ -34,8 +72,17 @@ Poodle-Lex patterns use a similar regular expression syntax to the IEEE POSIX ER
 "+": Matches the previous item if it appears one or more times in a row.
 "?": Matches the previous item if it appears zero or one times.
 "(...)": Matches the patern within the parenthesis.
+"{...}": Matches a pattern defined by a variable, identified by the text between the curly braces
 "\": Matches the next character literally
 "|": Matches either the previous item or the next item.
+
+The following standard special characters are NOT accepted:
+"$": In the POSIX ERE standard, matches text at the end of a line or input
+"^": In the POSIX ERE standard, matches text at the start of a line or input
+
+These symbols are not supported because they require additional context. The 
+characters are not allowed except when escaped and they are reserved for 
+future use.
 
 The following named character classes are also supported within a character class:
 "[:alnum:]" - Alphanumeric characters ([A-Za-z0-9])
@@ -53,12 +100,15 @@ The following named character classes are also supported within a character clas
 "[:xdigit:]" - Hexadecimal digits ([A-Fa-f0-9])
 
 Output:
-When run, the program generates a FreeBASIC class, Poodle.LexicalAnalyzer, which consumes a stream of Unicode codepoints and produces 
-"tokens", a structure containing a token ID and the token's matching text. Also include is code to read UTF and ASCII encoded text and a small demonstration.
+When run, the program generates source code which provides an interface. The 
+interface will take in a stream of text, and produce "tokens" in the form of
+a structure. The structure will contain an enumerated identifier, and 
+optionally a string containing the text which was grouped into the token.
 
 Example:
-The following generates, compiles, and executes a simple test application on Linux and Windows.
-Python 2.7 and FreeBASIC >= 0.90.1 should be installed prior to running. cx_Freeze is required to use setup.py.
+The following generates, compiles, and executes a simple FreeBasic test 
+application on Linux and Windows. Python 2.7 and FreeBASIC >= 0.90.1 should be 
+installed prior to running. 
 
 Windows:
 1) Add the Poodle-Lex installation directory to your PATH environment variable
@@ -82,3 +132,9 @@ python __main__.py RULES_FILE Output
 cd Output/Demo
 ./make_demo.sh
 ./Demo
+
+Credits:
+Poodle-Lex is developed and maintained by Parker Michaels.
+
+Thank you to everyone who helped test or provided feedback for this tool. This 
+includes members of the FreeBasic.net forum such as AGS and TFS.

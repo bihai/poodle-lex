@@ -73,7 +73,7 @@ special characters can be used to define more complex patterns:
 "?": Matches the previous item if it appears zero or one times.
 "(...)": Matches the patern within the parenthesis.
 "{...}": Matches a pattern defined by a variable, identified by the text between the curly braces
-"\": Matches the next character literally
+"\": Matches a special character or the next character literally
 "|": Matches either the previous item or the next item.
 
 The following standard special characters are NOT accepted:
@@ -83,6 +83,14 @@ The following standard special characters are NOT accepted:
 These symbols are not supported because they require additional context. The 
 characters are not allowed except when escaped and they are reserved for 
 future use.
+
+The following special characters are supported:
+"\t": Matches a tab (\x09) character
+"\r": Matches a line feed (\x0a) character
+"\n": Matches a carriage return (\x0d) characeter
+"\x**": Matches a codepoint between 0 and 255, with "*" being any hexidecimal digit
+"\u****": Matches a codepoint between 0 and 65535, with "*" being any hexidecimal digit
+"\U******": Matches any Unicode codepoint, with "*" being any hexidecimal digit
 
 The following named character classes are also supported within a character class:
 "[:alnum:]" - Alphanumeric characters ([A-Za-z0-9])

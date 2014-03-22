@@ -32,6 +32,14 @@ class TestRegexParser(unittest.TestCase):
                 Regex.Variable("Hello"), 2, 34)])
         self.assertEqual(repr(parsed), repr(expected))
         
+    def test_codepoint(self):
+        parsed = RegexParser(u"\\xa3").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(0xa3, 0xa3)])))
+        parsed = RegexParser(u"\\u123e").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(0x123e, 0x123e)])))
+        parsed = RegexParser(u"\\U10ffff").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(0x10ffff, 0x10ffff)])))
+        
     def test_syntax_errors(self):
         # Mismatched parenthesis
         self.assertRaises(RegexParserExpected, RegexParser(u"(Hello").parse)
@@ -83,6 +91,33 @@ class TestRegexParser(unittest.TestCase):
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello[[]").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello[[:]").parse)
         self.assertRaises(RegexParserExpected, RegexParser(u"Hello[[:alnum]").parse)
+        
+        # Arbitrary codepoints
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\x").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\xs").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\xa").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\xas").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\us").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u0").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u1s").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u1a").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u1at").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u1a2").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\u1a2u").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\Uh").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8i").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8fj").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f7").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f7k").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f7E").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f7El").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f7E6").parse)
+        self.assertRaises(RegexParserExpected, RegexParser(u"Hello\\U8f7E6m").parse)
+        self.assertRaises(RegexParserUnicodeCodepointOutOfRange, RegexParser(u"Hello\\U8f7E6d").parse)
                 
 if __name__ == '__main__':
     unittest.main()

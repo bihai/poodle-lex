@@ -163,7 +163,7 @@ class RegexParser(object):
                 codepoint = self.parse_hex_digits(4)
                 return Regex.Literal([(codepoint, codepoint)])
             elif self.get_next_if(u'U'):
-                codepoint = self.parse_hex_digits(8)
+                codepoint = self.parse_hex_digits(6)
                 return Regex.Literal([(codepoint, codepoint)])
             else:
                 return get_literal(self.get_next(), self.is_case_insensitive)
@@ -179,7 +179,10 @@ class RegexParser(object):
             if not self.next_is(string.hexdigits):
                 self.expect(string.hexdigits, name='hexadecimal digit')
             hex_text += self.get_next()
-        return int(hex_text, 16)
+        value = int(hex_text, 16)
+        if (value > 0x10ffff):
+            raise RegexParserUnicodeCodepointOutOfRange(value)
+        return value
         
     def parse_variable(self):
         """

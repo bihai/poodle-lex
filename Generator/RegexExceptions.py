@@ -47,6 +47,10 @@ class RegexParserExpected(RegexParserExceptionInternal):
         else:
             self.message = u"Expected \"%s\", but reached end of stream" % expected
             
+class RegexParserUnicodeCodepointOutOfRange(RegexParserExceptionInternal):
+    def __init__(self, codepoint):
+        self.message = u"Unicode codepoint out of range: '%06x'" % codepoint
+            
 class RegexParserInvalidCharacterRange(RegexParserExceptionInternal):
     def __init__(self, min, max):
         self.message = u"Invalid Range: [%s-%s]" % (unicode(min), unicode(max))

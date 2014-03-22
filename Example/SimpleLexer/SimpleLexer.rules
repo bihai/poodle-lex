@@ -9,4 +9,3 @@ Capture Quote: '"([^"\\]|\\.)*"'
 # Whitespace
 Newline: '\r\n|\r|\n'
 Skip Whitespace: '[\t\s]+'
-Joe: '\xa3'

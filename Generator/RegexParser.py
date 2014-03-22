@@ -156,6 +156,15 @@ class RegexParser(object):
                 return Regex.Literal([RegexParser.vertical_tab])
             elif self.get_next_if(u'f'):
                 return Regex.Literal([RegexParser.vertical_tab])
+            elif self.get_next_if(u'x'):
+                codepoint = self.parse_hex_digits(2)
+                return Regex.Literal([(codepoint, codepoint)])
+            elif self.get_next_if(u'u'):
+                codepoint = self.parse_hex_digits(4)
+                return Regex.Literal([(codepoint, codepoint)])
+            elif self.get_next_if(u'U'):
+                codepoint = self.parse_hex_digits(8)
+                return Regex.Literal([(codepoint, codepoint)])
             else:
                 return get_literal(self.get_next(), self.is_case_insensitive)
         else:
@@ -163,7 +172,15 @@ class RegexParser(object):
             if character in RegexParser.special:
                 raise RegexParserInvalidCharacter(character)
             return get_literal(character, self.is_case_insensitive)
-    
+   
+    def parse_hex_digits(self, num_digits):
+        hex_text = ''
+        for i in range(num_digits):
+            if not self.next_is(string.hexdigits):
+                self.expect(string.hexdigits, name='hexadecimal digit')
+            hex_text += self.get_next()
+        return int(hex_text, 16)
+        
     def parse_variable(self):
         """
         Parse a variable instance from the string at its current index
@@ -201,13 +218,16 @@ class RegexParser(object):
             number += self.get_next()
         return int(number)
     
-    def expect(self, character):
+    def expect(self, character, name=None):
         """
         Raise an exception if the character at the current index of the string is not a specific value.
         @param character: the value that the current character should be.
         """
         if not self.next_is(character):
-            raise RegexParserExpected(unicode(character), self.text, self.index)
+            if name is None:
+                raise RegexParserExpected(unicode(character), self.text, self.index)
+            else:
+                raise RegexParserExpected(name, self.text, self.index)
         self.index += 1
         
     def get_next(self):

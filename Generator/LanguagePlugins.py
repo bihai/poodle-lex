@@ -25,14 +25,17 @@ import os.path
 import random
 import string
 import imp
+import sys
+import textwrap
 
 class Plugin(object):
     """
     Class representing a Poodle-Lex language emitter plug-in
     """
-    def __init__(self, source_path, plugin_files_directory): 
+    def __init__(self, source_path, plugin_files_directory, description): 
         self.source_path = source_path
         self.plugin_files_directory = plugin_files_directory
+        self.description = description
         self.module = None
         
     def load(self):
@@ -82,21 +85,40 @@ def load(base_directory, file, encoding='utf-8'):
         for plugin_id in plugin_file["Plugins"]:
             if is_text and re.match("[a-zA-Z][a-zA-Z0-9_\-\+]*", plugin_id):
                 valid = True
+                plugin_paths = {}
+                description = ""
                 for plugin_attr in plugin_file["Plugins"][plugin_id]:
                     if is_text(plugin_attr) and plugin_attr in ("Source", "Files"):
                         if is_text(plugin_file["Plugins"][plugin_id][plugin_attr]):
+                            plugin_paths[plugin_attr] = plugin_file["Plugins"][plugin_id][plugin_attr]
+                            if not os.path.isabs(plugin_paths[plugin_attr]):
+                                plugin_paths[plugin_attr] = os.path.join(base_directory, plugin_paths[plugin_attr])
                             if os.path.exists(plugin_file["Plugins"][plugin_id][plugin_attr]):
                                 continue
+                    elif plugin_attr == "Description":
+                        if is_text(plugin_file["Plugins"][plugin_id][plugin_attr]):
+                            description = plugin_file["Plugins"][plugin_id][plugin_attr]
+                            continue
+                    valid = False
+                if "Source" not in plugin_paths or "Files" not in plugin_paths:
                     valid = False
                 if valid:
-                    plugin_files_directory = plugin_file["Plugins"][plugin_id]["Files"]
-                    if not os.path.isabs(plugin_files_directory):
-                        plugin_files_directory = os.path.join(base_directory, plugin_files_directory)
-                    language_plugins[plugin_id] = Plugin(plugin_file["Plugins"][plugin_id]["Source"], plugin_files_directory)
+                    language_plugins[plugin_id] = Plugin(plugin_paths["Source"], plugin_paths["Files"], description)
        
         if len(language_plugins) == 0:
             raise Exception("No plugins found")
         if plugin_file["Default"] not in language_plugins:
             raise Exception("Default language is invalid")
     return language_plugins, default_language
+    
+def describe(base_folder, file, encoding):
+    language_plugins, default_language = load(base_folder, file, encoding)
+    left_column_size = len(max(language_plugins, key=lambda i: len(i))) + 1
+    sys.stderr.write("Available output languages:\n")
+    for language, plugin in language_plugins.iteritems():
+        paragraph = textwrap.wrap(plugin.description, 76-left_column_size)
+        sys.stderr.write("    %s%s%s\n" % (language, ' '*(left_column_size-len(language)), paragraph[0]))
+        if len(paragraph) > 1:
+            for line in paragraph[1:]:
+                sys.stderr.write("    %s%s\n" % (' '*left_column_size, line))
     

@@ -31,16 +31,21 @@ def FileTemplate(in_filename, out_filename):
     @param in_filename: string containing the name of the template file to copy
     @param out_filename: string containing the name of the filled-in template file to write.
     """
+    pattern_variablename = r"\$(?P<%s>[a-zA-Z][a-zA-Z0-9_]*)"
+    pattern_inline = pattern_variablename % "inline"
+    pattern_entireline = r"^(?P<whitespace>[ \t]*)%s" % (pattern_variablename % "entireline")
+    pattern_variable = r"(%s)|(%s)" % (pattern_entireline, pattern_inline)
+    
     with open(in_filename, 'r') as in_file:
         with open(out_filename, 'w') as out_file:
             for line in in_file:
-                match = re.search(r"(^([ \t]*))?\$([a-zA-Z0-9_]+)", line)
+                match = re.search(pattern_variable, line)
                 if match is not None:
-                    if match.group(2) is not None:
-                        yield out_file, match.group(3), len(match.group(2))
+                    if match.group('entireline') is not None:
+                        yield out_file, match.group('entireline'), len(match.group('whitespace'))
                     else:
                         out_file.write(line[:match.start(0)])
-                        yield out_file, match.group(3), None
+                        yield out_file, match.group('inline'), None
                         out_file.write(line[match.end(0):])
                 else:
                     out_file.write(line)

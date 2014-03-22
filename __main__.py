@@ -31,6 +31,38 @@ import shutil
 import os
 import os.path
 
+this_file = sys.executable
+if getattr(sys, 'frozen', None) is None:
+    this_file = __file__
+this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
+
+
+# Use simple command parsing for simple commands
+minimizers = {
+    'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', HopcroftDFAMinimizer.minimize),
+    'polynomial': ('Minimize using a polynomial algorithm comparing each state', NaiveDFAMinimizer.minimize)
+}
+if len(sys.argv) > 1 and sys.argv[1] == 'list-minimizers':
+    left_column_size = len(max(minimizers, key=lambda i: len(i))) + 1
+    sys.stderr.write("Supported DFA minimization algorithms:\n")
+    for name, (description, minimizer) in minimizers.iteritems():
+        sys.stderr.write("    %s%s%s\n" % (name, ' '*(left_column_size-len(name)), description))
+    sys.exit(0)
+
+# Load language plug-ins file and list languages if requested
+language_plugins = None
+default_language = None
+try:
+    if len(sys.argv) > 1 and sys.argv[1] == 'list-languages':
+        LanguagePlugins.describe(this_folder, "Plugins/Plugins.json", 'utf-8')
+        sys.exit(0)
+    else:
+        language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
+except Exception as e: 
+   sys.stderr.write("Unable to load plug-in file: %s\n" % str(e))
+   sys.exit()
+
+# Parse complex options
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("RULES_FILE", help="Rules file")
 arg_parser.add_argument("OUTPUT_DIR", help="Containing directory for output files")
@@ -38,34 +70,16 @@ arg_parser.add_argument("-e", "--encoding", help="Rules file encoding", default=
 arg_parser.add_argument("-n", "--print-nfa", help="Print a graph of the NFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-d", "--print-dfa", help="Print a graph of the non-minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
-arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Valid values are 'hopcroft' by default, and 'polynomial'", default="hopcroft", metavar="ALGORITHM")
-arg_parser.add_argument("-l", "--language", help="Output programming language", default=None)
+arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Use '--action=list-minimizers' for list of options", default="hopcroft", metavar="ALGORITHM")
+arg_parser.add_argument("-l", "--language", help="Output programming language. Use '--action=list-languages' for list of options", default=None)
 arguments = arg_parser.parse_args()
 
 # Check minimizer
-valid_minimizers = {
-    "hopcroft": HopcroftDFAMinimizer.minimize,
-    "polynomial": NaiveDFAMinimizer.minimize
-}
-if arguments.minimizer not in valid_minimizers:
+if arguments.minimizer not in minimizers:
     sys.stderr.write("Minimizer '%s' not recognized\n" % arguments.minimizer)
     sys.exit()
-minimizer = valid_minimizers[arguments.minimizer]
+minimizer_description, minimizer = minimizers[arguments.minimizer]
 
-# Load language plug-ins file
-this_file = sys.executable
-if getattr(sys, 'frozen', None) is None:
-    this_file = __file__
-this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
-
-language_plugins = None
-default_language = None
-try:
-    language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
-except Exception as e: 
-   sys.stderr.write("Unable to load plug-in file: %s\n" % str(e))
-   sys.exit()
-    
 # Load language plug-in
 language = arguments.language
 if language is None:

@@ -23,8 +23,8 @@ import re
 def FileTemplate(in_filename, out_filename):
     """
     Helper class for filling in template files.
-        Returns an iterator which copies a file's contents, pausing to yeild each time it hits a $VARIABLE token.
-        Yields the following for each $VARIABLE token in the file:
+    Returns an iterator which copies a file's contents, pausing to yeild each time it hits a $VARIABLE token.
+    Yields the following for each $VARIABLE token in the file:
         1. A Python file object representing the output file
         2. A string containing the name of the token
         3. If the token is the first non-whitespace of a line, an integer with the indentation, otherwise None.

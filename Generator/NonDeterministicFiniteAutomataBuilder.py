@@ -36,7 +36,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
     def visit_literal(self, literal):
         """
         Converts a regular expression literal into an NFA with a transition for each contained character.
-            Pushes the NFA onto a stack.
+        Pushes the NFA onto a stack.
         @param literal: a Regex.Literal object representing the literal to convert.
         """
         state_machine = Automata.NonDeterministicFiniteAutomata()
@@ -46,8 +46,8 @@ class NonDeterministicFiniteAutomataBuilder(object):
     def visit_literal_except(self, literal_except):
         """
         Converts a regular expression inverse literal ([^...]) into an equivalent NFA.
-            Pushes the NFA onto a stack.
-        @param literal: a Regex.LiteralExcept object representing the inverse literal to convert.
+        Pushes the NFA onto a stack.
+        @param literal_except: a Regex.LiteralExcept object representing the inverse literal to convert.
         """
         state_machine = Automata.NonDeterministicFiniteAutomata()
         state_machine.start_state.edges[state_machine.end_state].add(1, 0x10FFFF)
@@ -57,7 +57,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
     def visit_repetition(self, repetition):
         """
         Converts a repeated regular exprsesion into an equivalent NFA.
-            Pushes the NFA onto a stack.
+        Pushes the NFA onto a stack.
         @param repetition: a Regex.Repetition object representing the repeated expression to convert.
         """
         state_machine = None
@@ -98,7 +98,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
     def visit_concatenation(self, concatenation):
         """
         Converts a concatenated set of regular expressions into an equivalent NFA graph.
-            Pushes the graph onto a stack.
+        Pushes the graph onto a stack.
         @param concatenation: a Regex.Concatenation object representing the set of concatenated expressions.
         """
         child_state_machines = []
@@ -111,7 +111,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
     def visit_alternation(self, alternation):
         """
         Converts an alternated (separated by "|") regular expressions into an equivalent NFA graph.
-            Pushes the graph onto a stack.
+        Pushes the graph onto a stack.
         @param alternation: a Regex.Alternation object representing the set of alternated expressions.
         """
         child_state_machines = []

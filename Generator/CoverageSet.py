@@ -224,7 +224,7 @@ class CoverageSet(object):
         """
         Returns a new CoverageSet object that covers all the values covered by one or more other CoverageSet objects.
         
-        @param other_coverage_sets: one or more other CoverageSet objects.
+        @param coverage_sets: one or more other CoverageSet objects.
         """
         new_coverage_set = CoverageSet()
         new_coverage_set.update(*coverage_sets)
@@ -260,8 +260,8 @@ class CoverageSet(object):
     def segments(*coverage_sets_and_ids):
         """
         Takes in one or more CoverageSet objects mapped to identifiers, and returns contiguious 
-            numerical intervals which are covered by one or more of the coverage sets, along with 
-            a list of identifiers representing CoverageSet objects which cover each interval.
+        numerical intervals which are covered by one or more of the coverage sets, along with 
+        a list of identifiers representing CoverageSet objects which cover each interval.
         @param coverage_sets_and_ids: one or more tuples with the first element being a CoverageSet
             objects, and the second being an identifier for the coverage set.
         @return: an iterator which returns a tuple with two elements. The first element of 

@@ -33,8 +33,8 @@ def pair_id(i, j):
 def minimize(state_machine):
     """
     Minimizes a deterministic finite automata (DFA) graph using an O(n^2) algorithm 
-        which compares the distinctiveness of every pair of states. The automata passed 
-        in is modified and nothing is returned.
+    which compares the distinctiveness of every pair of states. The automata passed 
+    in is modified and nothing is returned.
     @param state_machine: a DeterministicFiniteAutomata object representing the DFA to minimize.
     """   
     states = [state for state in state_machine]

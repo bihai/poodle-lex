@@ -29,8 +29,8 @@ class PluginTemplate(object):
     def __init__(self, lexical_analyzer, plugin_files, output_directory):
         """
         @param lexical_analyzer: a LexicalAnalyzer object representing the lexical analyzer to emit
-        @plugin_files: a string specifying the location of the plug-in's files
-        @output_directory: a string specifying the output directory where files should be saved
+        @param plugin_files: a string specifying the location of the plug-in's files
+        @param output_directory: a string specifying the output directory where files should be saved
         """
         self.lexical_analyzer = lexical_analyzer
         self.plugin_files = plugin_files

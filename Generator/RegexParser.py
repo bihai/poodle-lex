@@ -257,7 +257,7 @@ class RegexParser(object):
     def next_is(self, characters):
         """
         Returns true if the next character is at the current index of the string is one of a set of characters. False if not.
-        @param character: the value that the current character should be.
+        @param characters: the value that the current character should be.
         @return: True if the next characters is in the expected set, False otherwise or if at end of string
         """
         return self.nth_next_is(1, characters)
@@ -266,7 +266,7 @@ class RegexParser(object):
         """
         Looks ahead n characters and returns true if the next nth character of the string is one of a set of characters. False if not.
         @param n: how many characters to look ahead. Must be greater than 0
-        @param character: the value that the current character should be.
+        @param characters: the value that the current character should be.
         @return: True if the next characters is in the expected set, False otherwise or if at end of string
         """
         return n > 0 and self.index + n-1 < len(self.text) and self.text[self.index+n-1] in characters
@@ -274,7 +274,7 @@ class RegexParser(object):
     def next_is_not(self, characters):
         """
         Returns true if the next character is not end-of-string and is not one of a set of characters. False if not
-        @param character: the value that the current character should not be.
+        @param characters: the value that the current character should not be.
         @return: True if the next character is not in the expected set, Fase otherwise or if at end of string
         """
         return self.index < len(self.text) and self.text[self.index] not in characters
@@ -283,7 +283,7 @@ class RegexParser(object):
         """
         Looks ahead n characters and returns true if the next nth character of the string is not one of a set of characters. False if not.
         @param n: how many characters to look ahead. Must be greater than 0
-        @param character: the value that the current character should be.
+        @param characters: the value that the current character should be.
         @return: True if the next characters is in the expected set, False otherwise or if at end of string
         """
         return n > 0 and self.index + n-1 < len(self.text) and self.text[self.index+n-1] not in characters

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Poodle-lex : Lexical analyzer generator with multilingual support." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Poodle-lex</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/parkertomatoes/poodle-lex">View on GitHub</a>
+
+          <h1 id="project_title">Poodle-lex</h1>
+          <h2 id="project_tagline">Lexical analyzer generator with multilingual support.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/parkertomatoes/poodle-lex/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/parkertomatoes/poodle-lex/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>Poodle-Lex is a lexical analyzer generator, similar to lex and its variants. 
+It produces source code which scans an input stream and outputs a stream of 
+word units. Features include Unicode support and a platform for supporting 
+arbitrary programming languages through plugins.</p>
+
+<p>Usage: <code>python __main__.py RULES_FILE OUTPUT_DIR [Optional arguments]</code></p>
+
+<h2>
+<a name="required-arguments" class="anchor" href="#required-arguments"><span class="octicon octicon-link"></span></a>Required arguments:</h2>
+
+<p>RULES_FILE: A file containing token names and pattern definitions
+OUTPUT_DIR: An existing directory to which the state machine code is written.</p>
+
+<h2>
+<a name="optional-arguments" class="anchor" href="#optional-arguments"><span class="octicon octicon-link"></span></a>Optional arguments:</h2>
+
+<p>-n DOT_FILE,  --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
+-d DOT_FILE,  --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
+-m DOT_FILE,  --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
+-e ENCODING,  --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
+-l LANGUAGE,  --language LANGUAGE - Output emitter language.
+-i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well</p>
+
+<h2>
+<a name="rules-file" class="anchor" href="#rules-file"><span class="octicon octicon-link"></span></a>Rules file:</h2>
+
+<p>The rules file is a simple format which describes the lexical analyzer as a 
+set of token definitions, one on each line. The rules file consists of three
+types of statements:</p>
+
+<ul>
+<li>Token rules</li>
+<li>Variable definitions</li>
+<li>Comments</li>
+</ul><p>Token rules take the following form:
+<code>[COMMAND] TOKEN_ID: PATTERN</code></p>
+
+<p>Where <strong>TOKEN_ID</strong> is an alphanumeric ID, and <strong>PATTERN **is a regular expression. 
+**PATTERN</strong> must be surrounded by either single or double quotes. Quotes can be 
+escaped by using double-quotes ("" or '') inside of the pattern. If an "i" 
+appears in front of the opening quote, then the pattern will be interpreted as 
+case-insensitive for ASCII Latin characters.</p>
+
+<p><strong>PATTERN</strong> may consist of multiple strings, concatenated by "+". If a line ends 
+with "+", then the expression may extend over multiple lines. If a piece of 
+text matches two rules, then the rule appearing first is used.</p>
+
+<p><strong>COMMAND</strong> is an optional word which describes actions to be done with. Commands 
+are case-insensitive, and valid commands are:</p>
+
+<ul>
+<li>Skip: The pattern will be matched, but no token will be produced</li>
+<li>Captured: The text of the match will be returned along with the token</li>
+</ul><p>Variable definitions take the following form:
+<code>Let VARIABLE_NAME = PATTERN</code></p>
+
+<p>Variables can be substituted within a pattern, but are not themselves rules.
+<strong>VARIABLE_NAME</strong> is the name of a variable to define. <strong>PATTERN</strong> is a pattern in the 
+same format as with token rules.</p>
+
+<p>Finally, any text on a line after "#" is considered a comment. </p>
+
+<h2>
+<a name="language-plug-ins" class="anchor" href="#language-plug-ins"><span class="octicon octicon-link"></span></a>Language plug-ins:</h2>
+
+<p>As packaged, Poodle-Lex supports the following language arguments</p>
+
+<ul>
+<li>
+<strong>freebasic</strong>: FreeBasic language emitter with full Unicode support</li>
+<li>
+<strong>c-ascii</strong>: C emitter using the stdio interface</li>
+</ul><p>The default language is freebasic. More languages can be supportd by 
+installing plugins</p>
+
+<h2>
+<a name="regular-expression-rules" class="anchor" href="#regular-expression-rules"><span class="octicon octicon-link"></span></a>Regular expression rules:</h2>
+
+<p>Poodle-Lex patterns use a regular expression syntax similar to the IEEE POSIX 
+ERE standard. The pattern will match the characters present, and the following 
+special characters can be used to define more complex patterns:</p>
+
+<ul>
+<li>".": Matches any Unicode codepoint.</li>
+<li>"[...]": Matches one of any characters inside of the brackets</li>
+<li>"[^...]": Matches all Unicode codepoints except any characters inside the brackets.</li>
+<li>"{m, n}": Matches the previous item if it repeats a minimum of m times and a maximum of n times.</li>
+<li>"*": Matches the prevous item if it appears zero or more times in a row.</li>
+<li>"+": Matches the previous item if it appears one or more times in a row.</li>
+<li>"?": Matches the previous item if it appears zero or one times.</li>
+<li>"(...)": Matches the patern within the parenthesis.</li>
+<li>"{...}": Matches a pattern defined by a variable, identified by the text between the curly braces</li>
+<li>"\": Matches a special character or the next character literally</li>
+<li>"|": Matches either the previous item or the next item.</li>
+</ul><p>The following standard special characters are NOT accepted:</p>
+
+<ul>
+<li>"$": In the POSIX ERE standard, matches text at the end of a line or input</li>
+<li>"^": In the POSIX ERE standard, matches text at the start of a line or input</li>
+</ul><p>These symbols are not supported because they require additional context. The 
+characters are not allowed except when escaped and they are reserved for 
+future use.</p>
+
+<p>The following special characters are supported:</p>
+
+<ul>
+<li>"\t": Matches a tab (\x09) character</li>
+<li>"\r": Matches a line feed (\x0a) character</li>
+<li>"\n": Matches a carriage return (\x0d) characeter</li>
+<li>"\x**": Matches a codepoint between 0 and 255, with "*" being any hexidecimal digit</li>
+<li>"\u****": Matches a codepoint between 0 and 65535, with "*" being any hexidecimal digit</li>
+<li>"\U******": Matches any Unicode codepoint, with "*" being any hexidecimal digit</li>
+</ul><p>The following named character classes are also supported within a character class:</p>
+
+<ul>
+<li>"[:alnum:]" - Alphanumeric characters ([A-Za-z0-9])</li>
+<li>"[:word:]" - Alphanumeric characters + "<em>" ([A-Za-z0-9</em>])</li>
+<li>"[:alpha:]" - Alphabetical characters ([A-Za-z])</li>
+<li>"[:blank:]" - Space and tab ([ \t])</li>
+<li>"[:cntrl:]" - ASCII control characters ([\x01-\x1F])</li>
+<li>"[:digit:]" - Numerical digits ([0-9])</li>
+<li>"[:graph:]" - Visible characters ([\x21-\x7F])</li>
+<li>"[:lower:]" - Lowercase characters ([a-z])</li>
+<li>"[:print:]" - Printable characters ([\x20-\x7F])</li>
+<li>"[:punct:]" - Punctuation ([][!\"#\$\%&amp;\'()*+\,.\/:\;&lt;\=&gt;\?\@\^_`{|}~-])</li>
+<li>"[:space:]" - Whitespace characters ([ \t\r\n\v\f])</li>
+<li>"[:upper:]" - Uppercase characters ([A-Z])</li>
+<li>"[:xdigit:]" - Hexadecimal digits ([A-Fa-f0-9])</li>
+</ul><h2>
+<a name="output" class="anchor" href="#output"><span class="octicon octicon-link"></span></a>Output:</h2>
+
+<p>When run, the program generates source code which provides an interface. The 
+interface will take in a stream of text, and produce "tokens" in the form of
+a structure. The structure will contain an enumerated identifier, and 
+optionally a string containing the text which was grouped into the token.</p>
+
+<h2>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example:</h2>
+
+<p>The following generates, compiles, and executes a simple FreeBasic test 
+application on Linux and Windows. Python 2.7 and FreeBASIC &gt;= 0.90.1 should be 
+installed prior to running. </p>
+
+<h3>
+<a name="windows" class="anchor" href="#windows"><span class="octicon octicon-link"></span></a>Windows:</h3>
+
+<ol>
+<li>Add the Poodle-Lex installation directory to your PATH environment variable</li>
+<li>Copy any .rules files in the "Example" folder from the installation directory to any folder</li>
+<li>Navigate to that folder in the command prompt</li>
+<li>Enter the following, replacing RULES_FILE with the name of the rules file being used:
+mkdir Output
+Poodle-Lex RULES_FILE Output
+cd Output\Demo
+make_demo
+Demo</li>
+</ol><h3>
+<a name="linux" class="anchor" href="#linux"><span class="octicon octicon-link"></span></a>Linux:</h3>
+
+<ul>
+<li>Sync the source</li>
+<li>Install python 2.7</li>
+<li>install blist (Ubuntu: sudo apt-get install python-blist)</li>
+<li>Navigate to the source directory</li>
+<li>Enter the following, replacing RULES_FILE with the nae of the rules file being used:
+mkdir Output
+python <strong>main</strong>.py RULES_FILE Output
+cd Output/Demo
+./make_demo.sh
+./Demo</li>
+</ul><h2>
+<a name="credits" class="anchor" href="#credits"><span class="octicon octicon-link"></span></a>Credits:</h2>
+
+<p>Poodle-Lex is developed and maintained by Parker Michaels.</p>
+
+<p>Thank you to everyone who helped test or provided feedback for this tool. This 
+includes members of the FreeBasic.net forum such as AGS and TFS.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Poodle-lex maintained by <a href="https://github.com/parkertomatoes">parkertomatoes</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>

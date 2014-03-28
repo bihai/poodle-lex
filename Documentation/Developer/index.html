@@ -1,0 +1,102 @@
+<html>
+    <head>
+        <title>Poodle-Lex Developer Documentation</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <h1>Poodle-Lex Developer Documentation</h1>
+        <p>This documentation is meant to provide an introduction into 
+        understanding the Poodle-Lex source code for anyone who wishes to
+        develop for, borrow from, or simply learn about the application.</p>
+        
+        <h2>Getting Started</h2>
+        <p>Poodle-Lex is written in Python. To run Poodle-Lex from source, 
+        install the following dependencies</p>
+        <ul>
+            <li><a href="https://www.python.org/">Python 2</a>, version 2.7 or higher</a></li>
+            <li><a href="https://pypi.python.org/pypi/blist/">blist</a></li>
+            <li><a href="http://git-scm.com/downloads">Git</a></li>
+        </ul>
+        
+        <p>Once all dependencies have been acquired, clone the Poodle-Lex
+        repository using git:</p>
+        <code>git clone https://github.com/parkertomatoes/poodle-lex.git</code>
+        <p>Create a folder to hold the source and navigate to it in a command 
+        prompt or terminal. Then run __main__.py using Python:</p>
+        <code>mkdir Output
+        python __main__.py Example/SimpleLexer/SimpleLexer.rules Output</code>
+        
+        <h2>Overview</h2>
+        <p>Poodle-Lex consumes a rules file containing regular expressions and
+        produces source code which can accept strings and match them to 
+        rules. It does this though a series of steps which are a well 
+        known part of compter science.<p>
+        <ol>
+            <li>Parse a rules file into a list of name and regular expression strings</li>
+            <li>Parse each regular expression into a structure</li>
+            <li>Convert each regular expression into an NFA using 
+            <a href="http://en.wikipedia.org/wiki/Thompson's_construction_algorithm">Thompson Construction</a></li>
+            <li>Convert each NFA into a DFA using 
+            <a href="http://en.wikipedia.org/wiki/Powerset_construction">powerset construction</a></li>
+            <li>Minimize the DFA</li>
+            <li>Emit the DFA as source code</li>
+        </ol>
+        
+        <h2>Parsing the rules file</h2>
+        <p><em>Source file: <a href="">Generator/LexicalAnalyzerParser.py</a></em></p>
+        <p>Before creating a lexical analyzer, Poodle-Lex parses a rules file 
+        to obtain a list of rules and variables.</p>
+        <p>The parser is a hand-made recursive descent parser which uses 
+        the output of
+        <a href"http://docs.python.org/library/re.html">re.finditer</a>
+        as a lexical analyzer</a>. The parser is an iterator generator
+        which yields both rules and variable definitions.</p>
+        
+        <h3>Rules File Grammar</h3>
+        <ul>
+            <li><strong>body:</strong> line+;</li>
+            <li><strong>line:</strong> ws + (comment | variable_definition | rule_definition)? ws + "\r"? "\n";</li>
+            <li><strong>comment:</strong> "#" + [^\n]+;</li>
+            <li><strong>variable_definition:</strong> "let" + ws + identifier + ws + "=" + ws + rule_expression;</li>
+            <li><strong>rule_definition:</strong> (identifier + ws)? identifier + ws + ":" + ws + rule_expression;</li>
+            <li><strong>rule_expression:</strong> "i"? string + (ws + "+" + wsnl + string)*;</li>
+            <li><strong>string:</strong> double_quote_string | single_quote_string;
+            <li><strong>double_quoted_string:</strong> '"' + ([^'"'] | '""')* '"';</li>
+            <li><strong>single_quoted_string:</strong> "'" + ([^"'"] | "''")* "'";</li>
+            <li><strong>ws:</strong> [ \t]*;</li>
+            <li><strong>wsnl:</strong> [ \t\r\n]*;</li>
+        </ul>
+
+        <h2>Parsing the regular expressions</h2>
+        <p><em>Source files:</em></p>
+        <ul>
+            <li><em>Parser: <a href="">Generator/RegexParser.py</a></em></li>
+            <li><em>Structure: <a href="">Generator/Regex.py</a></em></li>
+        </ul>
+        <p>Once the rules file is parsed into a list of rules and variable 
+        definitions, each regular expression is represented with a string.
+        To be usable, the string is parsed into an 
+        <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitable</a> 
+        abstract tree representing the reglar expression. Each object in 
+        the tree is either a set of characters or a relationship between
+        other tree elements:</p>
+        <ul>
+            <li><a href="">Literal:</a> the primitive tree element, matches a single character (a, [ab])</li>
+            <li><a href="">Alternation:</a> matches one of several tree elements (a|b)</li>
+            <li><a href="">Concatenation:</a> matches a sequence of tree elements (ab)</li>
+            <li><a href="">Repetition:</a> matches a single tree element repeated a number of times (a*, a+, a?, a{1, 2})</li>
+            <li><a href="">Variable instance:</a> Placeholder to be substituted with another tree element ({a})</li>
+       </ul>
+        
+        <p>Like the rules file parser, the regular expression parser is 
+        a hand-made recursive descent parser. It takes in individual 
+        characters as its terminals as a dedicated lexical is not necessary.</p>
+        
+        <h3> Regular Expression Grammar</h3>
+        <ul>
+            <li><strong>pattern:</strong> concatenation ( "|" concatenation )+
+            <li><strong>concatenation:</strong> repetition+
+            <li><strong>repetition: STUB</li>
+        </ul>
+    </body>
+</html>

@@ -47,12 +47,38 @@ OUTPUT_DIR: An existing directory to which the state machine code is written.</p
 <h2>
 <a name="optional-arguments" class="anchor" href="#optional-arguments"><span class="octicon octicon-link"></span></a>Optional arguments:</h2>
 
-<p>-n DOT_FILE,  --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
--d DOT_FILE,  --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
--m DOT_FILE,  --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
--e ENCODING,  --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
--l LANGUAGE,  --language LANGUAGE - Output emitter language.
--i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well</p>
+<table>
+  <tr>
+    <td>-n DOT_FILE</td>
+    <td>--print-nfa DOT_FILE</td>
+    <td>Print a GraphViz(.dot) file with the lexical analyzer's NFA representation</td>
+  </tr>
+  <tr>
+    <td>-d DOT_FILE</td>
+    <td>--print-dfa DOT_FILE</td>
+    <td>Print a GraphViz(.dot) file with the lexical analyzer's DFA representation</td>
+  </tr>
+  <tr>
+    <td>-m DOT_FILE</td>
+    <td>--print-min-dfa DOT_FILE</td>
+    <td>Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.</td>
+  </tr>
+  <tr>
+    <td>-e ENCODING</td>
+    <td>--encoding ENCODING</td>
+    <td>Encoding of the input file. ENCODING must be an encoding codec name supported by Python.</td>
+  </tr>
+  <tr>
+    <td>-l LANGUAGE</td>
+    <td>--language LANGUAGE</td>
+    <td>Output emitter language.</td>
+  </tr>
+  <tr>
+    <td>-i ALGORITHM</td>
+    <td>--minimizer ALGORITHM</td>
+    <td>Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well</td>
+  </tr>
+</table>
 
 <h2>
 <a name="rules-file" class="anchor" href="#rules-file"><span class="octicon octicon-link"></span></a>Rules file:</h2>

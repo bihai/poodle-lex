@@ -4,7 +4,7 @@ body {
     padding: 1em;
 }
 
-h1, h2, h3, p, li {
+h1, h2, h3, p, li, div {
     font-family: sans-serif;
 }
 
@@ -27,6 +27,15 @@ h3 {
     font-size: 12pt;
 }
 
-p, li {
+p, li, div {
     font-size: 10pt;
+}
+
+.indent, code {
+    padding-left: 1em;
+}
+
+code {
+    display: block;
+    white-space: pre;
 }

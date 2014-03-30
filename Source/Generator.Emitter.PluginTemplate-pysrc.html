@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Generator.Emitter.PluginTemplate</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;Generator ::
+        Package&nbsp;Emitter ::
+        Module&nbsp;PluginTemplate
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="Generator.Emitter.PluginTemplate-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="Generator.Emitter.PluginTemplate-module.html">Module Generator.Emitter.PluginTemplate</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno"> 1</tt>  <tt class="py-line"><tt class="py-comment"># Copyright (C) 2014 Parker Michaels</tt> </tt>
+<a name="L2"></a><tt class="py-lineno"> 2</tt>  <tt class="py-line"><tt class="py-comment"># </tt> </tt>
+<a name="L3"></a><tt class="py-lineno"> 3</tt>  <tt class="py-line"><tt class="py-comment"># Permission is hereby granted, free of charge, to any person obtaining a </tt> </tt>
+<a name="L4"></a><tt class="py-lineno"> 4</tt>  <tt class="py-line"><tt class="py-comment"># copy of this software and associated documentation files (the "Software"), </tt> </tt>
+<a name="L5"></a><tt class="py-lineno"> 5</tt>  <tt class="py-line"><tt class="py-comment"># to deal in the Software without restriction, including without limitation </tt> </tt>
+<a name="L6"></a><tt class="py-lineno"> 6</tt>  <tt class="py-line"><tt class="py-comment"># the rights to use, copy, modify, merge, publish, distribute, sublicense, </tt> </tt>
+<a name="L7"></a><tt class="py-lineno"> 7</tt>  <tt class="py-line"><tt class="py-comment"># and/or sell copies of the Software, and to permit persons to whom the </tt> </tt>
+<a name="L8"></a><tt class="py-lineno"> 8</tt>  <tt class="py-line"><tt class="py-comment"># Software is furnished to do so, subject to the following conditions:</tt> </tt>
+<a name="L9"></a><tt class="py-lineno"> 9</tt>  <tt class="py-line"><tt class="py-comment"># </tt> </tt>
+<a name="L10"></a><tt class="py-lineno">10</tt>  <tt class="py-line"><tt class="py-comment"># The above copyright notice and this permission notice shall be included in </tt> </tt>
+<a name="L11"></a><tt class="py-lineno">11</tt>  <tt class="py-line"><tt class="py-comment"># all copies or substantial portions of the Software.</tt> </tt>
+<a name="L12"></a><tt class="py-lineno">12</tt>  <tt class="py-line"><tt class="py-comment"># </tt> </tt>
+<a name="L13"></a><tt class="py-lineno">13</tt>  <tt class="py-line"><tt class="py-comment"># THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR </tt> </tt>
+<a name="L14"></a><tt class="py-lineno">14</tt>  <tt class="py-line"><tt class="py-comment"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, </tt> </tt>
+<a name="L15"></a><tt class="py-lineno">15</tt>  <tt class="py-line"><tt class="py-comment"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE </tt> </tt>
+<a name="L16"></a><tt class="py-lineno">16</tt>  <tt class="py-line"><tt class="py-comment"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER </tt> </tt>
+<a name="L17"></a><tt class="py-lineno">17</tt>  <tt class="py-line"><tt class="py-comment"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING </tt> </tt>
+<a name="L18"></a><tt class="py-lineno">18</tt>  <tt class="py-line"><tt class="py-comment"># FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER </tt> </tt>
+<a name="L19"></a><tt class="py-lineno">19</tt>  <tt class="py-line"><tt class="py-comment"># DEALINGS IN THE SOFTWARE.</tt> </tt>
+<a name="L20"></a><tt class="py-lineno">20</tt>  <tt class="py-line"> </tt>
+<a name="PluginTemplateNotImplemented"></a><div id="PluginTemplateNotImplemented-def"><a name="L21"></a><tt class="py-lineno">21</tt> <a class="py-toggle" href="#" id="PluginTemplateNotImplemented-toggle" onclick="return toggle('PluginTemplateNotImplemented');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented-class.html">PluginTemplateNotImplemented</a><tt class="py-op">(</tt><tt class="py-base-class">Exception</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplateNotImplemented-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="PluginTemplateNotImplemented-expanded"><a name="PluginTemplateNotImplemented.__init__"></a><div id="PluginTemplateNotImplemented.__init__-def"><a name="L22"></a><tt class="py-lineno">22</tt> <a class="py-toggle" href="#" id="PluginTemplateNotImplemented.__init__-toggle" onclick="return toggle('PluginTemplateNotImplemented.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplateNotImplemented.__init__-collapsed" style="display:none;" pad="++" indent="++++++++"></div><div id="PluginTemplateNotImplemented.__init__-expanded"><a name="L23"></a><tt class="py-lineno">23</tt>  <tt class="py-line">        <tt class="py-name">Exception</tt><tt class="py-op">.</tt><tt id="link-0" class="py-name" targets="Method Generator.CoverageSet.CoverageSet.__init__()=Generator.CoverageSet.CoverageSet-class.html#__init__,Method Generator.DeterministicFiniteAutomataBuilder.DeterministicFiniteAutomataBuilder.__init__()=Generator.DeterministicFiniteAutomataBuilder.DeterministicFiniteAutomataBuilder-class.html#__init__,Method Generator.DeterministicFiniteAutomataBuilder.EpsilonClosureCrawler.__init__()=Generator.DeterministicFiniteAutomataBuilder.EpsilonClosureCrawler-class.html#__init__,Method Generator.Emitter.EmitCode.CodeEmitter.__init__()=Generator.Emitter.EmitCode.CodeEmitter-class.html#__init__,Method Generator.Emitter.PluginTemplate.PluginTemplate.__init__()=Generator.Emitter.PluginTemplate.PluginTemplate-class.html#__init__,Method Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented.__init__()=Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented-class.html#__init__,Method Generator.HopcroftDFAMinimizer.StateGroup.__init__()=Generator.HopcroftDFAMinimizer.StateGroup-class.html#__init__,Method Generator.LanguagePlugins.Plugin.__init__()=Generator.LanguagePlugins.Plugin-class.html#__init__,Method Generator.LexicalAnalyzer.LexicalAnalyzer.__init__()=Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#__init__,Method Generator.LexicalAnalyzer.LexicalAnalyzerException.__init__()=Generator.LexicalAnalyzer.LexicalAnalyzerException-class.html#__init__,Method Generator.LexicalAnalyzer.Pattern.__init__()=Generator.LexicalAnalyzer.Pattern-class.html#__init__,Method Generator.LexicalAnalyzer.Rule.__init__()=Generator.LexicalAnalyzer.Rule-class.html#__init__,Method Generator.LexicalAnalyzerParser.LexicalAnalyzerLexer.__init__()=Generator.LexicalAnalyzerParser.LexicalAnalyzerLexer-class.html#__init__,Method Generator.LexicalAnalyzerParser.LexicalAnalyzerParserException.__init__()=Generator.LexicalAnalyzerParser.LexicalAnalyzerParserException-class.html#__init__,Method Generator.NonDeterministicFiniteAutomataBuilder.NonDeterministicFiniteAutomataBuilder.__init__()=Generator.NonDeterministicFiniteAutomataBuilder.NonDeterministicFiniteAutomataBuilder-class.html#__init__,Method Generator.Regex.Alternation.__init__()=Generator.Regex.Alternation-class.html#__init__,Method Generator.Regex.Concatenation.__init__()=Generator.Regex.Concatenation-class.html#__init__,Method Generator.Regex.Literal.__init__()=Generator.Regex.Literal-class.html#__init__,Method Generator.Regex.LiteralExcept.__init__()=Generator.Regex.LiteralExcept-class.html#__init__,Method Generator.Regex.Repetition.__init__()=Generator.Regex.Repetition-class.html#__init__,Method Generator.Regex.Variable.__init__()=Generator.Regex.Variable-class.html#__init__,Method Generator.RegexExceptions.RegexParserCircularReference.__init__()=Generator.RegexExceptions.RegexParserCircularReference-class.html#__init__,Method Generator.RegexExceptions.RegexParserException.__init__()=Generator.RegexExceptions.RegexParserException-class.html#__init__,Method Generator.RegexExceptions.RegexParserExceptionInternal.__init__()=Generator.RegexExceptions.RegexParserExceptionInternal-class.html#__init__,Method Generator.RegexExceptions.RegexParserExpected.__init__()=Generator.RegexExceptions.RegexParserExpected-class.html#__init__,Method Generator.RegexExceptions.RegexParserInvalidCharacter.__init__()=Generator.RegexExceptions.RegexParserInvalidCharacter-class.html#__init__,Method Generator.RegexExceptions.RegexParserInvalidCharacterRange.__init__()=Generator.RegexExceptions.RegexParserInvalidCharacterRange-class.html#__init__,Method Generator.RegexExceptions.RegexParserUndefinedVariable.__init__()=Generator.RegexExceptions.RegexParserUndefinedVariable-class.html#__init__,Method Generator.RegexExceptions.RegexParserUnicodeCodepointOutOfRange.__init__()=Generator.RegexExceptions.RegexParserUnicodeCodepointOutOfRange-class.html#__init__,Method Generator.RegexParser.RegexParser.__init__()=Generator.RegexParser.RegexParser-class.html#__init__,Method Generator.RegexVariableResolver.RegexVariableResolver.__init__()=Generator.RegexVariableResolver.RegexVariableResolver-class.html#__init__"><a title="Generator.CoverageSet.CoverageSet.__init__
+Generator.DeterministicFiniteAutomataBuilder.DeterministicFiniteAutomataBuilder.__init__
+Generator.DeterministicFiniteAutomataBuilder.EpsilonClosureCrawler.__init__
+Generator.Emitter.EmitCode.CodeEmitter.__init__
+Generator.Emitter.PluginTemplate.PluginTemplate.__init__
+Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented.__init__
+Generator.HopcroftDFAMinimizer.StateGroup.__init__
+Generator.LanguagePlugins.Plugin.__init__
+Generator.LexicalAnalyzer.LexicalAnalyzer.__init__
+Generator.LexicalAnalyzer.LexicalAnalyzerException.__init__
+Generator.LexicalAnalyzer.Pattern.__init__
+Generator.LexicalAnalyzer.Rule.__init__
+Generator.LexicalAnalyzerParser.LexicalAnalyzerLexer.__init__
+Generator.LexicalAnalyzerParser.LexicalAnalyzerParserException.__init__
+Generator.NonDeterministicFiniteAutomataBuilder.NonDeterministicFiniteAutomataBuilder.__init__
+Generator.Regex.Alternation.__init__
+Generator.Regex.Concatenation.__init__
+Generator.Regex.Literal.__init__
+Generator.Regex.LiteralExcept.__init__
+Generator.Regex.Repetition.__init__
+Generator.Regex.Variable.__init__
+Generator.RegexExceptions.RegexParserCircularReference.__init__
+Generator.RegexExceptions.RegexParserException.__init__
+Generator.RegexExceptions.RegexParserExceptionInternal.__init__
+Generator.RegexExceptions.RegexParserExpected.__init__
+Generator.RegexExceptions.RegexParserInvalidCharacter.__init__
+Generator.RegexExceptions.RegexParserInvalidCharacterRange.__init__
+Generator.RegexExceptions.RegexParserUndefinedVariable.__init__
+Generator.RegexExceptions.RegexParserUnicodeCodepointOutOfRange.__init__
+Generator.RegexParser.RegexParser.__init__
+Generator.RegexVariableResolver.RegexVariableResolver.__init__" class="py-name" href="#" onclick="return doclink('link-0', '__init__', 'link-0');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">,</tt> <tt class="py-string">"Not implemented"</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L24"></a><tt class="py-lineno">24</tt>  <tt class="py-line">     </tt>
+<a name="PluginTemplate"></a><div id="PluginTemplate-def"><a name="L25"></a><tt class="py-lineno">25</tt> <a class="py-toggle" href="#" id="PluginTemplate-toggle" onclick="return toggle('PluginTemplate');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplate-class.html">PluginTemplate</a><tt class="py-op">(</tt><tt class="py-base-class">object</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplate-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="PluginTemplate-expanded"><a name="L26"></a><tt class="py-lineno">26</tt>  <tt class="py-line">    <tt class="py-docstring">"""</tt> </tt>
+<a name="L27"></a><tt class="py-lineno">27</tt>  <tt class="py-line"><tt class="py-docstring">    Template from which language emitter plug-ins should derive</tt> </tt>
+<a name="L28"></a><tt class="py-lineno">28</tt>  <tt class="py-line"><tt class="py-docstring">    """</tt> </tt>
+<a name="PluginTemplate.__init__"></a><div id="PluginTemplate.__init__-def"><a name="L29"></a><tt class="py-lineno">29</tt> <a class="py-toggle" href="#" id="PluginTemplate.__init__-toggle" onclick="return toggle('PluginTemplate.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplate-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">lexical_analyzer</tt><tt class="py-op">,</tt> <tt class="py-param">plugin_files</tt><tt class="py-op">,</tt> <tt class="py-param">output_directory</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplate.__init__-collapsed" style="display:none;" pad="++" indent="++++++++"></div><div id="PluginTemplate.__init__-expanded"><a name="L30"></a><tt class="py-lineno">30</tt>  <tt class="py-line">        <tt class="py-docstring">"""</tt> </tt>
+<a name="L31"></a><tt class="py-lineno">31</tt>  <tt class="py-line"><tt class="py-docstring">        @param lexical_analyzer: a LexicalAnalyzer object representing the lexical analyzer to emit</tt> </tt>
+<a name="L32"></a><tt class="py-lineno">32</tt>  <tt class="py-line"><tt class="py-docstring">        @param plugin_files: a string specifying the location of the plug-in's files</tt> </tt>
+<a name="L33"></a><tt class="py-lineno">33</tt>  <tt class="py-line"><tt class="py-docstring">        @param output_directory: a string specifying the output directory where files should be saved</tt> </tt>
+<a name="L34"></a><tt class="py-lineno">34</tt>  <tt class="py-line"><tt class="py-docstring">        """</tt> </tt>
+<a name="L35"></a><tt class="py-lineno">35</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">lexical_analyzer</tt> <tt class="py-op">=</tt> <tt class="py-name">lexical_analyzer</tt> </tt>
+<a name="L36"></a><tt class="py-lineno">36</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">plugin_files</tt> <tt class="py-op">=</tt> <tt class="py-name">plugin_files</tt> </tt>
+<a name="L37"></a><tt class="py-lineno">37</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">output_directory</tt> <tt class="py-op">=</tt> <tt class="py-name">output_directory</tt> </tt>
+</div><a name="L38"></a><tt class="py-lineno">38</tt>  <tt class="py-line">     </tt>
+<a name="PluginTemplate.emit"></a><div id="PluginTemplate.emit-def"><a name="L39"></a><tt class="py-lineno">39</tt> <a class="py-toggle" href="#" id="PluginTemplate.emit-toggle" onclick="return toggle('PluginTemplate.emit');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplate-class.html#emit">emit</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplate.emit-collapsed" style="display:none;" pad="++" indent="++++++++"></div><div id="PluginTemplate.emit-expanded"><a name="L40"></a><tt class="py-lineno">40</tt>  <tt class="py-line">        <tt class="py-docstring">"""</tt> </tt>
+<a name="L41"></a><tt class="py-lineno">41</tt>  <tt class="py-line"><tt class="py-docstring">        Emit all generated code</tt> </tt>
+<a name="L42"></a><tt class="py-lineno">42</tt>  <tt class="py-line"><tt class="py-docstring">        """</tt> </tt>
+<a name="L43"></a><tt class="py-lineno">43</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt id="link-1" class="py-name" targets="Class Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented=Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented-class.html"><a title="Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented" class="py-name" href="#" onclick="return doclink('link-1', 'PluginTemplateNotImplemented', 'link-1');">PluginTemplateNotImplemented</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L44"></a><tt class="py-lineno">44</tt>  <tt class="py-line">     </tt>
+<a name="PluginTemplate.get_output_directories"></a><div id="PluginTemplate.get_output_directories-def"><a name="L45"></a><tt class="py-lineno">45</tt> <a class="py-toggle" href="#" id="PluginTemplate.get_output_directories-toggle" onclick="return toggle('PluginTemplate.get_output_directories');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplate-class.html#get_output_directories">get_output_directories</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplate.get_output_directories-collapsed" style="display:none;" pad="++" indent="++++++++"></div><div id="PluginTemplate.get_output_directories-expanded"><a name="L46"></a><tt class="py-lineno">46</tt>  <tt class="py-line">        <tt class="py-docstring">"""</tt> </tt>
+<a name="L47"></a><tt class="py-lineno">47</tt>  <tt class="py-line"><tt class="py-docstring">        Return a list of directories for Poodle-Lex to create in the output folder</tt> </tt>
+<a name="L48"></a><tt class="py-lineno">48</tt>  <tt class="py-line"><tt class="py-docstring">        """</tt> </tt>
+<a name="L49"></a><tt class="py-lineno">49</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt id="link-2" class="py-name"><a title="Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented" class="py-name" href="#" onclick="return doclink('link-2', 'PluginTemplateNotImplemented', 'link-1');">PluginTemplateNotImplemented</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L50"></a><tt class="py-lineno">50</tt>  <tt class="py-line">     </tt>
+<a name="PluginTemplate.get_files_to_copy"></a><div id="PluginTemplate.get_files_to_copy-def"><a name="L51"></a><tt class="py-lineno">51</tt> <a class="py-toggle" href="#" id="PluginTemplate.get_files_to_copy-toggle" onclick="return toggle('PluginTemplate.get_files_to_copy');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="Generator.Emitter.PluginTemplate.PluginTemplate-class.html#get_files_to_copy">get_files_to_copy</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="PluginTemplate.get_files_to_copy-collapsed" style="display:none;" pad="++" indent="++++++++"></div><div id="PluginTemplate.get_files_to_copy-expanded"><a name="L52"></a><tt class="py-lineno">52</tt>  <tt class="py-line">        <tt class="py-docstring">"""</tt> </tt>
+<a name="L53"></a><tt class="py-lineno">53</tt>  <tt class="py-line"><tt class="py-docstring">        Return a list of files for Poodle-Lex to into the output directory</tt> </tt>
+<a name="L54"></a><tt class="py-lineno">54</tt>  <tt class="py-line"><tt class="py-docstring">        """</tt> </tt>
+<a name="L55"></a><tt class="py-lineno">55</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt id="link-3" class="py-name"><a title="Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented" class="py-name" href="#" onclick="return doclink('link-3', 'PluginTemplateNotImplemented', 'link-1');">PluginTemplateNotImplemented</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L56"></a><tt class="py-lineno">56</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Wed Mar 26 21:52:12 2014
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

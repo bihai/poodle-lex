@@ -46,7 +46,7 @@ class NonDeterministicState(object):
 class NonDeterministicFiniteAutomata(object):
     """
     Represents a non-deterministic finite automata (NFA) graph. 
-        This object may be iterated to yield NonDetermisticState objects for each contained state.
+    This object may be iterated to yield NonDetermisticState objects for each contained state.
     @ivar start_state: NonDeterministicState object representing the initial state of the automata.
     @ivar end_state: NonDeterministicState object representing the final state of the automata. 
     """
@@ -113,8 +113,8 @@ class NonDeterministicFiniteAutomata(object):
     def concatenate(state_machines):
         """
         Merges a list of state machines by concatenating one after the other.
-            Effectively places an epsilon transition between the end state of each automata and the initial state of the next.
-            State machines are consumed by this function and cannot be used afterwards.
+        Effectively places an epsilon transition between the end state of each automata and the initial state of the next.
+        State machines are consumed by this function and cannot be used afterwards.
         @param state_machines: An array of NonDeterministicFiniteAutomata objects representing the automata to be merged.
         @return: NonDeterministicFiniteAutomata object representing the merged state machines.
         """
@@ -137,9 +137,9 @@ class NonDeterministicFiniteAutomata(object):
     def alternate(state_machines):
         """
         Merges a list of state machines by alternating them. 
-            Effectively creates a new initial state with epsilon edges to each automata'a initial state, 
-            and a final state with epsilon edges from each automata's final state.
-            State machines are consumed and cannot be used after calling this function
+        Effectively creates a new initial state with epsilon edges to each automata'a initial state, 
+        and a final state with epsilon edges from each automata's final state.
+        State machines are consumed and cannot be used after calling this function
         @param state_machines: a list of NonDeterministicFiniteAutomata objects representing the state machines to be merged.
         @return: a NonDeterministicFiniteAutomata object representing the merged state machines.
         """

@@ -27,6 +27,7 @@ import string
 import imp
 import sys
 import textwrap
+import types
 
 class Plugin(object):
     """
@@ -45,9 +46,8 @@ class Plugin(object):
         with open(self.source_path, 'r') as f:
             modulename = "Generator.Emitter.language_plugin_%s" % ''.join(random.choice(string.ascii_lowercase) for i in range(16))
             self.module = imp.load_module(modulename, f, self.source_path, (".py", 'r', imp.PY_SOURCE))
-        if not hasattr(self.module, 'LanguageEmitter') or not issubclass(self.module.LanguageEmitter, PluginTemplate.PluginTemplate):
-            print type(self.module.LanguageEmitter)
-            raise Exception("Plug-in does not contain a 'LanguageEmitter' class")
+        if not hasattr(self.module, 'create_emitter') or not isinstance(self.module.create_emitter, types.FunctionType):
+            raise Exception("Plug-in does not contain a 'create_emitter' function")
             
     def create(self, lexical_analyzer, output_directory):
         """
@@ -55,7 +55,10 @@ class Plugin(object):
         """
         if self.module is None:
             raise Exception("Plug-in not loaded")
-        return self.module.LanguageEmitter(lexical_analyzer, self.plugin_files_directory, output_directory)
+        emitter = self.module.create_emitter(lexical_analyzer, self.plugin_files_directory, output_directory)
+        if not issubclass(emitter.__class__, PluginTemplate.PluginTemplate):
+            raise Exception("Plug-in interface did not return a class of the correct type")
+        return emitter
         
 def is_text(text):
     """

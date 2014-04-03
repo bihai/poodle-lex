@@ -29,9 +29,12 @@ from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
-class LanguageEmitter(PluginTemplate):
+def create_emitter(lexical_analyzer, plugin_files_directory, output_directory):
+    return CAsciiEmitter(lexical_analyzer, plugin_files_directory, output_directory)
+    
+class CAsciiEmitter(PluginTemplate):
     """
-    Emits a lexical analyzer as FreeBasic source code.
+    Emits a lexical analyzer as C source code (single-byte encoding only).
     @ivar lexical_analyzer: the lexical analyzer to emit
     @ivar ids: a dict mapping states to an enum element in the FreeBasic source
     @ivar dfa: the deterministic finite automata (DFA) representing the lexical analyzer.
@@ -70,24 +73,24 @@ class LanguageEmitter(PluginTemplate):
         self.map_rule_names()
         
         # Emit lexical analyzer header
-        h_template_file = os.path.join(self.plugin_files_directory, LanguageEmitter.h_file)
-        h_output_file = os.path.join(self.output_directory, LanguageEmitter.h_file)
+        h_template_file = os.path.join(self.plugin_files_directory, CAsciiEmitter.h_file)
+        h_output_file = os.path.join(self.output_directory, CAsciiEmitter.h_file)
         for stream, token, indent in FileTemplate(h_template_file, h_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 token_ids = [self.rule_ids[rule.id.upper()] for rule in self.lexical_analyzer.rules]
                 token_ids.append("PTKN_TOKENIDCOUNT")
-                LanguageEmitter.emit_enum_list(stream, indent, token_ids)
+                CAsciiEmitter.emit_enum_list(stream, indent, token_ids)
             elif token == "TOKEN_IDNAMES_LIMIT":
                 stream.write(str(len(self.lexical_analyzer.rules)+1))
             else:
                 raise Exception('Unrecognized token in header template: "%s"' % token)
         
         # Emit lexical analyzer source
-        c_template_file = os.path.join(self.plugin_files_directory, LanguageEmitter.c_file)
-        c_output_file = os.path.join(self.output_directory, LanguageEmitter.c_file)
+        c_template_file = os.path.join(self.plugin_files_directory, CAsciiEmitter.c_file)
+        c_output_file = os.path.join(self.output_directory, CAsciiEmitter.c_file)
         for stream, token, indent in FileTemplate(c_template_file, c_output_file):
             if token == 'ENUM_STATE_IDS':
-                LanguageEmitter.emit_enum_list(stream, indent, list(self.ids.values()))
+                CAsciiEmitter.emit_enum_list(stream, indent, list(self.ids.values()))
             elif token == 'INITIAL_STATE':
                 stream.write(self.ids[self.dfa.start_state].upper())
             elif token == 'INVALID_CHAR_STATE':
@@ -138,7 +141,7 @@ class LanguageEmitter(PluginTemplate):
                 initial_id = "PLA_STATE_" + "_".join([i.upper() for i in sorted(list(state.ids))])
                 id = initial_id[0:256]
                 n = 1
-                while id in self.ids.values() or id.lower() in LanguageEmitter.reserved_keywords:
+                while id in self.ids.values() or id.lower() in CAsciiEmitter.reserved_keywords:
                     id = "%s%d" % (initial_id, n)
                     n += 1
                 self.ids[state] = id
@@ -150,7 +153,7 @@ class LanguageEmitter(PluginTemplate):
         for rule in self.lexical_analyzer.rules:
             rule_id = "PTKN_" + rule.id.upper()
             n = 1
-            while rule_id in self.rule_ids.values() or rule_id.lower() in LanguageEmitter.reserved_keywords:
+            while rule_id in self.rule_ids.values() or rule_id.lower() in CAsciiEmitter.reserved_keywords:
                 rule_id = '%s%d' % ("PTKN_" + rule.id.upper(), n)
                 n += 1
             self.rule_ids[rule.id.upper()] = rule_id

@@ -29,7 +29,10 @@ from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
-class LanguageEmitter(PluginTemplate):
+def create_emitter(lexical_analyzer, plugin_files_directory, output_directory):
+    return FreeBasicEmitter(lexical_analyzer, plugin_files_directory, output_directory)
+
+class FreeBasicEmitter(PluginTemplate):
     """
     Emits a lexical analyzer as FreeBasic source code.
     @ivar lexical_analyzer: the lexical analyzer to emit
@@ -73,8 +76,8 @@ class LanguageEmitter(PluginTemplate):
         self.map_rule_names()
         
         # Emit lexical analyzer header
-        bi_template_file = os.path.join(self.plugin_files_directory, LanguageEmitter.bi_file)
-        bi_output_file = os.path.join(self.output_directory, LanguageEmitter.bi_file)
+        bi_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bi_file)
+        bi_output_file = os.path.join(self.output_directory, FreeBasicEmitter.bi_file)
         for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 for rule in self.lexical_analyzer.rules:
@@ -85,8 +88,8 @@ class LanguageEmitter(PluginTemplate):
                 raise Exception('Unrecognized token in header template: "%s"' % token)
         
         # Emit lexical analyzer source
-        bas_template_file = os.path.join(self.plugin_files_directory, LanguageEmitter.bas_file)
-        bas_output_file = os.path.join(self.output_directory, LanguageEmitter.bas_file)
+        bas_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bas_file)
+        bas_output_file = os.path.join(self.output_directory, FreeBasicEmitter.bas_file)
         for stream, token, indent in FileTemplate(bas_template_file, bas_output_file):
             if token == 'ENUM_STATE_IDS':
                 for state_id in sorted(list(self.ids.values())):
@@ -152,7 +155,7 @@ class LanguageEmitter(PluginTemplate):
                 initial_id = "".join([i.title() for i in sorted(list(state.ids))])
                 id = initial_id
                 n = 1
-                while id in self.ids.values() or id.lower() in LanguageEmitter.reserved_keywords:
+                while id in self.ids.values() or id.lower() in FreeBasicEmitter.reserved_keywords:
                     id = "%s%d" % (initial_id, n)
                     n += 1
                 self.ids[state] = id
@@ -164,7 +167,7 @@ class LanguageEmitter(PluginTemplate):
         for rule in self.lexical_analyzer.rules:
             rule_id = rule.id.title()
             n = 1
-            while rule_id in self.rule_ids.values() or rule_id.lower() in LanguageEmitter.reserved_keywords:
+            while rule_id in self.rule_ids.values() or rule_id.lower() in FreeBasicEmitter.reserved_keywords:
                 rule_id = '%s%d' % (rule.id.title(), n)
                 n += 1
             self.rule_ids[rule.id.title()] = rule_id

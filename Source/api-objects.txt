@@ -84,10 +84,9 @@ Generator.Emitter.EmitCode.CodeEmitter.open_line	Generator.Emitter.EmitCode.Code
 Generator.Emitter.EmitCode.CodeEmitter.indent_size	Generator.Emitter.EmitCode.CodeEmitter-class.html#indent_size
 Generator.Emitter.EmitCode.CodeEmitter.inherit	Generator.Emitter.EmitCode.CodeEmitter-class.html#inherit
 Generator.Emitter.PluginTemplate.PluginTemplate	Generator.Emitter.PluginTemplate.PluginTemplate-class.html
-Generator.Emitter.PluginTemplate.PluginTemplate.get_files_to_copy	Generator.Emitter.PluginTemplate.PluginTemplate-class.html#get_files_to_copy
 Generator.Emitter.PluginTemplate.PluginTemplate.get_output_directories	Generator.Emitter.PluginTemplate.PluginTemplate-class.html#get_output_directories
 Generator.Emitter.PluginTemplate.PluginTemplate.emit	Generator.Emitter.PluginTemplate.PluginTemplate-class.html#emit
-Generator.Emitter.PluginTemplate.PluginTemplate.__init__	Generator.Emitter.PluginTemplate.PluginTemplate-class.html#__init__
+Generator.Emitter.PluginTemplate.PluginTemplate.get_files_to_copy	Generator.Emitter.PluginTemplate.PluginTemplate-class.html#get_files_to_copy
 Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented	Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented-class.html
 Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented.__init__	Generator.Emitter.PluginTemplate.PluginTemplateNotImplemented-class.html#__init__
 Generator.HopcroftDFAMinimizer.StateGroup	Generator.HopcroftDFAMinimizer.StateGroup-class.html

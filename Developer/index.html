@@ -32,18 +32,31 @@ python __main__.py Example/SimpleLexer/SimpleLexer.rules Output</code>
         rules. It does this though a series of steps which are a well 
         known part of compter science.<p>
         <ol>
-            <li>Parse a rules file into a list of name and regular expression strings</li>
-            <li>Parse each regular expression into a structure</li>
-            <li>Convert each regular expression into an NFA using 
+            <li><a href="#ParseRulesSection">Parse</a> a rules file into a list of name and regular expression strings</li>
+            <li><a href="#ParseRegexSection">Parse</a> each regular expression into a structure</li>
+            <li><a href="#RegexToNFASection">Convert</a> each regular expression into an NFA using 
             <a href="http://en.wikipedia.org/wiki/Thompson's_construction_algorithm">Thompson Construction</a></li>
-            <li>Convert each NFA into a DFA using 
+            <li><a href="#NFAToDFASection">Convert</a> each NFA into a DFA using 
             <a href="http://en.wikipedia.org/wiki/Powerset_construction">powerset construction</a></li>
-            <li>Minimize the DFA</li>
-            <li>Emit the DFA as source code</li>
+            <li><a href="#MinimizeDFASection">Minimize</a> the DFA</li>
+            <li><a href="#EmitCodeSection">Emit</a> the DFA as source code</li>
         </ol>
         
+        <p>This document only brushes over general theory about automata and 
+        regular languages See the resources below for more information:</p>
+        <ul>
+            <li><a href="http://en.wikipedia.org/wiki/Automata_theory">Wikipedia</a></li>
+            <li>MIT OpenCourseware: Aaronson, Scott. 6.045J 
+            Automata, Computability, and Complexity, Spring 2011. (MIT 
+            OpenCourseWare: Massachusetts Institute of Technology), 
+            <a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-045j-automata-computability-and-complexity-spring-2011 (Accessed 29 Mar, 2014). License: Creative Commons BY-NC-SA">http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-045j-automata-computability-and-complexity-spring-2011</a>. 
+            License: Creative Commons BY-NC-SA</a></li>
+            <li><a href="https://www.google.com/search?q=nondeterministic+finite+automata">Google search</a> which brings up tons of university slides.</li>
+        </ul>
+        
+        <a name="ParseRulesSection" />
         <h2>Parsing the rules file</h2>
-        <p><em>Source file: <a href="">Generator/LexicalAnalyzerParser.py</a></em></p>
+        <p><em>Source file: <a href="../Source/Generator.LexicalAnalyzerParser-module.html">Generator/LexicalAnalyzerParser.py</a></em></p>
         <p>Before creating a lexical analyzer, Poodle-Lex parses a rules file 
         to obtain a list of rules and variables.</p>
         <p>The parser is a hand-made recursive descent parser which uses 
@@ -74,6 +87,7 @@ python __main__.py Example/SimpleLexer/SimpleLexer.rules Output</code>
             <li><strong>wsnl:</strong> [ \t\r\n]*;</li>
         </ul>
 
+        <a name="ParseRegexSection" />
         <h2>Parsing the regular expressions</h2>
         <p><em>Source files:</em></p>
         <ul>
@@ -88,11 +102,11 @@ python __main__.py Example/SimpleLexer/SimpleLexer.rules Output</code>
         the tree is either a set of characters or a relationship between
         other tree elements:</p>
         <ul>
-            <li><a href="">Literal:</a> the primitive tree element, matches a single character (a, [ab])</li>
-            <li><a href="">Alternation:</a> matches one of several tree elements (a|b)</li>
-            <li><a href="">Concatenation:</a> matches a sequence of tree elements (ab)</li>
-            <li><a href="">Repetition:</a> matches a single tree element repeated a number of times (a*, a+, a?, a{1, 2})</li>
-            <li><a href="">Variable instance:</a> Placeholder to be substituted with another tree element ({a})</li>
+            <li><a href="../Source/Generator.Regex.Literal-class.html">Literal:</a> the primitive tree element, matches a single character (a, [ab])</li>
+            <li><a href="../Source/Generator.Regex.Alternation-class.html">Alternation:</a> matches one of several tree elements (a|b)</li>
+            <li><a href="../Source/Generator.Regex.Concatenation-class.html">Concatenation:</a> matches a sequence of tree elements (ab)</li>
+            <li><a href="../Source/Generator.Regex.Repetition-class.html">Repetition:</a> matches a single tree element repeated a number of times (a*, a+, a?, a{1, 2})</li>
+            <li><a href="../Source/Generator.Regex.Variable-class.html">Variable instance:</a> Placeholder to be substituted with another tree element ({a})</li>
         </ul>
        
         <p>For example, "cat+|dog" is parsed into the following structure:</p>
@@ -134,11 +148,12 @@ python __main__.py Example/SimpleLexer/SimpleLexer.rules Output</code>
             <li><strong>named_character_class:</strong> "[:" [a-z]{5,5} ":]";</li>
         </ul>
         
+        <a name="RegexToNFASection" />
         <h2>Converting the regular expressions to an NFA</h2>
         <p><em>Source files:</em></p>
         <ul>
-            <li><em>NFA Structure: <a href="">Generator/_NonDeterministicFiniteAutomata.py</em></a></li>
-            <li><em>Conversion: <a href="">Generator/NonDeterministicFiniteAutomataBuilder.py</em></a></li>
+            <li><em>NFA Structure: <a href="../Source/Generator._NonDeterministicFiniteAutomata-module.html">Generator/_NonDeterministicFiniteAutomata.py</em></a></li>
+            <li><em>Conversion: <a href="../Source/Generator.NonDeterministicFiniteAutomataBuilder-module.html">Generator/NonDeterministicFiniteAutomataBuilder.py</em></a></li>
         </ul>
         <p>Before the regular expression is converted to code, it must be 
         converted into a non-deterministic finite automaton (NFA). An NFA is a 
@@ -149,16 +164,7 @@ python __main__.py Example/SimpleLexer/SimpleLexer.rules Output</code>
         Construction algorithm, sometimes called subset construction. General 
         information about NFAs and Thompson construction are beyond the scope 
         of this document, but there is abundent information about these 
-        topics. See the resources below for more information:
-        <ul>
-            <li><a href="">Wikipedia</a></li>
-            <li>MIT OpenCourseware: Aaronson, Scott. 6.045J 
-            Automata, Computability, and Complexity, Spring 2011. (MIT 
-            OpenCourseWare: Massachusetts Institute of Technology), 
-            <a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-045j-automata-computability-and-complexity-spring-2011 (Accessed 29 Mar, 2014). License: Creative Commons BY-NC-SA">http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-045j-automata-computability-and-complexity-spring-2011</a>. 
-            License: Creative Commons BY-NC-SA</a></li>
-            <li><a href="https://www.google.com/search?q=nondeterministic+finite+automata">Google search</a> which brings up tons of university slides.</li>
-        </ul>
+        topics. 
         
         <h3>The NFA data structure</h3>
         <p>NFAs are stored in Poodle-Lex using the 
@@ -216,16 +222,16 @@ s2.edges[state_machine.end_state] = a
         with epsilon edges.</p>
         <p>To recursively iterate though the regular expression tree
         structure, Poodle-Lex makes use of a
-        <a href="">visitor</a> 
+        <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor</a> 
         class to act differently on different types of tree elements, the 
-        <a href="">NonDeterministicFiniteAutomata</a>
+        <a href="../Source/Generator._NonDeterministicFiniteAutomata.NonDeterministicFiniteAutomata-class.html">NonDeterministicFiniteAutomata</a>
         class. This class visits the root of the tree, and first
         visits the children of each node, pushing their equivelent NFA onto 
         a stack. Then the children are popped off the stack and merged
         using static helper methods such as 
-        <a href ="">Alternate</a>
+        <a href ="../Source/Generator._NonDeterministicFiniteAutomata.NonDeterministicFiniteAutomata-class.html#alternate">Alternate</a>
         and 
-        <a href ="">Concatenate</a>. Because visiting each child means the
+        <a href ="../Source/Generator._NonDeterministicFiniteAutomata.NonDeterministicFiniteAutomata-class.html#concatenate">Concatenate</a>. Because visiting each child means the
         entire tree is visited, visiting the root of the tree results in an
         NFA equivalent to the entire regular expression.</p>
         
@@ -240,28 +246,29 @@ s2.edges[state_machine.end_state] = a
         are combined later, the tags identify which rules are matched when the 
         state machine is in the combined state.</p>
         
+        <a name="NFAToDFASection" />
         <h2>Converting the NFA to a DFA</h2>
         <p><em>Source files:</em></p>
         <ul>
-            <li><em>NFA to DFA: <a href="">Generator/DeterministicFiniteAutomataBuilder.py</a></em></li>
-            <li><em>DFA Structure: <a href="">Generator/_DeterministicFiniteAutomata.py</a></em></li>
+            <li><em>NFA to DFA: <a href="../Source/Generator.DeterministicFiniteAutomataBuilder-module.html">Generator/DeterministicFiniteAutomataBuilder.py</a></em></li>
+            <li><em>DFA Structure: <a href="../Source/Generator._DeterministicFiniteAutomata-module.html">Generator/_DeterministicFiniteAutomata.py</a></em></li>
         </ul>
         
         <p>NFAs are not ideal for single-threaded CPU execution (though they 
         are highly-parallel processors such as FPGAs), so Poodle-Lex next
         converts the NFA to a 
-        <a href="">deterministic finite automata (DFA)</a>
+        <a href="http://en.wikipedia.org/wiki/Deterministic_finite_automata">deterministic finite automata (DFA)</a>
         A DFA is a state machine which can only be in one state at a time,
         and state transitions only occur due to input characters. In 
         Poodle-Lex, they are represented by the 
-        <a href="">DeterministicFiniteAutomata</a> class.</p>
+        <a href="../Source/Generator._DeterministicFiniteAutomata.DeterministicFiniteAutomata-class.html">DeterministicFiniteAutomata</a> class.</p>
         
         <h3>The DFA data structure</h3>
         <p>The DeterministicFiniteAutomata class is equivalent to the 
         NondeterministicFiniteAutomata class, except that there are no 
         epsilon edges, and no unified end state. The class exists to 
         point to a single 
-        <a href="">DeterministicState</a>
+        <a href="../Source/Generator._DeterministicFiniteAutomata.DeterministicState-class.html">DeterministicState</a>
         object representing the start state. The DeterministicState object 
         contains the same <strong>edges</strong>, <strong>ids</strong>,
         and <strong>final_ids</strong> fields as the NFA data structure.
@@ -295,7 +302,7 @@ s2.edges[s3] = a</code>
         DFA, every combination of multiple NFA states the state machine can be
         in at one time must be found. Each combination of simultaneous states
         is then considered one DFA state. This process is called 
-        <a href="">powerset construction</a> and is described in more detail
+        <a href="http://en.wikipedia.org/wiki/Powerset_construction">powerset construction</a> and is described in more detail
         in other widely available resources.</p>
         <p>Poodle-Lex performs this process by completely traversing the NFA,
         and finding the <strong>epsilon closure</strong> of each state the 
@@ -303,10 +310,10 @@ s2.edges[s3] = a</code>
         of all the states given, plus all the states reachable 
         through epsilon edges. It finds all the simultaneous states a 
         traverser can be in. Poodle-Lex uses a separate recursive crawler, 
-        the <a href="">EpsilonClosureCrawler</a> class, to 
+        the <a href="../Source/Generator.DeterministicFiniteAutomataBuilder.EpsilonClosureCrawler-class.html">EpsilonClosureCrawler</a> class, to 
         find the epsilon closure for a set of states.</p>
         <p>The 
-        <a href="">DeterministicFiniteAutomataBuilder</a>
+        <a href="../Source/Generator.DeterministicFiniteAutomataBuilder.DeterministicFiniteAutomataBuilder-class.html">DeterministicFiniteAutomataBuilder</a>
         class is responsible for converting the NFA to a DFA. It starts by 
         taking the epsilon closure of the start state of the NFA. Then, a DFA 
         is created, and its start state is mapped to the epsilon closure.</p>
@@ -323,11 +330,12 @@ s2.edges[s3] = a</code>
         <strong>final_ids</strong> of the NFA. This allows a DFA state to be
         matched to one or more rules.</p>
         
+        <a name="MinimizeDFASection" />
         <h2>Minimizing the DFA</h2>
         <p><em>Source files:</em></p>
         <ul>
-            <li><em>Hopcroft: <a href="">Generator/HopcroftDFAMinimizer.py</a></em></li>
-            <li><em>Polynomial: <a href="">Generator/NaiveDFAMinimizer.py</a></em></li>
+            <li><em>Hopcroft: <a href="../Source/Generator.HopcroftDFAMinimizer-module.html">Generator/HopcroftDFAMinimizer.py</a></em></li>
+            <li><em>Polynomial: <a href="../Source/Generator.NaiveDFAMinimizer-module.html">Generator/NaiveDFAMinimizer.py</a></em></li>
         </ul>
         
         <p>When a DFA is created from an NFA, there is enough information to 
@@ -335,7 +343,7 @@ s2.edges[s3] = a</code>
         Before emitting source code, Poodle-Lex (and most similar programs) 
         minimize the state machine to reduce the number of states.</p>
         <p>A popular algorithm for minimizing a state machine is 
-        <a href="">Hopcroft's Algorithm</a>,
+        <a href="http://en.wikipedia.org/wiki/DFA_minimization#Hopcroft.27s_algorithm">Hopcroft's Algorithm</a>,
         which costs 
         <a href="http://en.wikipedia.org/wiki/Big_O_notation">n*s*O(n)^2</a> 
         iterations, where n is the number of states and s is the size of the
@@ -346,13 +354,12 @@ s2.edges[s3] = a</code>
         implementation is several times slower, however, and only exists 
         for demonstrative purposes and for internal unit testing.</p>
         
+        <a name="EmitCodeSection" />
         <h2>Generating source code from the DFA</h2>
         <p><em>Source files:</em></p>
         <ul>
-            <li><em>Plugin loader: <a href="">Generator/LanguagePlugins.py</a></em></li>
-            <li><em>Plugin template: <a href="">Generator/Emitter/PluginTemplate.py</a></em></li>
-            <li><em>Freebasic emitter: <a href="">Plugins/FreeBasic/FreeBasic.py</a></em></li>
-            <li><em>C-Ascii emitter: <a href="">Plugins/C-Ascii/C-Ascii.py</a></em></li>
+            <li><em>Plugin loader: <a href="../Source/Generator.LanguagePlugins-module.html">Generator/LanguagePlugins.py</a></em></li>
+            <li><em>Plugin template: <a href="../Source/Generator.Emitter.PluginTemplate-module.html">Generator/Emitter/PluginTemplate.py</a></em></li>
         </ul>
 
         <p>DFA state machines can be easily represented in most programming
@@ -372,10 +379,115 @@ s2.edges[s3] = a</code>
         <p>The last step Poodle-Lex takes it to generate source code 
         equivalent to the DFA. In order to maintain flexibility, 
         Poodle-Lex relies on emitter plugins written in Python.</p>
-        <p>Emitter plugins are defined in 
-        <strong>Plugins/Plugins.json</strong>. The json file
-        contains a list of plug-ins
-    
         
+        <h3>Plug-ins Overview</h3>
+        <p>Emitter plugins are defined in 
+        <strong>Plugins/Plugins.json</strong>. The json file contains an 
+        object with 3 elements:</p>
+        <ul>
+            <li><strong>Version</strong> <em>(number)</em>: Version of the file format</li>
+            <li><strong>Default</strong> <em>(string)</em>: id of the default </li>
+            <li><strong>Plugins</strong> <em>(object)</em>: Map of ids to plugins</li>
+        </ul>
+        <p>The <strong>Plugins</strong> object contains string attributes, 
+        each which identifies a plugin. The value of each attribute is an
+        object containing 3 pieces of data</p>
+        <ul>
+            <li><strong>Description</strong> <em>(string)</em>: Description of the plugin</li>
+            <li><strong>Source</strong> <em>(string)</em>: Relative path from executable to plugin code</li>
+            <li><strong>Files</strong> <em>(string)</em>: Relative path from executable to files made available to plugins such as templates.</li>
+        </ul>
+        <p>An example of a plug-in file is below:</p>
+        <code>{
+    "Version": 1,
+    "Default": "freebasic",
+    "Plugins": {
+        "freebasic": {
+            "Description": "FreeBasic programming language using proprietary Unicode streams",
+            "Source": "Plugins/FreeBasic/FreeBasic.py",
+            "Files": "Plugins/FreeBasic/Template"
+        },
+        "c-ascii": {
+            "Description": "C programming language using stdio streams",
+            "Source": "Plugins/C-Ascii/C-Ascii.py",
+            "Files": "Plugins/C-Ascii/Template"
+        }
+    }
+}</code>
+        <p>Plug-ins are loaded at run-time with the
+        <a href="https://docs.python.org/2/library/imp.html">imp</a> 
+        module, into the Generator.Emitter namespace. After the minimized DFA 
+        of the lexical analyzer is generator, the lexical analyzer is passed 
+        to the plugin which generates and emits the source code to the output 
+        directory.</p>
+        
+        <h3>The Plug-In Interface</h3>
+        <p>The plugin should contain a single function, 
+        <strong>create_emitter</strong>, which takes in 3 arguments:</p>
+        <ol>
+            <li>A <a href="../Source/Generator.LexicalAnalyzer.LexicalAnalyzer-class.html">LexicalAnalyzer</a> object, which contains the DFA of the lexical analyzer</li>
+            <li>A string containing the output directory</li>
+            <li>A string with the path to the plug-in files specified in PlugIns.json</li>
+        </ol>
+        <p>The output file should return an object which has a type that is a
+        sub-class of
+        <a href="../Source/Generator.Emitter.PluginTemplate.PluginTemplate-class.html">Generator.Emitter.PluginTemplate.PluginTemplate</a>.</p>
+        <p>The <strong>PluginTemplate</strong> interface has 3 methods that 
+        need to be implemented:</p>
+        <ul>
+            <li><strong>emit</strong>() - Generates code when called. Emits no value</li>
+            <li><strong>get_output_directories</strong>() - Return a list of strings, each of a path relative to the output directory for Poodle-Lex to create.</li>
+            <li><strong>get_files_to_copy</strong>() - Return a list of strings, each of a file relative to the plugin folder for Poodle-Lex to copy to the output directory</li>
+        </ul>
+        
+        <h3>Utility Classes</h3>
+        <p>There are two modules in the Generator.Emitter namespace that are 
+        useful for code generation,
+        <a href="../Source/Generator.Emitter.FileTemplate-module.html#FileTemplate">FileTemplate</a> 
+        and
+        <a href="../Source/Generator.Emitter.EmitCode.CodeEmitter-class.html">EmitCode.CodeEmitter</a>
+        </p>
+        
+        <p><strong>FileTemplate</strong>(in_file, out_file) is an iterator 
+        generator that takes in an input template file name and an output
+        file name. For each variable indicated by a dollar sign in front
+        of a variable name (such as "$NAME"), it yields a tuple with 3 
+        elements:</p>
+        <ol>
+            <li>A file stream to write the substituted text</li>
+            <li>A string containing the name of the variable to replace</li>
+            <li>If the variable is at the start of a line, the number of spaces preceding the variable. Otherwise, None</li>
+        </ol>
+        <p>For each variable yielded, the user must write what the variable 
+        is replaced with to the yielded stream. After iterating through
+        the output of FileTemplate(), the output file will be created
+        and closed.</p>
+        
+        <p><strong>CodeEmitter</strong> is a class which decorates a stream
+        with methods for creating indented lines often used in programming.
+        The constructor takes in a stream, and methods include:</p>
+        <ul>
+            <li><strong>line</strong>(<em>text</em>) - Write an indented line</li>
+            <li><strong>indent</strong>() - Increase the indent by four spaces</li>
+            <li><strong>dedent</strong>() - Decreate the indent by four spaces</li>
+            <li><strong>open_line</strong>() - Start a new line and write indentation</li>
+            <li><strong>write</strong>(<em>text</em>) - Write text without starting a new line</li>
+            <li><strong>close_line</strong>() - End the current line and write a new-line</li>
+        </ul>
+        
+        <h3>Navigating the LexicalAnalyzer Object</h3>
+        <p>A 
+        <a href="../Source/Generator.LexicalAnalyzer.LexicalAnalyzer-class.html">LexicalAnalyzer</a>
+        is passed to the language plug-in when creating an emitter object. 
+        This class has several methods that can be found in the source 
+        documentation, but only two of real interest.</p>
+        <ul>
+            <li><strong>get_min_dfa</strong>() - Returns a minimized DFA of the lexical analyzer</li>
+            <li><strong>rules</strong> - Instance variable, a list of <a href="">Rule</a> objects in order of priority.</li>
+        </ul>
+        <p>To iterate through the states of the lexical analyzer, one can 
+        simply iterate through the output of get_min_dfa(), like so</p>
+        <code>for state in lexical_analyzer.get_min_dfa():
+    print state.ids</code>
     </body>
 </html>

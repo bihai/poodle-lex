@@ -77,11 +77,12 @@ class CAsciiEmitter(PluginTemplate):
         h_output_file = os.path.join(self.output_directory, CAsciiEmitter.h_file)
         for stream, token, indent in FileTemplate(h_template_file, h_output_file):
             if token == 'ENUM_TOKEN_IDS':
-                token_ids = self.rule_ids.values()
+                token_ids = [self.rule_ids[rule.id.upper()] for rule in self.lexical_analyzer.rules]
+                token_ids.extend([self.rule_ids[id] for id in self.lexical_analyzer.reserved_ids])
                 token_ids.append("PTKN_TOKENIDCOUNT")
                 CAsciiEmitter.emit_enum_list(stream, indent, token_ids)
             elif token == "TOKEN_IDNAMES_LIMIT":
-                stream.write(str(len(self.lexical_analyzer.rules)+1))
+                stream.write(str(len(self.rule_ids)+1))
             else:
                 raise Exception('Unrecognized token in header template: "%s"' % token)
         
@@ -99,6 +100,7 @@ class CAsciiEmitter(PluginTemplate):
                 self.generate_state_machine(stream, indent)
             elif token == "TOKEN_IDNAMES":
                 rule_id_list = [rule.id for rule in self.lexical_analyzer.rules]
+                rule_id_list.extend(self.lexical_analyzer.reserved_ids)
                 formatted_ids = ", \n".join(" "*indent + "\"%s\"" % rule_id for rule_id in rule_id_list)
                 stream.write(formatted_ids + " \n")
             elif token == "CAPTURE_CASES":

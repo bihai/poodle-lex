@@ -35,7 +35,6 @@ Namespace Poodle
         Id As TokenId
         Text As Unicode.Text
         
-        
         Declare Constructor()
         Declare Constructor(ByVal Id As TokenId, ByVal Text As Unicode.Text)
         Declare Function ToString(ByRef _Encoding As Unicode.StringEncoding = *Unicode.DefaultStringEncoding) As String

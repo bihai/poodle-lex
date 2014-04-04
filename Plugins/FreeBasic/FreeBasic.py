@@ -80,10 +80,12 @@ class FreeBasicEmitter(PluginTemplate):
         bi_output_file = os.path.join(self.output_directory, FreeBasicEmitter.bi_file)
         for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
             if token == 'ENUM_TOKEN_IDS':
-                for id in self.rule_ids.itervalues():
+                token_ids = [self.rule_ids[rule.id.title()] for rule in self.lexical_analyzer.rules]
+                token_ids.extend([self.rule_ids[id.title()] for id in self.lexical_analyzer.reserved_ids])
+                for id in token_ids:
                     stream.write(" "*indent + id + "\n")
             elif token == "TOKEN_IDNAMES_LIMIT":
-                stream.write(str(len(self.lexical_analyzer.rules)+1))
+                stream.write(str(len(self.rule_ids)+1))
             else:
                 raise Exception('Unrecognized token in header template: "%s"' % token)
         
@@ -99,9 +101,10 @@ class FreeBasicEmitter(PluginTemplate):
             elif token == 'STATE_MACHINE':
                 self.generate_state_machine(stream, indent)
             elif token == "TOKEN_IDNAMES_LIMIT":
-                stream.write(str(len(self.lexical_analyzer.rules)+1))
+                stream.write(str(len(self.rule_ids)+1))
             elif token == "TOKEN_IDNAMES":
-                rule_id_list = [self.rule_ids[rule.id.title()] for rule in self.lexical_analyzer.rules]
+                rule_id_list = [rule.id for rule in self.lexical_analyzer.rules]
+                rule_id_list.extend(self.lexical_analyzer.reserved_ids)
                 formatted_ids = ", _\n".join(" "*indent + "@\"%s\"" % rule_id for rule_id in rule_id_list)
                 stream.write(formatted_ids + "_ \n")
             else:

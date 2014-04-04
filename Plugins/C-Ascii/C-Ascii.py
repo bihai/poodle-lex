@@ -77,7 +77,7 @@ class CAsciiEmitter(PluginTemplate):
         h_output_file = os.path.join(self.output_directory, CAsciiEmitter.h_file)
         for stream, token, indent in FileTemplate(h_template_file, h_output_file):
             if token == 'ENUM_TOKEN_IDS':
-                token_ids = [self.rule_ids[rule.id.upper()] for rule in self.lexical_analyzer.rules]
+                token_ids = self.rule_ids.values()
                 token_ids.append("PTKN_TOKENIDCOUNT")
                 CAsciiEmitter.emit_enum_list(stream, indent, token_ids)
             elif token == "TOKEN_IDNAMES_LIMIT":
@@ -150,13 +150,15 @@ class CAsciiEmitter(PluginTemplate):
         """
         Maps all rule names to an enum element in the FreeBasic source code
         """
-        for rule in self.lexical_analyzer.rules:
-            rule_id = "PTKN_" + rule.id.upper()
+        all_ids = [rule.id.upper() for rule in self.lexical_analyzer.rules]
+        all_ids.extend([id.upper() for id in self.lexical_analyzer.reserved_ids])
+        for id in all_ids:
+            code_id = "PTKN_" + id
             n = 1
-            while rule_id in self.rule_ids.values() or rule_id.lower() in CAsciiEmitter.reserved_keywords:
-                rule_id = '%s%d' % ("PTKN_" + rule.id.upper(), n)
+            while code_id in self.rule_ids.values() or code_id.lower() in CAsciiEmitter.reserved_keywords:
+                code_id = '%s%d' % ("PTKN_" + id, n)
                 n += 1
-            self.rule_ids[rule.id.upper()] = rule_id
+            self.rule_ids[id] = code_id
         
     def generate_state_machine(self, stream, indent):
         """

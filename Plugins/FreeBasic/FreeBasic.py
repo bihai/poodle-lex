@@ -80,8 +80,8 @@ class FreeBasicEmitter(PluginTemplate):
         bi_output_file = os.path.join(self.output_directory, FreeBasicEmitter.bi_file)
         for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
             if token == 'ENUM_TOKEN_IDS':
-                for rule in self.lexical_analyzer.rules:
-                    stream.write(" "*indent + self.rule_ids[rule.id.title()] + "\n")
+                for id in self.rule_ids.itervalues():
+                    stream.write(" "*indent + id + "\n")
             elif token == "TOKEN_IDNAMES_LIMIT":
                 stream.write(str(len(self.lexical_analyzer.rules)+1))
             else:
@@ -164,13 +164,15 @@ class FreeBasicEmitter(PluginTemplate):
         """
         Maps all rule names to an enum element in the FreeBasic source code
         """
-        for rule in self.lexical_analyzer.rules:
-            rule_id = rule.id.title()
+        all_ids = [rule.id.title() for rule in self.lexical_analyzer.rules]
+        all_ids.extend([id.title() for id in self.lexical_analyzer.reserved_ids])
+        for id in all_ids:
             n = 1
-            while rule_id in self.rule_ids.values() or rule_id.lower() in FreeBasicEmitter.reserved_keywords:
-                rule_id = '%s%d' % (rule.id.title(), n)
+            code_id = id
+            while code_id in self.rule_ids.values() or code_id.lower() in FreeBasicEmitter.reserved_keywords:
+                code_id = '%s%d' % (id, n)
                 n += 1
-            self.rule_ids[rule.id.title()] = rule_id
+            self.rule_ids[id] = code_id
         
     def generate_state_machine(self, stream, indent):
         """

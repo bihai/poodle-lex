@@ -2,7 +2,7 @@
 Skip Comment: '' + 
     '/\*.*\*/' +  '|' + # Multiline comments
     '//[^\r\n]*'        # Single line comments
-Skip Whitespace: '[ \t\v\n\f]+'
+Skip Whitespace: '[ \t\v\n\f\r]+'
 Capture PPDirective: "#([^\r\n]|\\(\r|\n|\r\n))*"
 
 # Keywords

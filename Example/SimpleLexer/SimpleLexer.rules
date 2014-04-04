@@ -9,3 +9,5 @@ Capture Quote: '"([^"\\]|\\.)*"'
 # Whitespace
 Newline: '\r\n|\r|\n'
 Skip Whitespace: '[\t\s]+'
+Reserve ForLaterUse
+Reserve AlsoForLaterUse

@@ -52,7 +52,6 @@ class Pattern(object):
         
     def __eq__(self, other_pattern):
         return repr(self.pattern) == repr(other_pattern.pattern)
-
         
 class Rule(Pattern):
     """
@@ -105,6 +104,7 @@ class LexicalAnalyzer(object):
         @param defines: a dictionary mapping strings represeneting names of substitutable variables to strings representing patterns which substitute them.
         @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft's algorithm by default
         """
+        self.reserved_ids = set()
         self.rules = []
         for rule in rules:
             self.add_rule(rule[0], rule[1])
@@ -127,9 +127,20 @@ class LexicalAnalyzer(object):
         for rule_id, pattern, is_case_insensitive, action in LexicalAnalyzerParser.parse(file, encoding):
             if action == '::define::':
                 lexer.add_define(rule_id, pattern, is_case_insensitive)
+            elif action == '::reserve::':
+                lexer.reserve_id(rule_id)
             else:
                 lexer.add_rule(rule_id, pattern, is_case_insensitive, action)
         return lexer
+        
+    def reserve_id(self, id):
+        """
+        Reserves a token name for custom use
+        @param id: string containing the rule id to reserve
+        """
+        if id in [rule.id for rule in self.rules] or id in self.reserved_ids:
+            raise RegexParserException(id, "Id is already reserved: '%s'" % id)
+        self.reserved_ids.add(id)
 
     def add_rule(self, id, pattern, is_case_insensitive=False, action=None):
         """
@@ -143,7 +154,7 @@ class LexicalAnalyzer(object):
             if id == '':
                 raise Exception("Can't have empty rule")
                 
-            if id in [rule.id for rule in self.rules]:
+            if id in [rule.id for rule in self.rules] or id in self.reserved_ids:
                 raise Exception("Duplicate rule: '%s'" % id)
             
             self.rules.append(Rule(id, pattern, is_case_insensitive, action))

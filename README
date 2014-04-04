@@ -3,7 +3,7 @@ It produces source code which scans an input stream and outputs a stream of
 word units. Features include Unicode support and a platform for supporting 
 arbitrary programming languages through plugins.
 
-Usage: python __main__.py RULES_FILE OUTPUT_DIR [Optional arguments]
+Usage: Poodle-Lex RULES_FILE OUTPUT_DIR [Optional arguments]
 
 Required arguments:
 RULES_FILE: A file containing token names and pattern definitions
@@ -17,13 +17,18 @@ Optional arguments:
 -l LANGUAGE,  --language LANGUAGE - Output emitter language.
 -i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well
 
+Commands:
+Poodle-Lex list-languages: Prints out a list of languages supportd by the -language option
+Poodle-Lex list-minimizers: Prints out a list of DFA minimization algorithms supported by the --minimizer option.
+
 Rules file:
 The rules file is a simple format which describes the lexical analyzer as a 
 set of token definitions, one on each line. The rules file consists of three
 types of statements:
 1) Token rules
 2) Variable definitions
-3) Comments
+3) Token name reservations
+4) Comments
 
 Token rules take the following form:
 [COMMAND] TOKEN_ID: PATTERN
@@ -49,6 +54,12 @@ Let VARIABLE_NAME = PATTERN
 Variables can be substituted within a pattern, but are not themselves rules.
 VARIABLE_NAME is the name of a variable to define. PATTERN is a pattern in the 
 same format as with token rules.
+
+Token name reservations take the following form:
+Reserve TOKEN_ID
+
+If used, this will add TOKEN_ID to the list of token ids. This can be used to 
+reserve token ids, or create ids that can be emitted by a preprocessor.
 
 Finally, any text on a line after "#" is considered a comment. 
  

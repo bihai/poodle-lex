@@ -150,6 +150,7 @@ def parse(file, encoding):
             file_lexer.get_next()
             file_lexer.skip(['whitespace'])
             token, text = file_lexer.expect_one_of(['colon', 'identifier'])
+            skip_pattern = False
             if token == 'identifier':
                 rule_action = rule_name
                 rule_name = text
@@ -157,20 +158,23 @@ def parse(file, encoding):
                 if rule_action.lower() == 'let':
                     rule_action = '::define::'
                     file_lexer.expect('equals')
+                elif rule_action.lower() == 'reserve':
+                    rule_action = '::reserve::'
+                    skip_pattern = True
                 else:
                     file_lexer.expect('colon')                
-            
             file_lexer.skip(['whitespace'])
-            if file_lexer.token == 'identifier' and file_lexer.text == 'i':
-                rule_is_case_insensitive = True
-                file_lexer.get_next()
-            rule_pattern = parse_literal(file_lexer)
-            file_lexer.skip(['whitespace'])
-            while file_lexer.token == 'plus':
-                file_lexer.get_next()
-                file_lexer.skip(['whitespace', 'comment', 'newline'])
-                rule_pattern += parse_literal(file_lexer)
+            if not skip_pattern:
+                if file_lexer.token == 'identifier' and file_lexer.text == 'i':
+                    rule_is_case_insensitive = True
+                    file_lexer.get_next()
+                rule_pattern = parse_literal(file_lexer)
                 file_lexer.skip(['whitespace'])
+                while file_lexer.token == 'plus':
+                    file_lexer.get_next()
+                    file_lexer.skip(['whitespace', 'comment', 'newline'])
+                    rule_pattern += parse_literal(file_lexer)
+                    file_lexer.skip(['whitespace'])
             file_lexer.skip(['comment'])
             file_lexer.expect_one_of(['newline', 'end of stream'])
             return rule_name, rule_pattern, rule_is_case_insensitive, rule_action

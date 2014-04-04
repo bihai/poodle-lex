@@ -89,10 +89,28 @@ object --+
           <td><span class="summary-sig"><a href="Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">rules</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
         <span class="summary-sig-arg">defines</span>=<span class="summary-sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>,
-        <span class="summary-sig-arg">minimizer</span>=<span class="summary-sig-default">&lt;function minimize at 0x033A5CB0&gt;</span>)</span><br />
+        <span class="summary-sig-arg">minimizer</span>=<span class="summary-sig-default">&lt;function minimize at 0x08AE0EB0&gt;</span>)</span><br />
       x.__init__(...) initializes x; see help(type(x)) for signature</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#LexicalAnalyzer.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#reserve_id" class="summary-sig-name">reserve_id</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">id</span>)</span><br />
+      Reserves a token name for custom use</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#LexicalAnalyzer.reserve_id">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -382,7 +400,7 @@ object --+
         <tr>
           <td><span class="summary-sig"><a href="Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#parse" class="summary-sig-name">parse</a>(<span class="summary-sig-arg">file</span>,
         <span class="summary-sig-arg">encoding</span>,
-        <span class="summary-sig-arg">minimizer</span>=<span class="summary-sig-default">&lt;function minimize at 0x033A5CB0&gt;</span>)</span><br />
+        <span class="summary-sig-arg">minimizer</span>=<span class="summary-sig-default">&lt;function minimize at 0x08AE0EB0&gt;</span>)</span><br />
       Creates a lexical analyzer from a rules definition file</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#LexicalAnalyzer.parse">source&nbsp;code</a></span>
@@ -473,7 +491,7 @@ object --+
   <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">rules</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
         <span class="sig-arg">defines</span>=<span class="sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>,
-        <span class="sig-arg">minimizer</span>=<span class="sig-default">&lt;function minimize at 0x033A5CB0&gt;</span>)</span>
+        <span class="sig-arg">minimizer</span>=<span class="sig-default">&lt;function minimize at 0x08AE0EB0&gt;</span>)</span>
     <br /><em class="fname">(Constructor)</em>
   </h3>
   </td><td align="right" valign="top"
@@ -506,7 +524,7 @@ object --+
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">parse</span>(<span class="sig-arg">file</span>,
         <span class="sig-arg">encoding</span>,
-        <span class="sig-arg">minimizer</span>=<span class="sig-default">&lt;function minimize at 0x033A5CB0&gt;</span>)</span>
+        <span class="sig-arg">minimizer</span>=<span class="sig-default">&lt;function minimize at 0x08AE0EB0&gt;</span>)</span>
     <br /><em class="fname">Static Method</em>
   </h3>
   </td><td align="right" valign="top"
@@ -521,6 +539,30 @@ object --+
         <li><strong class="pname"><code>file</code></strong> - string containing the file name of the rules definition file.</li>
         <li><strong class="pname"><code>minimizer</code></strong> - function which minimizes a given DeterministicFiniteAutomata 
           object. Hopcroft algorithm by default.</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="reserve_id"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">reserve_id</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">id</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#LexicalAnalyzer.reserve_id">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Reserves a token name for custom use</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>id</code></strong> - string containing the rule id to reserve</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -854,7 +896,7 @@ object --+
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Wed Apr 02 23:47:16 2014
+    Generated by Epydoc 3.0.1 on Thu Apr 03 22:07:23 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

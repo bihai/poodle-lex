@@ -108,6 +108,7 @@ Generator.LexicalAnalyzer.LexicalAnalyzer.check_not_final	Generator.LexicalAnaly
 Generator.LexicalAnalyzer.LexicalAnalyzer.finalize	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#finalize
 Generator.LexicalAnalyzer.LexicalAnalyzer.add_define	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#add_define
 Generator.LexicalAnalyzer.LexicalAnalyzer.rules	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#rules
+Generator.LexicalAnalyzer.LexicalAnalyzer.reserve_id	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#reserve_id
 Generator.LexicalAnalyzer.LexicalAnalyzer.export_dfa	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#export_dfa
 Generator.LexicalAnalyzer.LexicalAnalyzer.export_min_dfa	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#export_min_dfa
 Generator.LexicalAnalyzer.LexicalAnalyzer.export_nfa	Generator.LexicalAnalyzer.LexicalAnalyzer-class.html#export_nfa

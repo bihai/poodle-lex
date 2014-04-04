@@ -489,5 +489,11 @@ s2.edges[s3] = a</code>
         simply iterate through the output of get_min_dfa(), like so</p>
         <code>for state in lexical_analyzer.get_min_dfa():
     print state.ids</code>
+    
+        <p>The <strong>Rule</strong> object has an <strong>action</strong>
+        attribute which contains the action associated with the rules. If a
+        state has matches multiple rules, the order of the Rule objects in 
+        the <strong>rules</strong> instance variable can be used to select
+        a final match.</p>
     </body>
 </html>

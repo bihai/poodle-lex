@@ -36,7 +36,11 @@ It produces source code which scans an input stream and outputs a stream of
 word units. Features include Unicode support and a platform for supporting 
 arbitrary programming languages through plugins.</p>
 
-<p>Usage: <code>python __main__.py RULES_FILE OUTPUT_DIR [Optional arguments]</code></p>
+<p>Usage:</p>
+<ul>
+    <li><code>Poodle-Lex RULES_FILE OUTPUT_DIR [Optional arguments]</code>, or</li>
+    <li><code>Poodle-Lex COMMAND</code></li>
+</ul>
 
 <h2>
 <a name="required-arguments" class="anchor" href="#required-arguments"><span class="octicon octicon-link"></span></a>Required arguments:</h2>
@@ -81,6 +85,13 @@ OUTPUT_DIR: An existing directory to which the state machine code is written.</p
 </table>
 
 <h2>
+<a name="commands" class="anchor" href="#commands"><span class="octicon octicon-link"></span></a>Commands:</h2>
+<ul>
+    <li><strong>list-languages</strong>: Prints out a list of languages supportd by the -language option</li>
+    <li><strong>list-minimizers</strong>: Prints out a list of minimizers supported by the -minimizer option</li>
+</ul>
+
+<h2>
 <a name="rules-file" class="anchor" href="#rules-file"><span class="octicon octicon-link"></span></a>Rules file:</h2>
 
 <p>The rules file is a simple format which describes the lexical analyzer as a 
@@ -116,6 +127,11 @@ are case-insensitive, and valid commands are:</p>
 <p>Variables can be substituted within a pattern, but are not themselves rules.
 <strong>VARIABLE_NAME</strong> is the name of a variable to define. <strong>PATTERN</strong> is a pattern in the 
 same format as with token rules.</p>
+
+<p>Token name reservations take the following form:
+<code>Reserve TOKEN_ID</code></p>
+<p>If used, this will add TOKEN_ID to the list of token ids. This can be used to 
+reserve token ids, or create ids that can be emitted by a preprocessor.</p>
 
 <p>Finally, any text on a line after "#" is considered a comment. </p>
 

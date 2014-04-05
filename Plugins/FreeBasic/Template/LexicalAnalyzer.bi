@@ -18,8 +18,8 @@
 ' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 ' DEALINGS IN THE SOFTWARE.
 
-#ifndef POODLE_LEXICALANALYZER_BI
-#define POODLE_LEXICALANALYZER_BI
+#ifndef $HEADER_GUARD_NAME
+#define $HEADER_GUARD_NAME
 
 #include "Stream\Unicode.bi"
 #include "Stream\CharacterStream.bi"
@@ -44,7 +44,7 @@ Namespace Poodle
         Static IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer 
     End Type
 
-    Type LexicalAnalyzer Extends Object
+    Type $CLASS_NAME Extends Object
         Public:
         Declare Constructor(Stream As CharacterStream Ptr)
         Declare Function IsEndOfStream() As Integer

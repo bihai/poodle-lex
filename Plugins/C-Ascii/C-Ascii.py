@@ -29,7 +29,7 @@ from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
-def create_emitter(lexical_analyzer, plugin_files_directory, output_directory):
+def create_emitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
     return CAsciiEmitter(lexical_analyzer, plugin_files_directory, output_directory)
     
 class CAsciiEmitter(PluginTemplate):
@@ -78,7 +78,7 @@ class CAsciiEmitter(PluginTemplate):
         for stream, token, indent in FileTemplate(h_template_file, h_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 token_ids = [self.rule_ids[rule.id.upper()] for rule in self.lexical_analyzer.rules]
-                token_ids.extend([self.rule_ids[id] for id in self.lexical_analyzer.reserved_ids])
+                token_ids.extend([self.rule_ids[id.upper()] for id in self.lexical_analyzer.reserved_ids])
                 token_ids.append("PTKN_TOKENIDCOUNT")
                 CAsciiEmitter.emit_enum_list(stream, indent, token_ids)
             elif token == "TOKEN_IDNAMES_LIMIT":

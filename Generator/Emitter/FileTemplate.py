@@ -31,22 +31,29 @@ def FileTemplate(in_filename, out_filename):
     @param in_filename: string containing the name of the template file to copy
     @param out_filename: string containing the name of the filled-in template file to write.
     """
-    pattern_variablename = r"\$(?P<%s>[a-zA-Z][a-zA-Z0-9_]*)"
-    pattern_inline = pattern_variablename % "inline"
-    pattern_entireline = r"^(?P<whitespace>[ \t]*)%s" % (pattern_variablename % "entireline")
-    pattern_variable = r"(%s)|(%s)" % (pattern_entireline, pattern_inline)
+    pattern_variablename = r"[a-zA-Z][a-zA-Z0-9_]*"
+    pattern_loose = r"\$(?P<loose>%s)" % pattern_variablename
+    pattern_tight = r"\$\{(?P<tight>%s)\}" % pattern_variablename
+    pattern_instance = r"(%s|%s)" % (pattern_loose, pattern_tight)
+    pattern_entireline = r"^(?P<whitespace>[ \t]*)%s$" % (pattern_instance)
+    
+    def get_var_name(match):
+        if match.group('loose') is not None:
+            return match.group('loose')
+        else:
+            return match.group('tight')
     
     with open(in_filename, 'r') as in_file:
         with open(out_filename, 'w') as out_file:
             for line in in_file:
-                match = re.search(pattern_variable, line)
+                match = re.search(pattern_entireline, line)
                 if match is not None:
-                    if match.group('entireline') is not None:
-                        yield out_file, match.group('entireline'), len(match.group('whitespace'))
-                    else:
-                        out_file.write(line[:match.start(0)])
-                        yield out_file, match.group('inline'), None
-                        out_file.write(line[match.end(0):])
+                    yield out_file, get_var_name(match), len(match.group('whitespace'))
                 else:
-                    out_file.write(line)
+                    start = 0
+                    for match in re.finditer(pattern_instance, line):
+                        out_file.write(line[start:match.start(0)])
+                        yield out_file, get_var_name(match), None
+                        start = match.end(0)
+                    out_file.write(line[start:])
                     

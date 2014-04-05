@@ -90,7 +90,7 @@ class Rule(Pattern):
         nfa_visitor = NonDeterministicFiniteAutomataBuilder(self.id, defines)
         self.regex.accept(nfa_visitor)
         return nfa_visitor.get()
-        
+ 
 class LexicalAnalyzer(object):
     """
     Represents a lexical analyzer.

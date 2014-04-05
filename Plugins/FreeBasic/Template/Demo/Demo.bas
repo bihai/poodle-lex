@@ -20,7 +20,7 @@
 
 #include "vbcompat.bi"
 #include "UTF8Stream.bi"
-#include "LexicalAnalyzer.bi"
+#include "$CLASS_NAME.bi"
 
 If Len(Command(1)) = 0 Then
     Print "usage: Demo [input_file_to_scan]"
@@ -39,7 +39,7 @@ If InputFile.GetStatus() = Poodle.CharacterStream.CharacterStreamInvalid Then
     End
 End If
 
-Var LexicalAnalyzer = Poodle.LexicalAnalyzer(@InputFile)
+Var LexicalAnalyzer = Poodle.$CLASS_NAME(@InputFile)
 While LexicalAnalyzer.IsEndOfStream() = 0
     Var Token = LexicalAnalyzer.GetToken()
     Print Token.ToString()

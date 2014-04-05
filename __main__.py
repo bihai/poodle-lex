@@ -36,7 +36,6 @@ if getattr(sys, 'frozen', None) is None:
     this_file = __file__
 this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
 
-
 # Use simple command parsing for simple commands
 minimizers = {
     'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', HopcroftDFAMinimizer.minimize),
@@ -72,6 +71,8 @@ arg_parser.add_argument("-d", "--print-dfa", help="Print a graph of the non-mini
 arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
 arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Use '--action=list-minimizers' for list of options", default="hopcroft", metavar="ALGORITHM")
 arg_parser.add_argument("-l", "--language", help="Output programming language. Use '--action=list-languages' for list of options", default=None)
+arg_parser.add_argument("-c", "--class-name", help="The name of the lexical analyzer class to generate", default=None)
+arg_parser.add_argument("-s", "--namespace", help="The namespace name of the lexical analyzer class to generate", default=None)
 arguments = arg_parser.parse_args()
 
 # Check minimizer
@@ -132,7 +133,10 @@ except Exception as e:
 
 # Copy non-generated files over
 try:
-    emitter = language_plugin.create(lexer, arguments.OUTPUT_DIR)
+    plugin_options = LanguagePlugins.PluginOptions()
+    plugin_options.class_name = arguments.class_name
+    plugin_options.namespace = arguments.namespace
+    emitter = language_plugin.create(lexer, arguments.OUTPUT_DIR, plugin_options)
     
     if not os.path.exists(arguments.OUTPUT_DIR):
         sys.stderr.write("Output directory not found\n")

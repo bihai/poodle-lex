@@ -18,7 +18,7 @@
 ' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 ' DEALINGS IN THE SOFTWARE.
 
-#include "LexicalAnalyzer.bi"
+#include "$CLASS_NAME.bi"
 #include "UnicodeConstants.bi"
 
 Constructor Poodle.Token()
@@ -56,23 +56,23 @@ Dim Poodle.Token.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = {
     $TOKEN_IDNAMES
 }
 
-Constructor Poodle.LexicalAnalyzer(Stream As CharacterStream Pointer)
+Constructor Poodle.$CLASS_NAME(Stream As CharacterStream Pointer)
     This.Stream = Stream
     This.Character = Stream->GetCharacter()
 End Constructor
 
-Function Poodle.LexicalAnalyzer.IsEndOfStream() As Integer
+Function Poodle.$CLASS_NAME.IsEndOfStream() As Integer
     Return This.Stream->IsEndOfStream()
 End Function
 
 Namespace Poodle
-    Enum LexicalAnalyzerState
+    Enum ${CLASS_NAME}State
         $ENUM_STATE_IDS
     End Enum
 End Namespace
 
-Function Poodle.LexicalAnalyzer.GetToken() As Poodle.Token
-    Dim State As Poodle.LexicalAnalyzerState = Poodle.$INITIAL_STATE
+Function Poodle.$CLASS_NAME.GetToken() As Poodle.Token
+    Dim State As Poodle.${CLASS_NAME}State = Poodle.$INITIAL_STATE
     Dim Text As Poodle.Unicode.Text
     Do
         Dim Capture As Integer = 0

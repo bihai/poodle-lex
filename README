@@ -153,7 +153,8 @@ cd Output/Demo
 ./Demo
 
 Credits:
-Poodle-Lex is developed and maintained by Parker Michaels.
+Parker Michaels - Primary developer
+AGS - C lexer example, countless bug reports and tests
 
 Thank you to everyone who helped test or provided feedback for this tool. This 
-includes members of the FreeBasic.net forum such as AGS and TFS.
+includes members of the FreeBasic.net forum such as TFS.

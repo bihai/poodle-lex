@@ -21,7 +21,7 @@
 class PluginTemplateNotImplemented(Exception):
     def __init__(self):
         Exception.__init__(self, "Not implemented")
-    
+
 class PluginTemplate(object):
     """
     Template from which language emitter plug-ins should derive

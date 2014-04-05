@@ -29,6 +29,12 @@ import sys
 import textwrap
 import types
 
+class PluginOptions(object):
+    def __init__(self):
+        self.is_backtracking = False
+        self.class_name = None
+        self.namespace = None
+
 class Plugin(object):
     """
     Class representing a Poodle-Lex language emitter plug-in
@@ -49,13 +55,13 @@ class Plugin(object):
         if not hasattr(self.module, 'create_emitter') or not isinstance(self.module.create_emitter, types.FunctionType):
             raise Exception("Plug-in does not contain a 'create_emitter' function")
             
-    def create(self, lexical_analyzer, output_directory):
+    def create(self, lexical_analyzer, output_directory, plugin_options):
         """
         Creates a LanugageEmitter object from the plug-in
         """
         if self.module is None:
             raise Exception("Plug-in not loaded")
-        emitter = self.module.create_emitter(lexical_analyzer, self.plugin_files_directory, output_directory)
+        emitter = self.module.create_emitter(lexical_analyzer, self.plugin_files_directory, output_directory, plugin_options)
         if not issubclass(emitter.__class__, PluginTemplate.PluginTemplate):
             raise Exception("Plug-in interface did not return a class of the correct type")
         return emitter

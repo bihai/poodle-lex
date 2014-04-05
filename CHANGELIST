@@ -3,7 +3,7 @@ Poodle-Lex Changelist
 Version 1.0:
     Features:
         - Support for variable substitution
-        - Support for skip and capture commands
+        - Support for skip, capture, and reserve commands
         - Support for emitter language plugins
         - Addition of C emitter
 

@@ -155,7 +155,7 @@ class RegexParser(object):
             elif self.get_next_if(u'v'):
                 return Regex.Literal([RegexParser.vertical_tab])
             elif self.get_next_if(u'f'):
-                return Regex.Literal([RegexParser.vertical_tab])
+                return Regex.Literal([RegexParser.form_feed])
             elif self.get_next_if(u'x'):
                 codepoint = self.parse_hex_digits(2)
                 return Regex.Literal([(codepoint, codepoint)])

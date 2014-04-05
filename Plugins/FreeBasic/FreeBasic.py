@@ -29,8 +29,8 @@ from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
-def create_emitter(lexical_analyzer, plugin_files_directory, output_directory):
-    return FreeBasicEmitter(lexical_analyzer, plugin_files_directory, output_directory)
+def create_emitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
+    return FreeBasicEmitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options)
 
 class FreeBasicEmitter(PluginTemplate):
     """
@@ -39,19 +39,89 @@ class FreeBasicEmitter(PluginTemplate):
     @ivar ids: a dict mapping states to an enum element in the FreeBasic source
     @ivar dfa: the deterministic finite automata (DFA) representing the lexical analyzer.
     """
-    reserved_keywords = [
-        'if', 'then', 'else', 'elseif', 'for', 'next', 'do', 'loop',
-        'while', 'wend', 'goto', 'sub', 'function', 'end', 'type', 'is',
-        'and', 'or', 'xor', 'not', 'goto', 'property', 'constructor', 'destructor',
-        'namespace', 'string', 'integer', 'double', 'single', 'byte', 'ptr', 'any',
-        'byref', 'byval', 'as', 'ubyte', 'short', 'ushort', 'uinteger', 'long',
-        'ulong', 'longint', 'ulongint', 'cast', 'len', 'case', 'const', 'continue',
-        'enum', 'extern', 'int', 'return', 'static', 'union', 'unsigned'
-    ]
+    reserved_keywords = set([
+        "__date__", "__date_iso__", "__fb_argc__", "__fb_argv__", 
+        "__fb_backend__", "__fb_bigendian__", "__fb_build_date__", 
+        "__fb_cygwin__", "__fb_darwin__", "__fb_debug__", "__fb_dos__", 
+        "__fb_err__", "__fb_fpmode__", "__fb_fpu__", "__fb_freebsd__", 
+        "__fb_gcc__", "__fb_lang__", "__fb_linux__", "__fb_main__", 
+        "__fb_min_version__", "__fb_mt__", "__fb_netbsd__", "__fb_openbsd__", 
+        "__fb_option_byval__", "__fb_option_dynamic__", "__fb_option_escape__", 
+        "__fb_option_explicit__", "__fb_option_gosub__", 
+        "__fb_option_private__", "__fb_out_dll__", "__fb_out_exe__", 
+        "__fb_out_lib__", "__fb_out_obj__", "__fb_pcos__", "__fb_signature__", 
+        "__fb_sse__", "__fb_unix__", "__fb_vectorize__", "__fb_ver_major__", 
+        "__fb_ver_minor__", "__fb_ver_patch__", "__fb_version__", 
+        "__fb_win32__", "__fb_xbox__", "__file__", "__file_nq__", 
+        "__function__", "__function_nq__", "__line__", "__path__", "__time__", 
+        "assert", "define", "else", "elseif", "endif", "endmacro", "error", 
+        "if", "ifdef", "ifndef", "inclib", "include", "lang", "libpath", "line", 
+        "macro", "pragma", "print", "undef", "dynamic", "static", "abs", 
+        "abstract", "access", "acos", "add", "alias", "allocate", "alpha", 
+        "and", "andalso", "any", "append", "as", "assertwarn", "asc", "asin", 
+        "asm", "atan2", "atn", "base", "beep", "bin", "binary", "bit", 
+        "bitreset", "bitset", "bload", "bsave", "byref", "byte", "byval", 
+        "call", "callocate", "case", "cast", "cbyte", "cdbl", "cdecl", "chain", 
+        "chdir", "chr", "cint", "circle", "class", "clear", "clng", "clngint", 
+        "close", "cls", "color", "command", "common", "condbroadcast", 
+        "condcreate", "conddestroy", "condsignal", "condwait", "const", 
+        "constructor", "continue", "cos", "cptr", "cshort", "csign", "csng", 
+        "csrlin", "cubyte", "cuint", "culng", "culngint", "cunsg", "curdir", 
+        "cushort", "custom", "cvd", "cvi", "cvl", "cvlongint", "cvs", "cvshort", 
+        "data", "date", "dateadd", "datediff", "datepart", "dateserial", 
+        "datevalue", "day", "deallocate", "declare", "defbyte", "defdbl", 
+        "defined", "defint", "deflng", "deflongint", "defshort", "defsng", 
+        "defstr", "defubyte", "defuint", "defulongint", "defushort", "delete", 
+        "destructor", "dim", "dir", "do", "loop", "double", "draw", "dylibfree", 
+        "dylibload", "dylibsymbol", "encoding", "end", "enum", "environ", "eof", 
+        "eqv", "erase", "erfn", "erl", "ermn", "err", "exec", "exepath", "exit", 
+        "exp", "export", "extends", "extern", "field", "fileattr", "filecopy", 
+        "filedatetime", "fileexists", "filelen", "fix", "flip", "for", "next", 
+        "format", "frac", "fre", "freefile", "function", "get", "getjoystick", 
+        "getkey", "getmouse", "gosub", "goto", "hex", "hibyte", "hiword", 
+        "hour", "then", "iif", "imageconvertrow", "imagecreate", "imagedestroy", 
+        "imageinfo", "imp", "implements", "import", "inkey", "inp", "input", 
+        "input$", "instr", "instrrev", "int", "integer", "is", "isdate", "kill", 
+        "lbound", "lcase", "left", "len", "let", "lib", "lobyte", "loc", 
+        "local", "locate", "lock", "lof", "log", "long", "longint", "loword", 
+        "lpos", "lprint", "lset", "ltrim", "mid", "minute", "mkd", "mkdir", 
+        "mki", "mkl", "mklongint", "mks", "mkshort", "mod", "month", 
+        "monthname", "multikey", "mutexcreate", "mutexdestroy", "mutexlock", 
+        "mutexunlock", "naked", "name", "namespace", "new", "not", "now", 
+        "object", "oct", "offsetof", "on", "once", "open", "operator", 
+        "option", "option", "or", "orelse", "out", "output", "overload", 
+        "override", "paint", "palette", "pascal", "pcopy", "peek", "pmap", 
+        "point", "pointcoord", "pointer", "poke", "pos", "preserve", "preset", 
+        "private", "procptr", "property", "protected:", "pset", 
+        "ptr", "public", "put", "random", "randomize", "read", 
+        "reallocate", "redim", "rem", "reset", "restore", "resume", "return", 
+        "rgb", "rgba", "right", "rmdir", "rnd", "rset", "rtrim", "run", "sadd", 
+        "scope", "screen", "screencopy", "screencontrol", "screenevent", 
+        "screeninfo", "screenglproc", "screenlist", "screenlock", "screenptr", 
+        "screenres", "screenset", "screensync", "screenunlock", "second", 
+        "seek", "select", "setdate", "setenviron", "setmouse", "settime", "sgn", 
+        "shared", "shell", "shl", "shr", "short", "sin", "single", "sizeof", 
+        "sleep", "space", "spc", "sqr", "stdcall", "step", "stick", "stop", 
+        "str", "strig", "string", "strptr", "sub", "swap", "system", "tab", 
+        "tan", "this", "threadcall", "threadcreate", "threadwait", "time", 
+        "timeserial", "timevalue", "timer", "to", "trans", "trim", "type", 
+        "typeof", "ubound", "ubyte", "ucase", "uinteger", "ulong", "ulongint", 
+        "union", "unlock", "unsigned", "until", "ushort", "using", "va_arg", 
+        "va_first", "va_next", "val", "vallng", "valint", "valuint", "valulng", 
+        "var", "varptr", "view", "virtual", "wait", "wbin", "wchr", "weekday", 
+        "weekdayname", "wend", "while", "whex", "width", "window", 
+        "windowtitle", "winput", "with", "woct", "write", "wspace", "wstr", 
+        "wstring", "xor", "year", "zstring" 
+    ])
     bi_file = "LexicalAnalyzer.bi"
     bas_file = "LexicalAnalyzer.bas"
+    demo_file = os.path.join("Demo", "Demo.bas")
+    windows_makefile = os.path.join("Demo", "make_demo.bat")
+    linux_makefile = os.path.join("Demo", "make_demo.sh")
+    class_name = "LexicalAnalyzer"
+    namespace = "Poodle"
     
-    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory):
+    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
         """
         @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as FreeBasic code.
         @param plugin_files_directory: string specifying the location of template files
@@ -63,6 +133,7 @@ class FreeBasicEmitter(PluginTemplate):
         self.ids = {}
         self.rule_ids = {}
         self.dfa = None
+        self.plugin_options = plugin_options
     
     # Public interface
     def emit(self):
@@ -77,13 +148,17 @@ class FreeBasicEmitter(PluginTemplate):
         
         # Emit lexical analyzer header
         bi_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bi_file)
-        bi_output_file = os.path.join(self.output_directory, FreeBasicEmitter.bi_file)
+        bi_output_file = os.path.join(self.output_directory, self.get_class_name() + ".bi")
         for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 token_ids = [self.rule_ids[rule.id.title()] for rule in self.lexical_analyzer.rules]
                 token_ids.extend([self.rule_ids[id.title()] for id in self.lexical_analyzer.reserved_ids])
                 for id in token_ids:
                     stream.write(" "*indent + id + "\n")
+            elif token == "CLASS_NAME":
+                stream.write(self.get_class_name())
+            elif token == "HEADER_GUARD_NAME":
+                stream.write("POODLE_%s_BI" % self.get_class_name().upper())
             elif token == "TOKEN_IDNAMES_LIMIT":
                 stream.write(str(len(self.rule_ids)+1))
             else:
@@ -91,13 +166,15 @@ class FreeBasicEmitter(PluginTemplate):
         
         # Emit lexical analyzer source
         bas_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bas_file)
-        bas_output_file = os.path.join(self.output_directory, FreeBasicEmitter.bas_file)
+        bas_output_file = os.path.join(self.output_directory, self.get_class_name() + ".bas")
         for stream, token, indent in FileTemplate(bas_template_file, bas_output_file):
             if token == 'ENUM_STATE_IDS':
                 for state_id in sorted(list(self.ids.values())):
                     stream.write(" "*indent + state_id + '\n')
             elif token == 'INITIAL_STATE':
                 stream.write(self.ids[self.dfa.start_state])
+            elif token == 'CLASS_NAME':
+                stream.write(self.get_class_name())
             elif token == 'STATE_MACHINE':
                 self.generate_state_machine(stream, indent)
             elif token == "TOKEN_IDNAMES_LIMIT":
@@ -110,6 +187,28 @@ class FreeBasicEmitter(PluginTemplate):
             else:
                 raise Exception('Unrecognized token in source template: "%s"' % token)
 
+        # Emit demo files
+        for support_file in [
+            FreeBasicEmitter.demo_file,
+            FreeBasicEmitter.windows_makefile,
+            FreeBasicEmitter.linux_makefile
+        ]:
+            support_template_file = os.path.join(self.plugin_files_directory, support_file)
+            support_output_file = os.path.join(self.output_directory, support_file)
+            for stream, token, indent in FileTemplate(support_template_file, support_output_file):
+                if token == 'CLASS_NAME':
+                    stream.write(self.get_class_name())
+                
+    def get_class_name(self):
+        class_name = self.plugin_options.class_name
+        if class_name is None:
+            class_name = FreeBasicEmitter.default_class_name
+        if re.match("[A-Za-z_][A-Za-z0-9_]*", class_name) is None:
+            raise Exception("Invalid class name '%s'" % class_name)
+        elif class_name in FreeBasicEmitter.reserved_keywords:
+            raise Exception("Class name '%s' is reserved" % class_name)
+        return class_name
+                
     def get_output_directories(self):
         return [os.path.join(*i) for i in [
             ("Demo",),
@@ -141,10 +240,7 @@ class FreeBasicEmitter(PluginTemplate):
             ("Stream", "UTF16Stream.bas"),
             ("Stream", "UTF16Stream.bi"),
             ("Stream", "UTF32Stream.bas"),
-            ("Stream", "UTF32Stream.bi"),
-            ("Demo", "Demo.bas"),
-            ("Demo", "make_demo.bat"),
-            ("Demo", "make_demo.sh")
+            ("Stream", "UTF32Stream.bi")
         ]]
                
     # Private files
@@ -155,11 +251,12 @@ class FreeBasicEmitter(PluginTemplate):
         self.ids[self.dfa.start_state] = "InitialState"
         for state in self.dfa:
             if state != self.dfa.start_state:
-                initial_id = "".join([i.title() for i in sorted(list(state.ids))])
+                initial_id = "".join([i.title() for i in sorted(list(state.ids))])[:64]
                 id = initial_id
                 n = 1
                 while id in self.ids.values() or id.lower() in FreeBasicEmitter.reserved_keywords:
-                    id = "%s%d" % (initial_id, n)
+                    id_prefix = initial_id[:64-len(str(n))]
+                    id = "%s%d" % (id_prefix, n)
                     n += 1
                 self.ids[state] = id
                 
@@ -171,9 +268,10 @@ class FreeBasicEmitter(PluginTemplate):
         all_ids.extend([id.title() for id in self.lexical_analyzer.reserved_ids])
         for id in all_ids:
             n = 1
-            code_id = id
+            code_id = id[:64]
             while code_id in self.rule_ids.values() or code_id.lower() in FreeBasicEmitter.reserved_keywords:
-                code_id = '%s%d' % (id, n)
+                prefix = id[:64-len(str(n))]
+                code_id = '%s%d' % (prefix, n)
                 n += 1
             self.rule_ids[id] = code_id
         

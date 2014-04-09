@@ -18,19 +18,19 @@
 ' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 ' DEALINGS IN THE SOFTWARE.
 
-#include "$CLASS_NAME.bi"
+#include "$BASE_FILE_NAME.bi"
 #include "UnicodeConstants.bi"
 
-Constructor Poodle.Token()
-    This.Id = Poodle.Token.InvalidCharacter
+Constructor $NAMESPACE.${CLASS_NAME}Token()
+    This.Id = $NAMESPACE.${CLASS_NAME}Token.InvalidCharacter
 End Constructor
 
-Constructor Poodle.Token(ByVal Id As Poodle.Token.TokenId, ByVal Text As Poodle.Unicode.Text)
+Constructor $NAMESPACE.${CLASS_NAME}Token(ByVal Id As $NAMESPACE.${CLASS_NAME}Token.TokenId, ByVal Text As Poodle.Unicode.Text)
     This.Id = Id
     This.Text = Text
 End Constructor
 
-Function Poodle.Token.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+Function $NAMESPACE.${CLASS_NAME}Token.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
     Dim EncodedString As String
     Dim UnicodeString(1 To 3) As Poodle.Unicode.Text = { _
         Poodle.Unicode.Text("Token("), _
@@ -45,34 +45,34 @@ Function Poodle.Token.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding)
     Return EncodedString
 End Function
 
-Function Poodle.Token.GetIdAsString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
-    Var Text = Poodle.Unicode.Text(*Poodle.Token.IdNames(This.Id))
+Function $NAMESPACE.${CLASS_NAME}Token.GetIdAsString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+    Var Text = Poodle.Unicode.Text(*$NAMESPACE.${CLASS_NAME}Token.IdNames(This.Id))
     Return Text.ToString(_Encoding)
 End Function
 
-Dim Poodle.Token.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = { _
+Dim $NAMESPACE.${CLASS_NAME}Token.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = { _
     @"InvalidCharacter", _
     @"EndOfStream", _
     $TOKEN_IDNAMES
 }
 
-Constructor Poodle.$CLASS_NAME(Stream As CharacterStream Pointer)
+Constructor $NAMESPACE.$CLASS_NAME(Stream As Poodle.CharacterStream Pointer)
     This.Stream = Stream
     This.Character = Stream->GetCharacter()
 End Constructor
 
-Function Poodle.$CLASS_NAME.IsEndOfStream() As Integer
+Function $NAMESPACE.$CLASS_NAME.IsEndOfStream() As Integer
     Return This.Stream->IsEndOfStream()
 End Function
 
-Namespace Poodle
+Namespace $NAMESPACE
     Enum ${CLASS_NAME}State
         $ENUM_STATE_IDS
     End Enum
 End Namespace
 
-Function Poodle.$CLASS_NAME.GetToken() As Poodle.Token
-    Dim State As Poodle.${CLASS_NAME}State = Poodle.$INITIAL_STATE
+Function $NAMESPACE.$CLASS_NAME.GetToken() As $NAMESPACE.${CLASS_NAME}Token
+    Dim State As $NAMESPACE.${CLASS_NAME}State = $NAMESPACE.$INITIAL_STATE
     Dim Text As Poodle.Unicode.Text
     Do
         Dim Capture As Integer = 0
@@ -83,4 +83,3 @@ Function Poodle.$CLASS_NAME.GetToken() As Poodle.Token
         This.Character = This.Stream->GetCharacter()
     Loop
 End Function
-

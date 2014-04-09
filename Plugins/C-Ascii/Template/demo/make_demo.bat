@@ -1,1 +1,1 @@
-gcc demo.c ../lexical_analyzer.c -o demo -I..
+gcc demo.c ../$BASE_FILE_NAME.c -o demo -I..

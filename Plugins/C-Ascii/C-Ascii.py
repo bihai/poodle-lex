@@ -30,14 +30,11 @@ from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
 def create_emitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
-    return CAsciiEmitter(lexical_analyzer, plugin_files_directory, output_directory)
+    return CAsciiEmitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options)
     
 class CAsciiEmitter(PluginTemplate):
     """
     Emits a lexical analyzer as C source code (single-byte encoding only).
-    @ivar lexical_analyzer: the lexical analyzer to emit
-    @ivar ids: a dict mapping states to an enum element in the FreeBasic source
-    @ivar dfa: the deterministic finite automata (DFA) representing the lexical analyzer.
     """
     reserved_keywords = [
         'auto', 'break', 'case', 'char', 'const', 'continue', 'default', 'do',
@@ -47,12 +44,18 @@ class CAsciiEmitter(PluginTemplate):
     ]
     h_file = "lexical_analyzer.h"
     c_file = "lexical_analyzer.c"
+    demo_file = os.path.join('demo', 'demo.c')
+    windows_makefile = os.path.join('demo', 'make_demo.bat')
+    linux_makefile = os.path.join('demo', 'make_demo.sh')
+    default_namespace = "poodle"
+    default_file_name = "lexical_analyzer"
     
-    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory):
+    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
         """
-        @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as FreeBasic code.
+        @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as C code.
         @param plugin_files_directory: string specifying the location of template files
         @param output_directory: string specifying the directory where output files should be emitted
+        @param plugin_options: LanguagePlugins.PluginOptions object with optional parameters which dictate the code generation behavior.
         """
         self.lexical_analyzer = lexical_analyzer
         self.plugin_files_directory = plugin_files_directory
@@ -60,11 +63,31 @@ class CAsciiEmitter(PluginTemplate):
         self.ids = {}
         self.rule_ids = {}
         self.dfa = None
-    
+
+        # Process plugin options
+        for name, description in [
+            (plugin_options.file_name, 'Base file name'),
+            (plugin_options.namespace, 'Namespace')
+        ]:
+            if name is not None:
+                if re.match("[A-Za-z_][A-Za-z0-9_]*", name) is None:
+                    raise Exception("Invalid %s '%s'" % (description.lower(), name))
+                elif name in CAsciiEmitter.reserved_keywords:
+                    raise Exception("%s '%s' is reserved" % (description, name))
+        
+        if plugin_options.class_name is not None:
+            raise Exception("Arbitrary class name '%s' not supported as C-Ascii emitter is not class-based" % plugin_options.class_name)
+        self.base_file_name = plugin_options.file_name
+        if self.base_file_name is None:
+            self.base_file_name = CAsciiEmitter.default_file_name
+        self.namespace = plugin_options.namespace
+        if self.namespace is None:
+            self.namespace = CAsciiEmitter.default_namespaces
+        
     # Public interface
     def emit(self):
         """
-        Emits the lexical analyzer as a FreeBasic header file and source file.
+        Emits the lexical analyzer as a C header file and source file.
         """
         if not self.lexical_analyzer.is_finalized():
             self.lexical_analyzer.finalize()
@@ -74,28 +97,27 @@ class CAsciiEmitter(PluginTemplate):
         
         # Emit lexical analyzer header
         h_template_file = os.path.join(self.plugin_files_directory, CAsciiEmitter.h_file)
-        h_output_file = os.path.join(self.output_directory, CAsciiEmitter.h_file)
+        h_output_file = os.path.join(self.output_directory, self.base_file_name + ".h")
         for stream, token, indent in FileTemplate(h_template_file, h_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 token_ids = [self.rule_ids[rule.id.upper()] for rule in self.lexical_analyzer.rules]
                 token_ids.extend([self.rule_ids[id.upper()] for id in self.lexical_analyzer.reserved_ids])
-                token_ids.append("PTKN_TOKENIDCOUNT")
                 CAsciiEmitter.emit_enum_list(stream, indent, token_ids)
-            elif token == "TOKEN_IDNAMES_LIMIT":
-                stream.write(str(len(self.rule_ids)+1))
+            elif token == "HEADER_GUARD":
+                stream.write("%s_%s_H" % (self.namespace.upper(), self.base_file_name.upper()))
             else:
-                raise Exception('Unrecognized token in header template: "%s"' % token)
+                self.process_common_tokens(token, stream, 'header file template')
         
         # Emit lexical analyzer source
         c_template_file = os.path.join(self.plugin_files_directory, CAsciiEmitter.c_file)
-        c_output_file = os.path.join(self.output_directory, CAsciiEmitter.c_file)
+        c_output_file = os.path.join(self.output_directory, self.base_file_name + ".c")
         for stream, token, indent in FileTemplate(c_template_file, c_output_file):
             if token == 'ENUM_STATE_IDS':
                 CAsciiEmitter.emit_enum_list(stream, indent, list(self.ids.values()))
             elif token == 'INITIAL_STATE':
                 stream.write(self.ids[self.dfa.start_state].upper())
             elif token == 'INVALID_CHAR_STATE':
-                stream.write('PLA_STATE_INVALIDCHAR')
+                stream.write('STATE_%s_INVALIDCHAR' % self.namespace.upper())
             elif token == 'STATE_MACHINE':
                 self.generate_state_machine(stream, indent)
             elif token == "TOKEN_IDNAMES":
@@ -103,11 +125,24 @@ class CAsciiEmitter(PluginTemplate):
                 rule_id_list.extend(self.lexical_analyzer.reserved_ids)
                 formatted_ids = ", \n".join(" "*indent + "\"%s\"" % rule_id for rule_id in rule_id_list)
                 stream.write(formatted_ids + " \n")
+            elif token == "TOKEN_IDNAMES_LIMIT":
+                stream.write(str(len(self.rule_ids)+1))
             elif token == "CAPTURE_CASES":
                 for id in [rule.id for rule in self.lexical_analyzer.rules if rule.action is not None and rule.action.lower() == "capture"]:
                     stream.write(' '*indent + "case %s:\n" % self.rule_ids[id.upper()])
             else:
-                raise Exception('Unrecognized token in source template: "%s"' % token)
+                self.process_common_tokens(token, stream, 'source file template')
+                
+        # Emit demo files
+        for support_file, description in [
+            (CAsciiEmitter.demo_file, 'demo source template'),
+            (CAsciiEmitter.windows_makefile, 'windows demo build script template'),
+            (CAsciiEmitter.linux_makefile, 'linux demo build script template')
+        ]:
+            support_template_file = os.path.join(self.plugin_files_directory, support_file)
+            support_output_file = os.path.join(self.output_directory, support_file)
+            for stream, token, indent in FileTemplate(support_template_file, support_output_file):
+                self.process_common_tokens(token, stream, description)
 
     def get_output_directories(self):
         return [os.path.join(*i) for i in [
@@ -115,11 +150,23 @@ class CAsciiEmitter(PluginTemplate):
         ]]
         
     def get_files_to_copy(self):
+        return []
         return [os.path.join(*i) for i in [
             ("demo", "demo.c"),
             ("demo", "make_demo.bat"),
             ("demo", "make_demo.sh")
         ]]
+
+    # Private methods    
+    def process_common_tokens(self, token, stream, description):
+        if token == 'BASE_FILE_NAME':
+            stream.write(self.base_file_name)
+        elif token == 'NAMESPACE':
+            stream.write(self.namespace)
+        elif token == 'ID_NAMESPACE':
+            stream.write(self.namespace.upper())
+        else:
+            raise Exception('Unrecognized token in %s: "%s"' % (description, token))
     
     @staticmethod
     def emit_enum_list(stream, indent, items):
@@ -134,13 +181,13 @@ class CAsciiEmitter(PluginTemplate):
     # Private files
     def map_state_ids(self):
         """
-        Maps all states to an enum element in the FreeBasic source code.
+        Maps all states to an enum element in the C source code.
         """
-        self.ids[self.dfa.start_state] = "PLA_STATE_INITIALSTATE"
-        self.ids[None] = "PLA_STATE_INVALIDCHAR"
+        self.ids[self.dfa.start_state] = "STATE_%s_INITIALSTATE" % self.namespace.upper()
+        self.ids[None] = "STATE_%s_INVALIDCHAR" % self.namespace.upper()
         for state in self.dfa:
             if state != self.dfa.start_state:
-                initial_id = "PLA_STATE_" + "_".join([i.upper() for i in sorted(list(state.ids))])
+                initial_id = "STATE_%s_%s" % (self.namespace.upper(), "_".join([i.upper() for i in sorted(list(state.ids))]))
                 id = initial_id[0:256]
                 n = 1
                 while id in self.ids.values() or id.lower() in CAsciiEmitter.reserved_keywords:
@@ -150,15 +197,15 @@ class CAsciiEmitter(PluginTemplate):
                 
     def map_rule_names(self):
         """
-        Maps all rule names to an enum element in the FreeBasic source code
+        Maps all rule names to an enum element in the C source code
         """
         all_ids = [rule.id.upper() for rule in self.lexical_analyzer.rules]
         all_ids.extend([id.upper() for id in self.lexical_analyzer.reserved_ids])
         for id in all_ids:
-            code_id = "PTKN_" + id
+            code_id = "TOKEN_%s_%s" % (self.namespace.upper(), id)
             n = 1
             while code_id in self.rule_ids.values() or code_id.lower() in CAsciiEmitter.reserved_keywords:
-                code_id = '%s%d' % ("PTKN_" + id, n)
+                code_id = 'TOKEN_%s_%s%d' % (self.namespace.upper(), id, n)
                 n += 1
             self.rule_ids[id] = code_id
         
@@ -193,7 +240,7 @@ class CAsciiEmitter(PluginTemplate):
                 code.line("if (feof(f))")
                 code.line("{")
                 code.indent()
-                code.line("token.id = PTKN_ENDOFSTREAM;")
+                code.line("token.id = TOKEN_%s_ENDOFSTREAM;" % self.namespace.upper())
                 code.line("done = 1;")
                 code.dedent()
                 code.line("}")
@@ -229,7 +276,7 @@ class CAsciiEmitter(PluginTemplate):
                     code.line("token.id = %s;" % self.rule_ids[token])
                     code.line("done = 1;")
             else:
-                code.line("state = PLA_STATE_INVALIDCHAR;")
+                code.line("state = STATE_%s_INVALIDCHAR;" % self.namespace.upper())
 
             if len(state.edges) > 0:
                 code.dedent()

@@ -10,12 +10,15 @@ RULES_FILE: A file containing token names and pattern definitions
 OUTPUT_DIR: An existing directory to which the state machine code is written.
 
 Optional arguments:
+-e ENCODING,  --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
+-l LANGUAGE,  --language LANGUAGE - Output emitter language.
+-c CLASS_NAME, --class-name CLASS_NAME - The name of the lexical analyzer class to generate
+-s NAMESPACE, --namespace NAMESPACE - The namespace name of the lexical analyzer class to generate
+-f FILE_NAME, --file-name FILE_NAME - The base name of the generated source files
+-i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well
 -n DOT_FILE,  --print-nfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's NFA representation
 -d DOT_FILE,  --print-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's DFA representation
 -m DOT_FILE,  --print-min-dfa DOT_FILE - Print a GraphViz(.dot) file with the lexical analyzer's minimized DFA representation.
--e ENCODING,  --encoding ENCODING - Encoding of the input file. ENCODING must be an encoding codec name supported by Python.
--l LANGUAGE,  --language LANGUAGE - Output emitter language.
--i ALGORITHM, --minimizer ALGORITHM - Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well
 
 Commands:
 Poodle-Lex list-languages: Prints out a list of languages supportd by the -language option

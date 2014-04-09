@@ -19,25 +19,25 @@
  * DEALINGS IN THE SOFTWARE.
  */
  
-#ifndef POODLE_LEXICALANALYZER_H
-#define POODLE_LEXICALANALYZER_H
+#ifndef $HEADER_GUARD
+#define $HEADER_GUARD
 
 #include <stdio.h>
 
-typedef enum poodle_token_id_enum
+typedef enum ${NAMESPACE}_token_id_enum
 {
-    PTKN_INVALIDCHARACTER,
-    PTKN_ENDOFSTREAM,
+    TOKEN_${ID_NAMESPACE}_INVALIDCHARACTER,
+    TOKEN_${ID_NAMESPACE}_ENDOFSTREAM,
     $ENUM_TOKEN_IDS
-} poodle_token_id;
+} ${NAMESPACE}_token_id;
 
-typedef struct poodle_token_struct
+typedef struct ${NAMESPACE}_token_struct
 {
-    poodle_token_id id;
+    ${NAMESPACE}_token_id id;
     char* text;
-} poodle_token, *p_poodle_token;
+} ${NAMESPACE}_token, *p_${NAMESPACE}_token;
 
-poodle_token poodle_get_token(FILE* stream);
-void poodle_free_token(poodle_token* token);
+${NAMESPACE}_token ${NAMESPACE}_get_token(FILE* stream);
+void ${NAMESPACE}_free_token(${NAMESPACE}_token* token);
 
 #endif

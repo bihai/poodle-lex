@@ -34,6 +34,7 @@ class PluginOptions(object):
         self.is_backtracking = False
         self.class_name = None
         self.namespace = None
+        self.file_name = None
 
 class Plugin(object):
     """

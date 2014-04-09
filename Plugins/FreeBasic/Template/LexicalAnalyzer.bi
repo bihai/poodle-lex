@@ -24,8 +24,8 @@
 #include "Stream\Unicode.bi"
 #include "Stream\CharacterStream.bi"
 
-Namespace Poodle
-    Type Token
+Namespace $NAMESPACE
+    Type ${CLASS_NAME}Token
         Public:
         Enum TokenId
             InvalidCharacter
@@ -33,12 +33,12 @@ Namespace Poodle
             $ENUM_TOKEN_IDS
         End Enum
         Id As TokenId
-        Text As Unicode.Text
+        Text As ${RELATIVE_NAMESPACE}Unicode.Text
         
         Declare Constructor()
-        Declare Constructor(ByVal Id As TokenId, ByVal Text As Unicode.Text)
-        Declare Function ToString(ByRef _Encoding As Unicode.StringEncoding = *Unicode.DefaultStringEncoding) As String
-        Declare Function GetIdAsString(ByRef _Encoding As Unicode.StringEncoding = *Unicode.DefaultStringEncoding) As String
+        Declare Constructor(ByVal Id As TokenId, ByVal Text As ${RELATIVE_NAMESPACE}Unicode.Text)
+        Declare Function ToString(ByRef _Encoding As ${RELATIVE_NAMESPACE}Unicode.StringEncoding = *${RELATIVE_NAMESPACE}Unicode.DefaultStringEncoding) As String
+        Declare Function GetIdAsString(ByRef _Encoding As ${RELATIVE_NAMESPACE}Unicode.StringEncoding = *${RELATIVE_NAMESPACE}Unicode.DefaultStringEncoding) As String
         
         Private:
         Static IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer 
@@ -46,13 +46,13 @@ Namespace Poodle
 
     Type $CLASS_NAME Extends Object
         Public:
-        Declare Constructor(Stream As CharacterStream Ptr)
+        Declare Constructor(Stream As ${RELATIVE_NAMESPACE}CharacterStream Ptr)
         Declare Function IsEndOfStream() As Integer
-        Declare Function GetToken() As Token
+        Declare Function GetToken() As ${CLASS_NAME}Token
         
         Private:
-        Stream As CharacterStream Ptr
-        Character As Unicode.CodePoint
+        Stream As ${RELATIVE_NAMESPACE}CharacterStream Ptr
+        Character As ${RELATIVE_NAMESPACE}Unicode.CodePoint
     End Type
 
 End Namespace

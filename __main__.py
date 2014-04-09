@@ -72,6 +72,7 @@ arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the mini
 arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Use '--action=list-minimizers' for list of options", default="hopcroft", metavar="ALGORITHM")
 arg_parser.add_argument("-l", "--language", help="Output programming language. Use '--action=list-languages' for list of options", default=None)
 arg_parser.add_argument("-c", "--class-name", help="The name of the lexical analyzer class to generate", default=None)
+arg_parser.add_argument("-f", "--file-name", help="The base name of the generated source files", default=None)
 arg_parser.add_argument("-s", "--namespace", help="The namespace name of the lexical analyzer class to generate", default=None)
 arguments = arg_parser.parse_args()
 
@@ -136,6 +137,7 @@ try:
     plugin_options = LanguagePlugins.PluginOptions()
     plugin_options.class_name = arguments.class_name
     plugin_options.namespace = arguments.namespace
+    plugin_options.file_name = arguments.file_name
     emitter = language_plugin.create(lexer, arguments.OUTPUT_DIR, plugin_options)
     
     if not os.path.exists(arguments.OUTPUT_DIR):

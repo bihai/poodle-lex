@@ -118,14 +118,15 @@ class FreeBasicEmitter(PluginTemplate):
     demo_file = os.path.join("Demo", "Demo.bas")
     windows_makefile = os.path.join("Demo", "make_demo.bat")
     linux_makefile = os.path.join("Demo", "make_demo.sh")
-    class_name = "LexicalAnalyzer"
-    namespace = "Poodle"
+    default_class_name = "LexicalAnalyzer"
+    default_namespace = "Poodle"
     
     def __init__(self, lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
         """
         @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as FreeBasic code.
         @param plugin_files_directory: string specifying the location of template files
         @param output_directory: string specifying the directory where output files should be emitted
+        @param plugin_options: LanguagePlugins.PluginOptions object containing options which affect the generation of code.
         """
         self.lexical_analyzer = lexical_analyzer
         self.plugin_files_directory = plugin_files_directory
@@ -133,8 +134,29 @@ class FreeBasicEmitter(PluginTemplate):
         self.ids = {}
         self.rule_ids = {}
         self.dfa = None
-        self.plugin_options = plugin_options
-    
+
+        # Process plugin options
+        for name, description in [
+            (plugin_options.class_name, 'Class name'),
+            (plugin_options.file_name, 'Base file name'),
+            (plugin_options.namespace, 'Namespace')
+        ]:
+            if name is not None:
+                if re.match("[A-Za-z_][A-Za-z0-9_]*", name) is None:
+                    raise Exception("Invalid %s '%s'" % (description.lower(), name))
+                elif name in FreeBasicEmitter.reserved_keywords:
+                    raise Exception("%s '%s' is reserved" % (description, name))
+        
+        self.class_name = plugin_options.class_name
+        if self.class_name is None:
+            self.class_name = FreeBasicEmitter.default_class_name
+        self.base_file_name = plugin_options.file_name
+        if self.base_file_name is None:
+            self.base_file_name = self.class_name
+        self.namespace = plugin_options.namespace
+        if self.namespace is None:
+            self.namespace = FreeBasicEmitter.default_namespace
+            
     # Public interface
     def emit(self):
         """
@@ -148,67 +170,53 @@ class FreeBasicEmitter(PluginTemplate):
         
         # Emit lexical analyzer header
         bi_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bi_file)
-        bi_output_file = os.path.join(self.output_directory, self.get_class_name() + ".bi")
+        bi_output_file = os.path.join(self.output_directory, self.base_file_name + ".bi")
         for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
             if token == 'ENUM_TOKEN_IDS':
                 token_ids = [self.rule_ids[rule.id.title()] for rule in self.lexical_analyzer.rules]
                 token_ids.extend([self.rule_ids[id.title()] for id in self.lexical_analyzer.reserved_ids])
                 for id in token_ids:
                     stream.write(" "*indent + id + "\n")
-            elif token == "CLASS_NAME":
-                stream.write(self.get_class_name())
             elif token == "HEADER_GUARD_NAME":
-                stream.write("POODLE_%s_BI" % self.get_class_name().upper())
+                stream.write("%s_%s_BI" % (self.namespace.upper(), self.class_name.upper()))
+            elif token == "RELATIVE_NAMESPACE":
+                if self.namespace != FreeBasicEmitter.default_namespace:
+                    stream.write(FreeBasicEmitter.default_namespace + ".")
             elif token == "TOKEN_IDNAMES_LIMIT":
                 stream.write(str(len(self.rule_ids)+1))
             else:
-                raise Exception('Unrecognized token in header template: "%s"' % token)
+                self.process_common_tokens(token, stream, 'header file template')
         
         # Emit lexical analyzer source
         bas_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bas_file)
-        bas_output_file = os.path.join(self.output_directory, self.get_class_name() + ".bas")
+        bas_output_file = os.path.join(self.output_directory, self.base_file_name + ".bas")
         for stream, token, indent in FileTemplate(bas_template_file, bas_output_file):
             if token == 'ENUM_STATE_IDS':
                 for state_id in sorted(list(self.ids.values())):
                     stream.write(" "*indent + state_id + '\n')
             elif token == 'INITIAL_STATE':
                 stream.write(self.ids[self.dfa.start_state])
-            elif token == 'CLASS_NAME':
-                stream.write(self.get_class_name())
             elif token == 'STATE_MACHINE':
                 self.generate_state_machine(stream, indent)
-            elif token == "TOKEN_IDNAMES_LIMIT":
-                stream.write(str(len(self.rule_ids)+1))
             elif token == "TOKEN_IDNAMES":
                 rule_id_list = [rule.id for rule in self.lexical_analyzer.rules]
                 rule_id_list.extend(self.lexical_analyzer.reserved_ids)
                 formatted_ids = ", _\n".join(" "*indent + "@\"%s\"" % rule_id for rule_id in rule_id_list)
                 stream.write(formatted_ids + "_ \n")
             else:
-                raise Exception('Unrecognized token in source template: "%s"' % token)
-
+                self.process_common_tokens(token, stream, 'source file template')
+                
         # Emit demo files
-        for support_file in [
-            FreeBasicEmitter.demo_file,
-            FreeBasicEmitter.windows_makefile,
-            FreeBasicEmitter.linux_makefile
+        for support_file, description in [
+            (FreeBasicEmitter.demo_file, 'demo source template'),
+            (FreeBasicEmitter.windows_makefile, 'windows demo build script template'),
+            (FreeBasicEmitter.linux_makefile, 'linux demo build script template')
         ]:
             support_template_file = os.path.join(self.plugin_files_directory, support_file)
             support_output_file = os.path.join(self.output_directory, support_file)
             for stream, token, indent in FileTemplate(support_template_file, support_output_file):
-                if token == 'CLASS_NAME':
-                    stream.write(self.get_class_name())
-                
-    def get_class_name(self):
-        class_name = self.plugin_options.class_name
-        if class_name is None:
-            class_name = FreeBasicEmitter.default_class_name
-        if re.match("[A-Za-z_][A-Za-z0-9_]*", class_name) is None:
-            raise Exception("Invalid class name '%s'" % class_name)
-        elif class_name in FreeBasicEmitter.reserved_keywords:
-            raise Exception("Class name '%s' is reserved" % class_name)
-        return class_name
-                
+                self.process_common_tokens(token, stream, description)
+                    
     def get_output_directories(self):
         return [os.path.join(*i) for i in [
             ("Demo",),
@@ -243,7 +251,19 @@ class FreeBasicEmitter(PluginTemplate):
             ("Stream", "UTF32Stream.bi")
         ]]
                
-    # Private files
+    # Private methods
+    def process_common_tokens(self, token, stream, description):
+        if token == 'CLASS_NAME':
+            stream.write(self.class_name)
+        elif token == 'BASE_FILE_NAME':
+            stream.write(self.base_file_name)
+        elif token == 'NAMESPACE':
+            stream.write(self.namespace)
+        elif token == "TOKEN_IDNAMES_LIMIT":
+            stream.write(str(len(self.rule_ids)+1))
+        else:
+            raise Exception('Unrecognized token in %s: "%s"' % (description, token))
+    
     def map_state_ids(self):
         """
         Maps all states to an enum element in the FreeBasic source code.
@@ -288,7 +308,7 @@ class FreeBasicEmitter(PluginTemplate):
         for i, state in enumerate(self.dfa):
             if i != 0:
                 code.line()
-            code.line("Case Poodle.%s" % self.ids[state])
+            code.line("Case %s.%s" % (self.namespace, self.ids[state]))
             code.line("Select Case This.Character")
             code.indent()
             
@@ -306,12 +326,12 @@ class FreeBasicEmitter(PluginTemplate):
             def emit_check_zero(invalid_otherwise):
                 code.line("If Stream->IsEndOfStream() Then")
                 code.indent()
-                code.line("Return Poodle.Token(Poodle.Token.EndOfStream, Poodle.Unicode.Text())")
+                code.line("Return %s.%sToken(%s.%sToken.EndOfStream, Poodle.Unicode.Text())" % (self.namespace, self.class_name, self.namespace, self.class_name))
                 code.dedent()
                 if invalid_otherwise:
                     code.line("Else")
                     code.indent()
-                    code.line("Return Poodle.Token(Poodle.Token.InvalidCharacter, Text)")
+                    code.line("Return %s.%sToken(%s.%sToken.InvalidCharacter, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name))
                     code.dedent()
                 code.line("End If")
                 
@@ -326,7 +346,7 @@ class FreeBasicEmitter(PluginTemplate):
                 rules = [rule for rule in self.lexical_analyzer.rules if rule.id in destination.ids]
                 if any([rule.action is not None and rule.action.lower() == 'capture' for rule in rules]):
                     code.line("Capture = 1")
-                code.line("State = Poodle.%s" % self.ids[destination])
+                code.line("State = %s.%s" % (self.namespace, self.ids[destination]))
                 code.line()
             
             if state == self.dfa.start_state and not found_zero:
@@ -342,17 +362,17 @@ class FreeBasicEmitter(PluginTemplate):
                 rule = [rule for rule in self.lexical_analyzer.rules if rule.id.title() == token][0]
                 if rule.action is not None and rule.action.lower() == 'skip':
                     # Reset state machine if token is skipped
-                    code.line("State = Poodle.%s" % self.ids[self.dfa.start_state])
+                    code.line("State = %s.%s" % (self.namespace, self.ids[self.dfa.start_state]))
                     code.line("Text = Poodle.Unicode.Text()")
                     code.line("Continue Do")
                 elif rule.action is not None and rule.action.lower() == 'capture':
-                    code.line("Return Poodle.Token(Poodle.Token.%s, Text)" % self.rule_ids[token])
+                    code.line("Return %s.%sToken(%s.%sToken.%s, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name, self.rule_ids[token]))
                 else:
-                    code.line("Return Poodle.Token(Poodle.Token.%s, Poodle.Unicode.Text())" % self.rule_ids[token])
+                    code.line("Return %s.%sToken(%s.%sToken.%s, Poodle.Unicode.Text())" % (self.namespace, self.class_name, self.namespace, self.class_name, self.rule_ids[token]))
             else:
                 code.line("Text.Append(This.Character)")
                 code.line("This.Character = This.Stream->GetCharacter()")
-                code.line("Return Poodle.Token(Poodle.Token.InvalidCharacter, Text)")
+                code.line("Return %s.%sToken(%s.%sToken.InvalidCharacter, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name))
             
             code.dedent()
             code.line("End Select")

@@ -22,25 +22,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "lexical_analyzer.h"
+#include "$BASE_FILE_NAME.h"
 #define MAX_TOKEN_LENGTH 4096
 
-typedef enum poodle_state_enum
+typedef enum ${NAMESPACE}_state_enum
 {
     $ENUM_STATE_IDS
-} poodle_state;
+} ${NAMESPACE}_state;
 
-static char* token_strings[] = {
+static char* ${NAMESPACE}_token_strings[] = {
     "InvalidCharacter",
     "EndOfStream",
     $TOKEN_IDNAMES
 };
 
-int capture(poodle_token_id id)
+int capture(${NAMESPACE}_token_id id)
 {
     switch(id)
     {
-        case PTKN_INVALIDCHARACTER:
+        case TOKEN_${ID_NAMESPACE}_INVALIDCHARACTER:
         $CAPTURE_CASES
             return 1;
         default:
@@ -48,21 +48,21 @@ int capture(poodle_token_id id)
     }
 }
 
-void poodle_debug_token(poodle_token* token, FILE* f)
+void ${NAMESPACE}_debug_token(${NAMESPACE}_token* token, FILE* f)
 {
     if (!f)
         return;
     else if (!token)
         fprintf(f, "(Null)");
-    else if (token->id < 0 || token->id >= PTKN_TOKENIDCOUNT)
+    else if (token->id < 0 || token->id >= $TOKEN_IDNAMES_LIMIT)
         fprintf(f, "(Invalid ID)");
     else if (token->text == NULL)
-        fprintf(f, "Token(%s)", token_strings[token->id]);
+        fprintf(f, "Token(%s)", ${NAMESPACE}_token_strings[token->id]);
     else
-        fprintf(f, "Token(%s, '%s')", token_strings[token->id], token->text);
+        fprintf(f, "Token(%s, '%s')", ${NAMESPACE}_token_strings[token->id], token->text);
 }
 
-void poodle_free_token(poodle_token* token)
+void ${NAMESPACE}_free_token(${NAMESPACE}_token* token)
 {
     if (!token)
         return;
@@ -73,10 +73,10 @@ void poodle_free_token(poodle_token* token)
     }
 }
 
-poodle_token poodle_get_token(FILE* f)
+${NAMESPACE}_token ${NAMESPACE}_get_token(FILE* f)
 {
-    poodle_token token;
-    poodle_state state = $INITIAL_STATE;
+    ${NAMESPACE}_token token;
+    ${NAMESPACE}_state state = $INITIAL_STATE;
     char token_buffer[MAX_TOKEN_LENGTH], c;
     int token_index = 0;
     int done = 0;
@@ -92,7 +92,7 @@ poodle_token poodle_get_token(FILE* f)
         switch(state)
         {
             case $INVALID_CHAR_STATE:
-                token.id = PTKN_INVALIDCHARACTER;
+                token.id = TOKEN_${ID_NAMESPACE}_INVALIDCHARACTER;
                 done = 1;
                 break;
             $STATE_MACHINE

@@ -21,7 +21,7 @@
  
  #include <stdio.h>
  #include <stdlib.h>
- #include "lexical_analyzer.h"
+ #include "$BASE_FILE_NAME.h"
  
  int main(int argc, char* argv[])
  {
@@ -38,16 +38,16 @@
         exit(1);
     }
     
-    poodle_token token;
+    ${NAMESPACE}_token token;
     int done = 0;
     while (!done)
     {
-        token = poodle_get_token(f);
-        poodle_debug_token(&token, stdout);
+        token = ${NAMESPACE}_get_token(f);
+        ${NAMESPACE}_debug_token(&token, stdout);
         printf("\n");
-        if (token.id == PTKN_ENDOFSTREAM)
+        if (token.id == TOKEN_${ID_NAMESPACE}_ENDOFSTREAM)
             done = 1;
-        poodle_free_token(&token);
+        ${NAMESPACE}_free_token(&token);
     }
     fclose(f);
  }

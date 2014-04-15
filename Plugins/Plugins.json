@@ -7,10 +7,10 @@
             "Source": "Plugins/FreeBasic/FreeBasic.py",
             "Files": "Plugins/FreeBasic/Template"
         },
-        "c-ascii": {
-            "Description": "C programming language using stdio streams",
-            "Source": "Plugins/C-Ascii/C-Ascii.py",
-            "Files": "Plugins/C-Ascii/Template"
+        "cpp": {
+            "Description": "C++ programming language interface which consumes an std::istream",
+            "Source": "Plugins/CPlusPlus/CPlusPlus.py",
+            "Files": "Plugins/CPlusPlus/Template"
         }
     }
 } 

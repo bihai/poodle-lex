@@ -71,7 +71,7 @@ class RegexVariableResolver(object):
         if variable.name not in self.defines:
             raise RegexParserUndefinedVariable(variable.name)
         self.visited.add(variable.name)
-        self.defines[variable.name].regex.accept(self)
+        self.defines[variable.name].get_regex().accept(self)
         self.visited.remove(variable.name)
         
     def get(self):

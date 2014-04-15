@@ -22,10 +22,10 @@ from RegexParser import RegexParser
 from RegexExceptions import *
 from NonDeterministicFiniteAutomataBuilder import NonDeterministicFiniteAutomataBuilder
 from DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
+import LexicalAnalyzerParser
 import NaiveDFAMinimizer
 import HopcroftDFAMinimizer
 import Automata
-import LexicalAnalyzerParser
 
 class LexicalAnalyzerException(Exception):
     def __init__(self, message):
@@ -34,42 +34,32 @@ class LexicalAnalyzerException(Exception):
         return self.message
     def __repr__(self):
         return self.message
-
+        
 class Pattern(object):
-    """
-    Represents a single substitutable variable
-    @ivar pattern: string representing the variable's regular expression pattern
-    @ivar regex: an object from the Regex package representing the rule's regular expression pattern
-    """
-    def __init__(self, pattern, is_case_insensitive=False):
-        """
-        @param pattern: string containing the regular expression pattern
-        @param is_case_insensitive: boolean representing if the pattern is case insensitive
-        """
+    def __init__(self, pattern, is_case_insensitive):
         self.pattern = pattern
         self.is_case_insensitive = is_case_insensitive
-        self.regex = RegexParser(pattern, is_case_insensitive).parse()
         
-    def __eq__(self, other_pattern):
-        return repr(self.pattern) == repr(other_pattern.pattern)
+    def get_regex(self):
+        return RegexParser(self.pattern, self.is_case_insensitive).parse()
         
-class Rule(Pattern):
+class Rule(object):
     """
     Represents a single rule with an id and a regular expression
     @ivar id: string which identifies the rule
     @ivar pattern: string representing the rule's regular expression pattern
     @ivar regex: an object from the Regex package representing the rule's regular expression pattern
     """
-    _valid_actions = set(['skip', 'capture'])
+    _valid_actions = set(['skip', 'capture', 'reserve'])
     
-    def __init__(self, id, pattern, is_case_insensitive=False, action=None):
+    def __init__(self, id, pattern, action=None):
         """
         @param id: string containing the id of the rule
         @param pattern: string containing the regular expression pattern of the rule
-        @param is_case_insensitive: boolean representing if the pattern is case insensitive
+        @param action: string containing a command to associate with the rule, or None
         """
-        Pattern.__init__(self, pattern, is_case_insensitive)
         self.id = id
+        self.pattern = pattern
         self.action = action
         if action is not None and action.lower() not in Rule._valid_actions:
             raise RegexParserException(id, "Action '%s' not suppported" % action)
@@ -88,7 +78,7 @@ class Rule(Pattern):
         @return: a NonDeterministicFiniteAutomata object which represents the NFA equivalent of the rule's pattern
         """
         nfa_visitor = NonDeterministicFiniteAutomataBuilder(self.id, defines)
-        self.regex.accept(nfa_visitor)
+        self.pattern.get_regex().accept(nfa_visitor)
         return nfa_visitor.get()
  
 class LexicalAnalyzer(object):
@@ -123,14 +113,8 @@ class LexicalAnalyzer(object):
         @param file: string containing the file name of the rules definition file.
         @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft algorithm by default.
         """
-        lexer = LexicalAnalyzer(minimizer=minimizer)
-        for rule_id, pattern, is_case_insensitive, action in LexicalAnalyzerParser.parse(file, encoding):
-            if action == '::define::':
-                lexer.add_define(rule_id, pattern, is_case_insensitive)
-            elif action == '::reserve::':
-                lexer.reserve_id(rule_id)
-            else:
-                lexer.add_rule(rule_id, pattern, is_case_insensitive, action)
+        lexer = LexicalAnalyzerParser.LexicalAnalyzerParser(file, encoding).parse()
+        lexer._minimizer = minimizer
         return lexer
         
     def reserve_id(self, id):
@@ -142,7 +126,7 @@ class LexicalAnalyzer(object):
             raise RegexParserException(id, "Id is already reserved: '%s'" % id)
         self.reserved_ids.add(id)
 
-    def add_rule(self, id, pattern, is_case_insensitive=False, action=None):
+    def add_rule(self, id, pattern, action=None):
         """
         Adds a rule to the lexical analyzer.
         @param id: string identifying the rule
@@ -157,11 +141,11 @@ class LexicalAnalyzer(object):
             if id in [rule.id for rule in self.rules] or id in self.reserved_ids:
                 raise Exception("Duplicate rule: '%s'" % id)
             
-            self.rules.append(Rule(id, pattern, is_case_insensitive, action))
+            self.rules.append(Rule(id, pattern, action))
         except RegexParserExceptionInternal as e:
             raise RegexParserException(id, e.message)
 
-    def add_define(self, id, pattern, is_case_insensitive=False):
+    def add_define(self, id, pattern):
         """
         Adds a definition for a substitutable variable 
         @param id: string identifying the varaible
@@ -176,7 +160,7 @@ class LexicalAnalyzer(object):
             if id in self.defines:
                 raise Exception("Duplicate variable definition: '%s'" % id)
             
-            self.defines[id] = Pattern(pattern, is_case_insensitive)
+            self.defines[id] = pattern
         except RegexParserExceptionInternal as e:
             raise RegexParserException(id, e.message, type='variable definition')
             

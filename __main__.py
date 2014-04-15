@@ -30,6 +30,7 @@ import sys
 import shutil
 import os
 import os.path
+import traceback
 
 this_file = sys.executable
 if getattr(sys, 'frozen', None) is None:
@@ -164,3 +165,4 @@ try:
     emitter.emit()
 except Exception as e:
     sys.stderr.write("An error occured while emitting code: '%s'" % str(e))
+    traceback.print_tb(sys.exc_info()[2])

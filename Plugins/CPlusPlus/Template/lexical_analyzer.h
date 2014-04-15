@@ -19,35 +19,53 @@
  * DEALINGS IN THE SOFTWARE.
  */
  
- #include <stdio.h>
- #include <stdlib.h>
- #include "$BASE_FILE_NAME.h"
- 
- int main(int argc, char* argv[])
- {
-    if (argc != 2)
+#ifndef $HEADER_GUARD
+#define $HEADER_GUARD
+
+#include <string>
+#include <iostream>
+
+namespace $NAMESPACE
+{
+    namespace Unicode
     {
-        fprintf(stderr, "Usage: %s [input_file_to_scan]\n", argv[0]);
-        exit(1);
+        typedef int Codepoint;
+        typedef std::basic_string<Codepoint> String;
     }
     
-    FILE* f = fopen(argv[1], "r");
-    if (f == NULL)
+    class $CLASS_NAME
     {
-        fprintf(stderr, "Unable to open '%s'\n", argv[1]);
-        exit(1);
-    }
-    
-    ${NAMESPACE}_token token;
-    int done = 0;
-    while (!done)
-    {
-        token = ${NAMESPACE}_get_token(f);
-        ${NAMESPACE}_debug_token(&token, stdout);
-        printf("\n");
-        if (token.id == TOKEN_${ID_NAMESPACE}_ENDOFSTREAM)
-            done = 1;
-        ${NAMESPACE}_free_token(&token);
-    }
-    fclose(f);
- }
+        public:
+        struct Token
+        {
+            public:
+            enum TokenId
+            {
+                INVALIDCHARACTER,
+                ENDOFSTREAM,
+                $ENUM_TOKEN_IDS
+            };
+            
+            Token();
+            Token(TokenId id);
+            Token(TokenId id, const Unicode::String& text);
+            TokenId id;
+            Unicode::String text;
+        };
+        
+        $CLASS_NAME(std::istream* stream);
+        Token get_token();
+        void throw_error(std::string message);
+        
+        private:
+        Unicode::Codepoint buffer;
+        bool is_buffered;
+        std::istream* stream;
+        int line;
+        int character;
+        Unicode::Codepoint get_utf8_char();
+        Unicode::Codepoint peek_utf8_char();
+    };
+}
+
+#endif

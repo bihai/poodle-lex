@@ -1,0 +1,1 @@
+g++ demo.cpp ../$BASE_FILE_NAME.cpp -o demo -I..

@@ -1,7 +1,7 @@
 # Comments, whitespace, and preprocessor
-Skip Comment: '' + 
-    '/\*.*\*/' +  '|' + # Multiline comments
-    '//[^\r\n]*'        # Single line comments
+Skip Comment: "" +
+    '/\*' + '([^\*]|\*+[^/\*])*' + '\*+/' + '|' + # Multi-line comments
+    "//[^\r\n]*"                                  # Single-line comments    
 Skip Whitespace: '[ \t\v\n\f\r]+'
 Capture PPDirective: "#([^\r\n]|\\(\r|\n|\r\n))*"
 
@@ -41,42 +41,34 @@ While: 'while'
 Capture Identifier: '[[:alpha:]_][[:word:]]*'
 
 # Constants and Literals
-Let FloatingPoint = "" +
-    "[[:digit:]]*\.[[:digit:]]+" + "|" + 
-    "[[:digit:]]+\.[[:digit:]]*"
-Let ScientificNotation = "[Ee][\+\-]?[[:digit:]]+"
-Let EscapedOctal = '\\[0-7]{1,3}'
-Let EscapedCharacter = '\\[abfnrtv"''\\\?]'
-Let EscapedHex = '\\x[[:xdigit:]]+'
-Capture Constant: '(' +
-    # Integer constants
-    '(' +
-        '(0[xX][[:xdigit:]])' + '|' +                 # Hexadecimal integer
-        '(0[[:digit:]]+)' + '|' +                     # Octal integer
-        '[[:digit:]]+' +                              # Plain 'ol integer
-    ')([uU][lL]?|[lL][uU]?)?' +                       # Integer suffix
-')|(' +
-    # Floating point constants
-    '(' +
-        '[[:digit:]]+{ScientificNotation}' + '|' +    # Integer with exponential part
-        '{FloatingPoint}{ScientificNotation}?' +  
-    ')[lLfF]?' +                                      # Floating point suffix
-')|(' +
-    # Character constant
-    "L?'(" +
-        "[^\\\r\n']" + '|' +                          # Character
-        '{EscapedCharacter}' + '|' +                  # Basic escape sequence
-        '{EscapedOctal}' + '|' +                      # Octal escape sequence
-        '{EscapedHex}' +                              # Hexadecimal escape sequence
-    ")'" +
-')'
-Capture StringLiteral: 'L?"(' + 
-    '[^\\"\r\n]' + '|' +                              # Character
-    '\\(\n|\r|\r\n)' + '|' +                          # Multiline string
-    '{EscapedCharacter}' + '|' +                      # Basic escape sequence
-    '{EscapedOctal}' + '|' +                          # Octal escape sequence
-    '{EscapedHex}' +                                  # Hexadecimal escape sequence
-')*"'
+Let HexadecimalDigits = '0[Xx][[:xdigit:]]+'
+Let IntegerConstant = '(' + 
+    '{HexadecimalDigits}' + '|' + # Hexadecimal integer
+    '0[0-7]*' + '|' +             # Octal integer
+    '[1-9][[:digit:]]*' +         # Decimal integer
+')([uU][lL]?|[lL][uU]?)?'
+Let DecimalExponent = "[Ee][\+\-]?[[:digit:]]+"
+Let HexadecimalExponent = "[Pp][\+\-]?[[:digit:]]+"
+Let DecimalFloatingPointDigits = '(' +
+    '[[:digit:]]*\.[[:digit:]]+' + '|' +        # 123.
+    '[[:digit:]]+\.[[:digit:]]*' +              # .123
+'){DecimalExponent}?'
+Let HexadecimalFloatingPointDigits = '0x(' +
+    '[[:xdigit:]]*\.[[:xdigit:]]+' + '|' +  # 0x.123
+    '[[:xdigit:]]+\.[[:xdigit:]]*' +        # 0x123.
+'){HexadecimalExponent}'
+Let FloatingPointConstant = '(' +
+    '{DecimalFloatingPointDigits}' + '|' +
+    '{HexadecimalFloatingPointDigits}' + '|' +
+    '[[:digit:]]+{DecimalExponent}' + '|' +
+    '{HexadecimalDigits}{HexadecimalExponent}' +
+')[FfLl]?'
+Let CharacterConstant = "L?'([^\r\n\\]|\\[^\r\n])'"
+Capture Constant: '' +
+    '{IntegerConstant}' + '|' +
+    '{FloatingPointConstant}' + '|' +
+    '{CharacterConstant}'
+Capture StringLiteral: 'L?"([^\r\n"\\]|\\([^\r]|\r\n))*"'
 
 # Operators
 Ellipsis: '\.\.\.'
@@ -125,4 +117,3 @@ GreaterThan: '\>'
 BitwiseXor: '\^'
 BitwiseOr: '\|'
 TernarySelect: '\?'
-Let suffix = 'lower'

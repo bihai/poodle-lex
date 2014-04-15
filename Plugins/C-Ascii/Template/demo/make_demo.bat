@@ -1,1 +1,0 @@
-gcc demo.c ../$BASE_FILE_NAME.c -o demo -I..

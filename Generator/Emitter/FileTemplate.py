@@ -43,7 +43,7 @@ def FileTemplate(in_filename, out_filename):
         else:
             return match.group('tight')
     
-    with open(in_filename, 'r') as in_file:
+    with open(in_filename, 'rU') as in_file:
         with open(out_filename, 'w') as out_file:
             for line in in_file:
                 match = re.search(pattern_entireline, line)

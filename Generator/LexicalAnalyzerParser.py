@@ -49,7 +49,9 @@ class LexicalAnalyzerParser(object):
         if token == 'colon':
             self.parse_rule(name_or_action, None)
         elif token == 'identifier':
-            if name_or_action.lower() == 'let':
+            if name_or_action.lower() == 'reserve':
+                self.rules_file.reserve_id(text)
+            elif name_or_action.lower() == 'let':
                 self.lexer.skip('whitespace')
                 self.lexer.expect('equals')
                 self.parse_definition(text)

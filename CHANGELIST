@@ -4,8 +4,12 @@ Version 1.0:
     Features:
         - Support for variable substitution
         - Support for skip, capture, and reserve commands
+        - Support for alternate class, namespace, and file names
         - Support for emitter language plugins
-        - Addition of C emitter
+        - Addition of a C++ emitter plug-in
+        
+    Bug fixes:
+        - Fixes to the C lexical analyzer example
 
 Version 0.9a:
     Features:

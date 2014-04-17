@@ -49,8 +49,9 @@ text matches two rules, then the rule appearing first is used.
 COMMAND is an optional word which describes actions to be done with. Commands 
 are case-insensitive, and valid commands are:
  - Skip: The pattern will be matched, but no token will be produced
- - Captured: The text of the match will be returned along with the token
-
+ - Capture: The text of the match will be returned along with the token
+ - Reserve: ID will be reserved, but no rule will match it.
+ 
 Variable definitions take the following form:
 Let VARIABLE_NAME = PATTERN
 
@@ -69,7 +70,7 @@ Finally, any text on a line after "#" is considered a comment.
 Language plug-ins:
 As packaged, Poodle-Lex supports the following language arguments
  - freebasic: FreeBasic language emitter with full Unicode support
- - c-ascii: C emitter using the stdio interface
+ - cpp: C++ emitter which consumes UTF-8 input
  
 The default language is freebasic. More languages can be supportd by 
 installing plugins

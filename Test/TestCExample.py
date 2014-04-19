@@ -45,7 +45,7 @@ class TestCExampleFreeBasic(unittest.TestCase):
         with open(os.devnull, 'w') as f:
             if os.name == 'posix':
                 demo_exe = os.path.join(working_dir, demo_base_name)
-                subprocess.call('./make_demo.sh', cwd=working_dir, shell=True, stdout=f)
+                subprocess.call('sh make_demo.sh', cwd=working_dir, shell=True, stdout=f)
             else:
                 demo_exe = os.path.join(working_dir, demo_base_name + ".exe")
                 subprocess.call('make_demo.bat', cwd=working_dir, shell=True, stdout=f)
@@ -54,8 +54,8 @@ class TestCExampleFreeBasic(unittest.TestCase):
         
         # Compare output and expected
         matching = True
-        with open(demo_output, 'r') as f1:
-            with open(expected_output, 'r') as f2:
+        with open(demo_output, 'rU') as f1:
+            with open(expected_output, 'rU') as f2:
                 while True:
                     actual = f1.read(4096)
                     expected = f2.read(4096)

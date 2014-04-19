@@ -42,7 +42,7 @@
     if (f.fail())
     {
         std::cerr << "Unable to open '" << argv[1] << "'" << std::endl;
-        exit(1);
+        return 1;
     }
     
     try

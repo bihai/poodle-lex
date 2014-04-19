@@ -10,6 +10,7 @@ Version 1.0:
         
     Bug fixes:
         - Fixes to the C lexical analyzer example
+        - Expanded unit tests to cover high-level functionality
 
 Version 0.9a:
     Features:

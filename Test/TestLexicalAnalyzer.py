@@ -5,20 +5,20 @@ sys.path.append("..")
 import unittest
 from Generator import Automata
 from Generator.CoverageSet import CoverageSet
-from Generator.LexicalAnalyzer import LexicalAnalyzer
+from Generator.LexicalAnalyzer import LexicalAnalyzer, Pattern
 
    
 class TestDFAEquivalency(unittest.TestCase):
     def test_lexical_analyzer(self):
         # Generate DFA through the LexicalAnalyzer class
         lexical_analyzer = LexicalAnalyzer()
-        lexical_analyzer.add_rule("Keyword", ur'k€yword', True)
-        lexical_analyzer.add_rule("Identifier", ur'[a-zA-Z][a-zA-Z0-9€_]*', True)
-        lexical_analyzer.add_rule("Float", ur'[0-9]+\.[0-9]*|[0-9]*\.[0-9]+')
-        lexical_analyzer.add_rule("Integer", ur'[[:digit:]]+')
-        lexical_analyzer.add_rule("Quote", ur'"([^"\\]|\\.)*"')
-        lexical_analyzer.add_rule("Newline", ur'\r\n|\r|\n')
-        lexical_analyzer.add_rule("Whitespace", ur'[\t\s]+')
+        lexical_analyzer.add_rule("Keyword", Pattern(ur'k€yword', True))
+        lexical_analyzer.add_rule("Identifier", Pattern(ur'[a-zA-Z][a-zA-Z0-9€_]*', True))
+        lexical_analyzer.add_rule("Float", Pattern(ur'[0-9]+\.[0-9]*|[0-9]*\.[0-9]+'))
+        lexical_analyzer.add_rule("Integer", Pattern(ur'[[:digit:]]+'))
+        lexical_analyzer.add_rule("Quote", Pattern(ur'"([^"\\]|\\.)*"'))
+        lexical_analyzer.add_rule("Newline", Pattern(ur'\r\n|\r|\n'))
+        lexical_analyzer.add_rule("Whitespace", Pattern(ur'[\t\s]+'))
         lexical_analyzer.finalize()
         min_dfa = lexical_analyzer.get_min_dfa()
         with open('got_min_dfa.dot', 'w') as f:

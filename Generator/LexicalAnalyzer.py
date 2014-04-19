@@ -36,7 +36,7 @@ class LexicalAnalyzerException(Exception):
         return self.message
         
 class Pattern(object):
-    def __init__(self, pattern, is_case_insensitive):
+    def __init__(self, pattern, is_case_insensitive=False):
         self.pattern = pattern
         self.is_case_insensitive = is_case_insensitive
         

@@ -32,16 +32,21 @@ End Constructor
 
 Function $NAMESPACE.${CLASS_NAME}Token.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
     Dim EncodedString As String
-    Dim UnicodeString(1 To 3) As Poodle.Unicode.Text = { _
+    Dim UnicodeString(1 To 4) As Poodle.Unicode.Text = { _
         Poodle.Unicode.Text("Token("), _
         Poodle.Unicode.Text(", '"), _
-        Poodle.Unicode.Text("')") _
+        Poodle.Unicode.Text("')"), _
+        Poodle.Unicode.Text(")") _
     }
     EncodedString += UnicodeString(1).ToString(_Encoding)
     EncodedString += This.GetIdAsString(_Encoding)
-    EncodedString += UnicodeString(2).ToString(_Encoding)
-    EncodedString += This.Text.ToString(_Encoding)
-    EncodedString += UnicodeString(3).ToString(_Encoding)
+    If This.Text.Length > 0 Then
+        EncodedString += UnicodeString(2).ToString(_Encoding)
+        EncodedString += This.Text.ToString(_Encoding)
+        EncodedString += UnicodeString(3).ToString(_Encoding)
+    Else
+        EncodedString += UnicodeString(4).ToString(_Encoding)
+    End If
     Return EncodedString
 End Function
 
@@ -51,7 +56,7 @@ Function $NAMESPACE.${CLASS_NAME}Token.GetIdAsString(ByRef _Encoding As Poodle.U
 End Function
 
 Dim $NAMESPACE.${CLASS_NAME}Token.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = { _
-    @"InvalidCharacter", _
+    @"InvalidToken", _
     @"EndOfStream", _
     $TOKEN_IDNAMES
 }

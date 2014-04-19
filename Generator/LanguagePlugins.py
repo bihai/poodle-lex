@@ -103,7 +103,7 @@ def load(base_directory, file, encoding='utf-8'):
                             plugin_paths[plugin_attr] = plugin_file["Plugins"][plugin_id][plugin_attr]
                             if not os.path.isabs(plugin_paths[plugin_attr]):
                                 plugin_paths[plugin_attr] = os.path.join(base_directory, plugin_paths[plugin_attr])
-                            if os.path.exists(plugin_file["Plugins"][plugin_id][plugin_attr]):
+                            if os.path.exists(os.path.join(base_directory, plugin_file["Plugins"][plugin_id][plugin_attr])):
                                 continue
                     elif plugin_attr == "Description":
                         if is_text(plugin_file["Plugins"][plugin_id][plugin_attr]):

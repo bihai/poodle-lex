@@ -34,6 +34,11 @@ Namespace Poodle
         
         Extern DefaultStringEncoding As StringEncoding Pointer ' UTF8
         
+        Enum TextState
+            TextStateValid
+            TextStateInvalid
+        End Enum
+        
         Type Text Extends Object
             Public:
             Declare Constructor()
@@ -49,9 +54,10 @@ Namespace Poodle
             Declare Destructor()
             
             Private:
-            InternalData As Unicode.Codepoint Pointer
+            InternalData As Codepoint Pointer
             Capacity As Integer
             InternalLength As Integer
+            State As TextState
         End Type
     End Namespace
 End Namespace

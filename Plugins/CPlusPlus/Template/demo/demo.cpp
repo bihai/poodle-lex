@@ -70,10 +70,10 @@
     {
         $SELECT_ID_STRING
         case $CLASS_NAME::Token::ENDOFSTREAM:
-            id_string = "End Of Stream";
+            id_string = "EndOfStream";
             break;
         default:
-            id_string = "Invalid token";
+            id_string = "InvalidToken";
             break;
     }
     if (token.text.empty())
@@ -87,6 +87,6 @@
     std::string result;
     result.reserve(str.size());
     for (int i=0; i<str.size(); i++)
-        result += (str[i] > 31 && str[i] < 128) ? (char)str[i] : '?';
+        result += (str[i] > 0 && str[i] < 128) ? (char)str[i] : '?';
     return result;
  }

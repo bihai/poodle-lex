@@ -243,6 +243,8 @@ class FreeBasicEmitter(PluginTemplate):
             ("Stream", "Unicode.bi"),
             ("Stream", "UnicodeConstants.bas"),
             ("Stream", "UnicodeConstants.bi"),
+            ("Stream", "UnicodeTextStream.bas"),
+            ("Stream", "UnicodeTextStream.bi"),
             ("Stream", "UTF8Stream.bas"),
             ("Stream", "UTF8Stream.bi"),
             ("Stream", "UTF16Stream.bas"),

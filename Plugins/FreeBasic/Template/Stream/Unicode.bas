@@ -37,6 +37,7 @@ Constructor Poodle.Unicode.Text(ByRef Value As Const String, ByRef _Encoding As 
 End Constructor
 
 Constructor Poodle.Unicode.Text(ByRef Rhs As Poodle.Unicode.Text)
+    This.State = Poodle.Unicode.TextStateValid
     This.InternalData = Rhs.InternalData
     This.Capacity = Rhs.Capacity
     This.InternalLength = Rhs.InternalLength
@@ -46,7 +47,13 @@ Constructor Poodle.Unicode.Text(ByRef Rhs As Poodle.Unicode.Text)
 End Constructor
 
 Constructor Poodle.Unicode.Text(ByRef Rhs As Const Poodle.Unicode.Text)
-    This.InternalData = New Unicode.Codepoint[Rhs.Capacity]
+    This.State = Poodle.Unicode.TextStateValid
+    This.InternalData = New Poodle.Unicode.Codepoint[Rhs.Capacity]
+    If This.InternalData = 0 Then
+        This.State = Poodle.Unicode.TextStateInvalid
+        Return
+    End If
+    
     For i As Integer = 0 To Rhs.InternalLength-1
         This.InternalData[i] = Rhs.InternalData[i]
     Next i
@@ -64,7 +71,12 @@ Operator Poodle.Unicode.Text.Let(ByRef Rhs As Poodle.Unicode.Text)
 End Operator    
 
 Operator Poodle.Unicode.Text.Let(ByRef Rhs As Const Poodle.Unicode.Text)
+    This.State = Poodle.Unicode.TextStateValid
     This.InternalData = New Poodle.Unicode.Codepoint[Rhs.Capacity]
+    If This.InternalData = 0 Then
+        This.State = Poodle.Unicode.TextStateInvalid
+        Return
+    End If
     For i As Integer = 0 To Rhs.InternalLength-1
         This.InternalData[i] = Rhs.InternalData[i]
     Next i
@@ -84,8 +96,6 @@ Function Poodle.Unicode.Text.Append(ByVal Character As Unicode.Codepoint) As Int
         If This.InternalData = 0 Then Return 0
         This.Capacity = 16
     End If
-    
-    If This.InternalLength >= 1024 Then Return 0
     
     If This.InternalLength >= This.Capacity Then
         Var NewText = New Poodle.Unicode.Codepoint[This.Capacity*2]

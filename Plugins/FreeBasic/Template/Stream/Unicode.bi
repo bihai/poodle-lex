@@ -29,7 +29,8 @@ Namespace Poodle
         
         Type StringEncoding Extends Object
             Declare Abstract Function Decode(ByRef As Const String, ByRef As Integer) As Codepoint
-            Declare Abstract Sub Encode(ByRef As String, ByVal As Codepoint)
+            Declare Abstract Function GetByteLength(ByVal As Codepoint) As Integer
+            Declare Abstract Function Encode(ByVal As Codepoint, ByVal As Unsigned Byte Pointer) As Integer
         End Type
         
         Extern DefaultStringEncoding As StringEncoding Pointer ' UTF8

@@ -29,7 +29,8 @@ Namespace Poodle
     Type UTF8StringEncoding Extends Unicode.StringEncoding
         Public:
         Declare Virtual Function Decode(ByRef As Const String, ByRef As Integer) As Unicode.Codepoint
-        Declare Virtual Sub Encode(ByRef As String, ByVal As Unicode.Codepoint)
+        Declare Virtual Function GetByteLength(ByVal As Unicode.Codepoint) As Integer
+        Declare Virtual Function Encode(ByVal As Unicode.Codepoint, ByVal As Unsigned Byte Pointer) As Integer
     End Type
 
     '' Streams UTF-8 characters from a file

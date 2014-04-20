@@ -123,9 +123,20 @@ Property Poodle.Unicode.Text.Data() As Poodle.Unicode.Codepoint Pointer
 End Property
 
 Function Poodle.Unicode.Text.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
-    Dim EncodedString As String = ""
-    For i As Integer = 0 To This.InternalLength-1
-        _Encoding.Encode(EncodedString, This.InternalData[i])
+    Dim ByteCount As Unsigned LongInt = 0
+    For i As Integer = 0 To This.InternalLength - 1
+        ByteCount += _Encoding.GetByteLength(This.InternalData[i])
     Next i
-    Return EncodedString
+    
+    Dim Bytes As Unsigned Byte Pointer = New Unsigned Byte[ByteCount + 1]
+    If Bytes = 0 Then Return ""
+    
+    Dim CurrentByte As Unsigned Byte Pointer = Bytes
+    For i As Integer = 0 To This.InternalLength-1
+        CurrentByte += _Encoding.Encode(This.InternalData[i], CurrentByte)
+    Next i
+    Bytes[ByteCount] = 0
+    Dim As String Result = *Cast(ZString Pointer, Bytes)
+    Delete Bytes
+    Return Result
 End Function

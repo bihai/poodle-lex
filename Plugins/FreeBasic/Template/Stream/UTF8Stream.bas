@@ -132,24 +132,61 @@ Function Poodle.UTF8StringEncoding.Decode(ByRef Value As Const String, ByRef Ind
     Return Codepoint
 End Function
 
-Sub Poodle.UTF8StringEncoding.Encode(ByRef UTF8String As String, ByVal Codepoint As Poodle.Unicode.Codepoint)
-    Select Case CodePoint
+Function Poodle.UTF8StringEncoding.GetByteLength(ByVal Character As Poodle.Unicode.Codepoint) As Integer
+    Select Case Character
         Case 0 To &h7f
-        UTF8String += Chr(Cast(Unsigned Byte, CodePoint))
-        
+        Return 1
+       
         Case &h80 To &h7ff
-        UTF8String += Chr(Poodle.UTF8HeadByteHeaderValue(2) Or Cast(Unsigned Byte, CodePoint Shr 6))
-        UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, ((CodePoint Shr 0) And Cast(Poodle.Unicode.CodePoint, Poodle.UTF8TailByteMask))))
+        Return 2
         
         Case &h800 To &hffff
-        UTF8String += Chr(Poodle.UTF8HeadByteHeaderValue(3) Or Cast(Unsigned Byte, CodePoint Shr 12))
-        UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 6) And Poodle.UTF8TailByteMask))
-        UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 0) And Poodle.UTF8TailByteMask))
+        Return 3
         
         Case &h10000 To &h1fffff
-        UTF8String += Chr(Poodle.UTF8HeadByteHeaderValue(4) Or Cast(Unsigned Byte, CodePoint Shr 18))
-        UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 12) And Poodle.UTF8TailByteMask))
-        UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 6) And Poodle.UTF8TailByteMask))
-        UTF8String += Chr(Poodle.UTF8TailByteHeaderValue Or Cast(Unsigned Byte, (CodePoint Shr 0) And Poodle.UTF8TailByteMask))
+        Return 4
+   
+        Case Else
+        Return 3
     End Select
-End Sub
+End Function
+
+Function Poodle.UTF8StringEncoding.Encode(ByVal Character As Unicode.CodePoint, ByVal Bytes As Unsigned Byte Pointer) As Integer
+    Select Case Character
+        Case 0 To &h7f
+        *Bytes = Cast(Unsigned Byte, Character)
+        Return 1
+        
+        Case &h80 To &h7ff
+        *Bytes = Cast(Unsigned Byte, Character Shr 6) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8HeadByteHeaderValue(2))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Character Shr 0) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Return 2
+        
+        Case &h800 To &hffff
+        *Bytes = Cast(Unsigned Byte, Character Shr 12) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8HeadByteHeaderValue(3))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Character Shr 6) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Character Shr 0) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Return 3
+        
+        Case &h10000 To &h1fffff
+        *Bytes = Cast(Unsigned Byte, Character Shr 18) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8HeadByteHeaderValue(4))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Character Shr 12) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Character Shr 6) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Character Shr 0) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Return 4
+        
+        Case Else
+        *Bytes = Cast(Unsigned Byte, Unicode.InvalidCharacter Shr 12) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8HeadByteHeaderValue(3))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Unicode.InvalidCharacter Shr 6) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Bytes += 1
+        *Bytes = Cast(Unsigned Byte, (Unicode.InvalidCharacter Shr 0) And Cast(Poodle.Unicode.Codepoint, Poodle.UTF8TailByteMask))
+        Return 3
+    End Select
+End Function

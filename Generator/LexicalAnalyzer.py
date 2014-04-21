@@ -90,7 +90,7 @@ class LexicalAnalyzer(object):
     """
     def __init__(self, rules=[], defines={}, minimizer=HopcroftDFAMinimizer.minimize):
         """
-        @param rules: a list of tuple pairs, which each tuple pair representing a rule. 
+        @param rules: a list of tuple pairs, which contain a string containing the name of the rule, and a Pattern object containing the regular expression of the rule. 
         @param defines: a dictionary mapping strings represeneting names of substitutable variables to strings representing patterns which substitute them.
         @param minimizer: function which minimizes a given DeterministicFiniteAutomata object. Hopcroft's algorithm by default
         """
@@ -130,8 +130,8 @@ class LexicalAnalyzer(object):
         """
         Adds a rule to the lexical analyzer.
         @param id: string identifying the rule
-        @param pattern: string containing the regular expression of the rule's pattern.
-        @param is_case_insensitive: boolean which is true if the pattern should be case insensitive. Optional, false by default.
+        @param pattern: Pattern object containing the regular expression of the rule's pattern.
+        @param action string containing the action which should be take for the rule
         """
         self.check_not_final()
         try:
@@ -149,8 +149,7 @@ class LexicalAnalyzer(object):
         """
         Adds a definition for a substitutable variable 
         @param id: string identifying the varaible
-        @param pattern: string containing the regular expression of the rule's pattern.
-        @param is_case_insensitive: boolean which is true if the pattern should be case insensitive. Optional, false by default.
+        @param pattern: Pattern object containing the regular expression of the rule's pattern.
         """
         self.check_not_final()
         try:

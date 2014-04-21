@@ -55,11 +55,9 @@
 <!-- ==================== CLASS DESCRIPTION ==================== -->
 <h1 class="epydoc">Class Rule</h1><p class="nomargin-top"><span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#Rule">source&nbsp;code</a></span></p>
 <pre class="base-tree">
-object --+    
-         |    
-   <a href="Generator.LexicalAnalyzer.Pattern-class.html">Pattern</a> --+
-             |
-            <strong class="uidshort">Rule</strong>
+object --+
+         |
+        <strong class="uidshort">Rule</strong>
 </pre>
 
 <hr />
@@ -91,7 +89,6 @@ object --+
           <td><span class="summary-sig"><a href="Generator.LexicalAnalyzer.Rule-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">id</span>,
         <span class="summary-sig-arg">pattern</span>,
-        <span class="summary-sig-arg">is_case_insensitive</span>=<span class="summary-sig-default">False</span>,
         <span class="summary-sig-arg">action</span>=<span class="summary-sig-default">None</span>)</span><br />
       x.__init__(...) initializes x; see help(type(x)) for signature</td>
           <td align="right" valign="top">
@@ -109,7 +106,7 @@ object --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="Generator.LexicalAnalyzer.Rule-class.html#__eq__" class="summary-sig-name">__eq__</a>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a name="__eq__"></a><span class="summary-sig-name">__eq__</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">other_rule</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#Rule.__eq__">source&nbsp;code</a></span>
@@ -178,7 +175,7 @@ object --+
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="_valid_actions"></a><span class="summary-name">_valid_actions</span> = <code title="set(['capture', 'skip'])"><code class="variable-group">set([</code><code class="variable-quote">'</code><code class="variable-string">capture</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">skip</code><code class="variable-quote">'</code><code class="variable-group">])</code></code>
+        <a name="_valid_actions"></a><span class="summary-name">_valid_actions</span> = <code title="set(['capture', 'reserve', 'skip'])"><code class="variable-group">set([</code><code class="variable-quote">'</code><code class="variable-string">capture</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">reserve</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">skip</code><code class="variable-quote">'</code><code class="variable-group">])</code></code>
     </td>
   </tr>
 </table>
@@ -212,7 +209,7 @@ object --+
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
         <a name="pattern"></a><span class="summary-name">pattern</span><br />
-      string representing the variable's regular expression pattern
+      string representing the rule's regular expression pattern
     </td>
   </tr>
 <tr>
@@ -278,7 +275,6 @@ object --+
   <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">id</span>,
         <span class="sig-arg">pattern</span>,
-        <span class="sig-arg">is_case_insensitive</span>=<span class="sig-default">False</span>,
         <span class="sig-arg">action</span>=<span class="sig-default">None</span>)</span>
     <br /><em class="fname">(Constructor)</em>
   </h3>
@@ -293,34 +289,10 @@ object --+
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>id</code></strong> - string containing the id of the rule</li>
         <li><strong class="pname"><code>pattern</code></strong> - string containing the regular expression pattern of the rule</li>
-        <li><strong class="pname"><code>is_case_insensitive</code></strong> - boolean representing if the pattern is case insensitive</li>
+        <li><strong class="pname"><code>action</code></strong> - string containing a command to associate with the rule, or None</li>
     </ul></dd>
     <dt>Overrides:
         object.__init__
-    </dt>
-  </dl>
-</td></tr></table>
-</div>
-<a name="__eq__"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">__eq__</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">other_rule</span>)</span>
-    <br /><em class="fname">(Equality operator)</em>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="Generator.LexicalAnalyzer-pysrc.html#Rule.__eq__">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  
-  <dl class="fields">
-    <dt>Overrides:
-        <a href="Generator.LexicalAnalyzer.Pattern-class.html#__eq__">Pattern.__eq__</a>
     </dt>
   </dl>
 </td></tr></table>
@@ -377,7 +349,7 @@ object --+
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Apr 03 22:07:23 2014
+    Generated by Epydoc 3.0.1 on Mon Apr 21 00:14:50 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

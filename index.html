@@ -80,8 +80,24 @@ OUTPUT_DIR: An existing directory to which the state machine code is written.</p
   <tr>
     <td>-i ALGORITHM</td>
     <td>--minimizer ALGORITHM</td>
-    <td>Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well</td>
+    <td>Algorithm to use for minimizing the DFA. Default is hopcroft, but polynomial is allowed as well.</td>
   </tr>
+  <tr>
+    <td>-c CLASS_NAME</td>
+    <td>--class-name CLASS_NAME</td>
+    <td>Override the default class name of the emitted code and uses CLASS_NAME instead.</td>
+  </tr>
+  <tr>
+    <td>-f FILE_NAME</td>
+    <td>--file-name FILE_NAME</td>
+    <td>Override the default file name of the emitted code and use FILE_NAME instead.</td>
+  </tr>
+  <tr>
+    <td>-s NAMESPACE</td>
+    <td>--namespace NAMESPACE</td>
+    <td>Override the default namespace of the emitted code and use NAMESPACE instead</td>
+  </tr>
+
 </table>
 
 <h2>
@@ -120,7 +136,8 @@ are case-insensitive, and valid commands are:</p>
 
 <ul>
 <li>Skip: The pattern will be matched, but no token will be produced</li>
-<li>Captured: The text of the match will be returned along with the token</li>
+<li>Capture: The text of the match will be returned along with the token</li>
+<li>Reserve: The token id will be reserved but not used</li>
 </ul><p>Variable definitions take the following form:
 <code>Let VARIABLE_NAME = PATTERN</code></p>
 

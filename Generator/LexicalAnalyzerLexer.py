@@ -100,6 +100,8 @@ class LexicalAnalyzerLexer(object):
         Parses a double or single-quoted string, strips quotes, and removes escaped quotes
         @return: the value of the string constant parsed
         """
+        if self.token is None:
+            self.get_next()
         token, text = self.expect_one_of('literalsingle', 'literaldouble')
         if token == 'literalsingle':
             return text[1:-1].replace("''", "'")
@@ -110,7 +112,7 @@ class LexicalAnalyzerLexer(object):
         """
         Checks if the next token is one of a set of token classes. Raises exception if token doesn't match.
         If existin_token and existing_text are provided they will be checked. Otherwise, a token will be pulled from the iterator.
-        @param expected_tokens: array of strings containing valid token classes for the next token
+        @param expected_tokens: one or more strings containing valid token classes for the next token
         @return: tuple pair for the token being checked containing a string with the class of token, and a string with the token text.
         """
         if self.token is None:
@@ -120,6 +122,19 @@ class LexicalAnalyzerLexer(object):
         old_token, old_text = self.token, self.text
         self.get_next()
         return old_token, old_text
+        
+    def expect_keywords(self, *expected_text):
+        """
+        Checks that the next token is an identifier and that without casing it is one of an expected set of values
+        @param expected_text: one or more strings containing valid values for the next token
+        """
+        if self.token is None:
+            self.get_next()
+        if self.token != 'identifier' or self.text.lower() not in [i.lower() for i in expected_text]:
+            self.throw("Expected '%s', found '%s'" % ("' or '".join(self.expected_text), self.text))
+        old_token, old_text = self.token, self.text
+        self.get_next()
+        return old_text
         
     def expect(self, expected_token):
         """

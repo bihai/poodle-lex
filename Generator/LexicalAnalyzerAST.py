@@ -1,3 +1,23 @@
+# Copyright (C) 2014 Parker Michaels
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a 
+# copy of this software and associated documentation files (the "Software"), 
+# to deal in the Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+# and/or sell copies of the Software, and to permit persons to whom the 
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in 
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+# DEALINGS IN THE SOFTWARE.
+
 class Pattern(object):
     """
     Represents a regular expression string
@@ -12,7 +32,7 @@ class Pattern(object):
         self.is_case_insensitive = is_case_insensitive
     
     def __repr__(self):
-        return "Pattern(%s, %s)" % (repr(self.regex), self.is_case_insensitive)
+        return "Pattern(%s, %s)" % (self.regex, self.is_case_insensitive)
         
 class Define(object):
     """
@@ -64,7 +84,7 @@ class Rule(object):
         self.section = section
         
     def __repr__(self):
-        return "Rule(Id=%s, %s, Action=%s, SectionAction=%s, Section=%s)" % (self.id, repr(self.pattern), self.rule_action, self.section_action, repr(self.section))
+        return "Rule(Id=%s, %s, Action=%s, SectionAction=%s, Section=%s)" % (repr(self.id), repr(self.pattern), repr(self.rule_action), repr(self.section_action), repr(self.section))
         
 class Section(object):
     """
@@ -72,17 +92,21 @@ class Section(object):
     @ivar rules: list of Rule objects representing rules in the section, in order of priority
     @ivar defines: list of Define objects representing variable definitions in the section, in order of priority
     @ivar reserved_ids: list of strings representing reserved identifiers
+    @ivar standalone_sections: list of sections not tied to a rule
     """
     def accept(self, visitor):
         visitor.visit_section(self)
         
-    def __init__(self, rules, defines, reserved_ids):
-        self.rules = rules
-        self.defines = defines
-        self.reserved_ids = reserved_ids
+    def __init__(self, id, rules=[], defines=[], reserved_ids=[], standalone_sections=[]):
+        self.id = id
+        self.rules = list(rules)
+        self.defines = list(defines)
+        self.reserved_ids = list(reserved_ids)
+        self.standalone_sections = list(standalone_sections)
         
     def __repr__(self):
         rule_string = "Rules=[%s]" % ", ".join(repr(rule) for rule in self.rules)
         define_string = "Defines=[%s]" % ", ".join(repr(define) for define in self.defines)
         reserved_string = "Reserved=[%s]" % ", ".join(self.reserved_ids)
-        return "Section(%s, %s, %s)" % (rule_string, define_string, reserved_string)
+        section_string = "StandaloneSections=[%s]" % ", ".join(repr(section) for section in self.standalone_sections)
+        return "Section(%s, %s, %s, %s, %s)" % (repr(self.id), rule_string, define_string, reserved_string, section_string)

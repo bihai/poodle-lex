@@ -18,24 +18,25 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import LexicalAnalyzer
-from RegexParser import RegexParser
+import LexicalAnalyzerAST
 from LexicalAnalyzerLexer import LexicalAnalyzerParserException, LexicalAnalyzerLexer
 
 class LexicalAnalyzerParser(object):
     def __init__(self, file, encoding):
         self.lexer = LexicalAnalyzerLexer(file, encoding)
-        self.rules_file = LexicalAnalyzer.LexicalAnalyzer()
+        self.rules_file = [LexicalAnalyzerAST.Section('::main::')]
         
     def parse(self):
         """
-        Parse the rules file and return a string
-        @return: a LexicalAnalyzer object described by the rules file
+        Parse the rules file into an AST tree
+        @return: a Section object described by the rules file
         """
+        self.lexer.skip('whitespace', 'comment', 'newline')
         while self.lexer.token != 'end of stream':
-            self.lexer.skip('whitespace', 'comment', 'newline')
             self.parse_statement()
-        return self.rules_file
+            self.lexer.skip('whitespace', 'comment', 'newline')
+            
+        return self.rules_file.pop()
         
     def parse_statement(self):
         """
@@ -47,15 +48,31 @@ class LexicalAnalyzerParser(object):
         self.lexer.skip('whitespace')
         token, text = self.lexer.expect_one_of('colon', 'identifier')
         if token == 'colon':
+            # ID: PATTERN (Exit Section | Enter (SECTION_ID | Section))?
             self.parse_rule(name_or_action, None)
         elif token == 'identifier':
             if name_or_action.lower() == 'reserve':
-                self.rules_file.reserve_id(text)
+                # Reserve ID
+                self.rules_file[-1].reserved_ids.append(text)
             elif name_or_action.lower() == 'let':
+                # Let ID = PATTERN
                 self.lexer.skip('whitespace')
                 self.lexer.expect('equals')
                 self.parse_definition(text)
+            elif name_or_action.lower() == 'section':
+                # Section SECTION_ID
+                new_section = LexicalAnalyzerAST.Section(text)
+                print "Adding section %s to section %s" % (new_section.id, self.rules_file[-1].id)
+                self.rules_file[-1].standalone_sections.append(new_section)
+                self.rules_file.append(new_section)
+            elif name_or_action.lower() == 'end' and text.lower() == 'section':
+                # End Section
+                if len(self.rules_file) < 2:
+                    self.lexer.throw('"End Section" statement when not in a section')
+                old_section = self.rules_file.pop()
+                print "leaving section %s, back in section %s" % (old_section.id, self.rules_file[-1].id)
             else:
+                # ACTION ID: PATTERN (Exit Section | Enter (SECTION_ID | Section))?
                 self.lexer.skip('whitespace')
                 self.lexer.expect('colon')
                 self.parse_rule(text, name_or_action)
@@ -64,22 +81,47 @@ class LexicalAnalyzerParser(object):
                 
     def parse_rule(self, name, action):
         """
-        Parse an expression and add the rule to the LexicalAnalyzer object
+        Parse an expression and add the rule to the current section
         @return: None
         """
         self.lexer.skip('whitespace')
         expression = self.parse_expression()
-        self.rules_file.add_rule(name, expression, action)
-        
+        self.lexer.skip('whitespace')
+        rule = LexicalAnalyzerAST.Rule(name, expression, action)
+        self.rules_file[-1].rules.append(rule)
+        if self.lexer.token == 'identifier':
+            keyword = self.lexer.expect_keywords('enter', 'exit').lower()
+            self.lexer.skip('whitespace')
+            if keyword == 'enter':
+                rule.section_action = 'enter'
+                self.lexer.skip('whitespace')
+                text = self.lexer.expect('identifier')
+                if text.lower() == 'section':
+                    rule.section = LexicalAnalyzerAST.Section(name)
+                    self.rules_file.append(rule.section)
+                    print "adding section %s to rule %s" % (rule.section.id, rule.id)
+                else:
+                    rule.section = LexicalAnalyzerAST.SectionReference(name)
+            elif keyword == 'exit':
+                rule.section_action = 'exit'
+                self.expect_keywords('section')
+
     def parse_definition(self, name):
         """
+        Parse an expression and add the define to the current section
+        @param name: the ID of the definition being parsed
         @return: None
         """
         self.lexer.skip('whitespace')
         expression = self.parse_expression()
-        self.rules_file.add_define(name, expression)
+        define = LexicalAnalyzerAST.Define(name, expression)
+        self.rules_file[-1].defines.append(define)
         
     def parse_expression(self):
+        """
+        Parse a concatenated list of regular expression strings and return
+        @return: a Pattern object representing the expression
+        """
         self.lexer.skip('whitespace')
         is_case_insensitive = False
         if self.lexer.token == 'identifier' and self.lexer.text == 'i':
@@ -92,5 +134,5 @@ class LexicalAnalyzerParser(object):
             self.lexer.skip('whitespace', 'newline', 'comment')
             string_value += self.lexer.expect_string()
             self.lexer.skip('whitespace')
-        return LexicalAnalyzer.Pattern(string_value, is_case_insensitive)
+        return LexicalAnalyzerAST.Pattern(string_value, is_case_insensitive)
         

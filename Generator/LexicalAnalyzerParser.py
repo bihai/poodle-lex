@@ -24,7 +24,28 @@ from LexicalAnalyzerLexer import LexicalAnalyzerParserException, LexicalAnalyzer
 class LexicalAnalyzerParser(object):
     def __init__(self, file, encoding):
         self.lexer = LexicalAnalyzerLexer(file, encoding)
-        self.rules_file = [LexicalAnalyzerAST.Section('::main::')]
+        for NodeType in [
+            LexicalAnalyzerAST.Rule,
+            LexicalAnalyzerAST.Define,
+            LexicalAnalyzerAST.ReservedId,
+            LexicalAnalyzerAST.Pattern,
+            LexicalAnalyzerAST.Section,
+            LexicalAnalyzerAST.SectionReference
+        ]:
+            setattr(self, NodeType.__name__, self.create_line_wrapper(NodeType))
+        self.rules_file = [self.Section('::main::')]
+        
+    def create_line_wrapper(self, NodeType):
+        """
+        Uses reflection to create a version of each task with the line 
+        number of the rules file lexer bound to the constructor
+        @param NodeType: a Python class to wrap
+        """
+        parent_self = self
+        class Wrapper(NodeType):
+            def __init__(self, *args):
+                NodeType.__init__(self, *args, line_number=parent_self.lexer.line)
+        return Wrapper
         
     def parse(self):
         """
@@ -52,8 +73,8 @@ class LexicalAnalyzerParser(object):
             self.parse_rule(name_or_action, None)
         elif token == 'identifier':
             if name_or_action.lower() == 'reserve':
-                # Reserve ID
-                self.rules_file[-1].reserved_ids.append(text)
+                # Reserve ID\
+                self.rules_file[-1].reserved_ids.append(self.ReservedID(text))
             elif name_or_action.lower() == 'let':
                 # Let ID = PATTERN
                 self.lexer.skip('whitespace')
@@ -61,8 +82,7 @@ class LexicalAnalyzerParser(object):
                 self.parse_definition(text)
             elif name_or_action.lower() == 'section':
                 # Section SECTION_ID
-                new_section = LexicalAnalyzerAST.Section(text)
-                print "Adding section %s to section %s" % (new_section.id, self.rules_file[-1].id)
+                new_section = self.Section(text)
                 self.rules_file[-1].standalone_sections.append(new_section)
                 self.rules_file.append(new_section)
             elif name_or_action.lower() == 'end' and text.lower() == 'section':
@@ -70,7 +90,6 @@ class LexicalAnalyzerParser(object):
                 if len(self.rules_file) < 2:
                     self.lexer.throw('"End Section" statement when not in a section')
                 old_section = self.rules_file.pop()
-                print "leaving section %s, back in section %s" % (old_section.id, self.rules_file[-1].id)
             else:
                 # ACTION ID: PATTERN (Exit Section | Enter (SECTION_ID | Section))?
                 self.lexer.skip('whitespace')
@@ -87,7 +106,7 @@ class LexicalAnalyzerParser(object):
         self.lexer.skip('whitespace')
         expression = self.parse_expression()
         self.lexer.skip('whitespace')
-        rule = LexicalAnalyzerAST.Rule(name, expression, action)
+        rule = self.Rule(name, expression, action)
         self.rules_file[-1].rules.append(rule)
         if self.lexer.token == 'identifier':
             keyword = self.lexer.expect_keywords('enter', 'exit').lower()
@@ -97,11 +116,10 @@ class LexicalAnalyzerParser(object):
                 self.lexer.skip('whitespace')
                 text = self.lexer.expect('identifier')
                 if text.lower() == 'section':
-                    rule.section = LexicalAnalyzerAST.Section(name)
+                    rule.section = self.Section(name)
                     self.rules_file.append(rule.section)
-                    print "adding section %s to rule %s" % (rule.section.id, rule.id)
                 else:
-                    rule.section = LexicalAnalyzerAST.SectionReference(name)
+                    rule.section = self.SectionReference(name)
             elif keyword == 'exit':
                 rule.section_action = 'exit'
                 self.expect_keywords('section')
@@ -114,7 +132,7 @@ class LexicalAnalyzerParser(object):
         """
         self.lexer.skip('whitespace')
         expression = self.parse_expression()
-        define = LexicalAnalyzerAST.Define(name, expression)
+        define = self.Define(name, expression)
         self.rules_file[-1].defines.append(define)
         
     def parse_expression(self):
@@ -134,5 +152,5 @@ class LexicalAnalyzerParser(object):
             self.lexer.skip('whitespace', 'newline', 'comment')
             string_value += self.lexer.expect_string()
             self.lexer.skip('whitespace')
-        return LexicalAnalyzerAST.Pattern(string_value, is_case_insensitive)
+        return self.Pattern(string_value, is_case_insensitive)
         

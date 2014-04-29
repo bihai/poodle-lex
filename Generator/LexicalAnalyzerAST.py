@@ -18,7 +18,23 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-class Pattern(object):
+class ASTException(Exception):
+    pass
+
+class Node(object):
+    """
+    Visitable object which contains a line number
+    """
+    def accept(self, visitor):
+        self.throw("not implemented")
+        
+    def __init__(self, line_number):
+        self.line_number = line_number
+        
+    def throw(self, message):
+        raise ASTException("On line %d, %s" % (self.line_number, message))
+
+class Pattern(Node):
     """
     Represents a regular expression string
     @ivar regex: string containing the regular expression
@@ -27,14 +43,15 @@ class Pattern(object):
     def accept(self, visitor):
         visitor.visit_pattern(self)
 
-    def __init__(self, regex, is_case_insensitive):
+    def __init__(self, regex, is_case_insensitive, line_number):
         self.regex = regex
         self.is_case_insensitive = is_case_insensitive
+        self.line_number = line_number
     
     def __repr__(self):
         return "Pattern(%s, %s)" % (self.regex, self.is_case_insensitive)
         
-class Define(object):
+class Define(Node):
     """
     Represents a 'Let id = pattern' variable declaration
     @ivar id: the name of the variable 
@@ -43,12 +60,13 @@ class Define(object):
     def accept(self, visitor):
         visitor.visit_define(self)
         
-    def __init__(self, id, pattern):
+    def __init__(self, id, pattern, line_number):
         self.id = id
         self.pattern = pattern
+        self.line_number = line_number
         
     def __repr__(self):
-        return "Define(%s, %s)" % (self.id, repr(self.pattern))
+        return "Define(%s, %s)" % (repr(self.id), repr(self.pattern))
 
 class SectionReference(object):
     """
@@ -58,11 +76,27 @@ class SectionReference(object):
     def accept(self, visitor):
         visitor.visit_section_reference(self)
         
-    def __init__(self, name):
+    def __init__(self, name, line_number):
         self.name = name
+        self.line_number = line_number
         
     def __repr__(self):
-        return "SectionReference(%s)" % self.name
+        return "SectionReference(%s)" % repr(self.name)
+        
+class ReservedId(object):
+    """
+    Represents a reserved ID
+    @ivar id: string containing the id being reserved
+    """
+    def accept(self, visitor):
+        visitor.visit_reserved_id(self)
+    
+    def __init__(self, id, line_number):
+        self.id = id
+        self.line_number = line_number
+        
+    def __repr__(self):
+        return "ReservedId(%s)" % repr(self.id)
         
 class Rule(object):
     """
@@ -76,12 +110,13 @@ class Rule(object):
     def accept(self, visitor):
         visitor.visit_rule(self)
 
-    def __init__(self, id, pattern, rule_action=None, section_action=None, section=None):
+    def __init__(self, id, pattern, rule_action=None, section_action=None, section=None, line_number=None):
         self.id = id
         self.pattern = pattern
         self.rule_action = rule_action
         self.section_action = section_action
         self.section = section
+        self.line_number = line_number
         
     def __repr__(self):
         return "Rule(Id=%s, %s, Action=%s, SectionAction=%s, Section=%s)" % (repr(self.id), repr(self.pattern), repr(self.rule_action), repr(self.section_action), repr(self.section))
@@ -97,12 +132,13 @@ class Section(object):
     def accept(self, visitor):
         visitor.visit_section(self)
         
-    def __init__(self, id, rules=[], defines=[], reserved_ids=[], standalone_sections=[]):
+    def __init__(self, id, rules=[], defines=[], reserved_ids=[], standalone_sections=[], line_number=None):
         self.id = id
         self.rules = list(rules)
         self.defines = list(defines)
         self.reserved_ids = list(reserved_ids)
         self.standalone_sections = list(standalone_sections)
+        self.line_number = line_number
         
     def __repr__(self):
         rule_string = "Rules=[%s]" % ", ".join(repr(rule) for rule in self.rules)

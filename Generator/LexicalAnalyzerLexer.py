@@ -59,7 +59,7 @@ class LexicalAnalyzerLexer(object):
         self.generator = self._tokens()
         self.token = None
         self.text = None
-        self.line = 0
+        self.line = 1
         
     def __iter__(self):
         return self

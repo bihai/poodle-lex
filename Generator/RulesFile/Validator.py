@@ -17,15 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
-from LexicalAnalyzerVisitor import LexicalAnalyzerVisitor
+from Visitor import Visitor
 
-class LexicalAnalyzerValidator(LexicalAnalyzerVisitor):
+class Validator(Visitor):
     """
-    Visitor class to objects in the LexicalAnalyzerAST, to resolve section
-    references and check for duplicate names
+    Visitor class to objects in the rules file AST, to flatten the section
+    hierarchy and check for duplicate names
     """
     def __init__(self):
-        LexicalAnalyzerVisitor.__init__(self)
+        Visitor.__init__(self)
         self.rules = {}
         self.sections = {}
         self.defines = {}

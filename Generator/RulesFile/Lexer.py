@@ -20,7 +20,7 @@
 
 import re
 
-class LexicalAnalyzerParserException(Exception):
+class RulesFileException(Exception):
     def __init__(self, message):
         self.message = message
     
@@ -30,7 +30,7 @@ class LexicalAnalyzerParserException(Exception):
     def __repr__(self):
         return self.message
 
-class LexicalAnalyzerLexer(object):
+class Lexer(object):
     """
     Reads a rules definition file and provides an iterable stream of tokens
     """
@@ -81,7 +81,7 @@ class LexicalAnalyzerLexer(object):
         return self.token, self.text
         
     def throw(self, message):
-        raise LexicalAnalyzerParserException('On line %d, %s' % (self.line, message))
+        raise RulesFileException('On line %d, %s' % (self.line, message))
             
     def skip(self, *tokens):
         """
@@ -151,7 +151,7 @@ class LexicalAnalyzerLexer(object):
         """
         index = 0
         while index < len(self.source):
-            match = LexicalAnalyzerLexer._regex.match(self.source, index)
+            match = Lexer._regex.match(self.source, index)
             if match is None:
                 self.throw("Unrecognized character: '%s'" % self.source[index])
             yield [(k, v) for k, v in match.groupdict().iteritems() if v is not None][0]

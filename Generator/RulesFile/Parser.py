@@ -18,19 +18,19 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import LexicalAnalyzerAST
-from LexicalAnalyzerLexer import LexicalAnalyzerParserException, LexicalAnalyzerLexer
+import AST
+from Lexer import RulesFileException, Lexer
 
-class LexicalAnalyzerParser(object):
+class Parser(object):
     def __init__(self, file, encoding):
-        self.lexer = LexicalAnalyzerLexer(file, encoding)
+        self.lexer = Lexer(file, encoding)
         for NodeType in [
-            LexicalAnalyzerAST.Rule,
-            LexicalAnalyzerAST.Define,
-            LexicalAnalyzerAST.ReservedId,
-            LexicalAnalyzerAST.Pattern,
-            LexicalAnalyzerAST.Section,
-            LexicalAnalyzerAST.SectionReference
+            AST.Rule,
+            AST.Define,
+            AST.ReservedId,
+            AST.Pattern,
+            AST.Section,
+            AST.SectionReference
         ]:
             setattr(self, NodeType.__name__, self.create_line_wrapper(NodeType))
         self.rules_file = [self.Section('::main::')]
@@ -45,6 +45,7 @@ class LexicalAnalyzerParser(object):
         class Wrapper(NodeType):
             def __init__(self, *args):
                 NodeType.__init__(self, *args, line_number=parent_self.lexer.line)
+        Wrapper.__name__ = NodeType.__name__ + 'Wrapper'
         return Wrapper
         
     def parse(self):
@@ -62,7 +63,7 @@ class LexicalAnalyzerParser(object):
     def parse_statement(self):
         """
         Parse parse a single statement in the rules file, and attach it
-        to the LexicalAnalyzer object
+        to the AST object
         @return: None
         """
         name_or_action = self.lexer.expect('identifier')
@@ -112,16 +113,15 @@ class LexicalAnalyzerParser(object):
             keyword = self.lexer.expect_keywords('enter', 'exit').lower()
             self.lexer.skip('whitespace')
             if keyword == 'enter':
-                rule.section_action = 'enter'
                 self.lexer.skip('whitespace')
                 text = self.lexer.expect('identifier')
                 if text.lower() == 'section':
-                    rule.section = self.Section(name)
-                    self.rules_file.append(rule.section)
+                    rule.section_action = ('enter', self.Section(name))
+                    self.rules_file.append(rule.section_action[1])
                 else:
-                    rule.section = self.SectionReference(name)
+                    rule.section_action = ('enter', self.SectionReference(text))
             elif keyword == 'exit':
-                rule.section_action = 'exit'
+                rule.section_action = ('exit', None)
                 self.expect_keywords('section')
 
     def parse_definition(self, name):

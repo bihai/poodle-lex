@@ -43,10 +43,16 @@ class ScopedId(object):
             return False
         return all(i == j for i, j in zipped)
         
+    def __iter__(self):
+        return iter(self.ids)
+    
+    def __len__(self):
+        return len(self.ids)
+    
     def __repr__(self):
         return "ScopedId('%s')" % "', '".join(self.ids)
-
-class LexicalAnalyzerVisitor(object):
+        
+class Visitor(object):
     """
     Base visitor for rules file nodes.
     """
@@ -62,13 +68,16 @@ class LexicalAnalyzerVisitor(object):
     def visit_section(self, section):
         pass
         
+    def leave_section(self):
+        pass
+        
     def visit_section_reference(self, section_reference):
         pass
         
     def visit_reserved_id(self, reserved_id):
         pass
 
-class LexicalAnalyzerTraverser(LexicalAnalyzerVisitor):
+class Traverser(Visitor):
     """
     Visitor class which traverses the rules file AST and pulls in other visitors at each node.
     Provides scope to other visitors
@@ -93,8 +102,9 @@ class LexicalAnalyzerTraverser(LexicalAnalyzerVisitor):
     def visit_rule(self, rule):
         for visitor in self.visitors:
             rule.accept(visitor)
-        if rule.section is not None:
-            rule.section.accept(self)
+        if rule.section_action is not None:
+            if rule.section_action[1] is not None:
+                rule.section_action[1].accept(self)
             
     def visit_define(self, define):
         for visitor in self.visitors:
@@ -118,6 +128,9 @@ class LexicalAnalyzerTraverser(LexicalAnalyzerVisitor):
         for subsection in section.standalone_sections:
             subsection.accept(self)
         self.section.pop()
+        
+        for visitor in self.visitors:
+            visitor.leave_section()
     
     def visit_section_reference(self, section_reference):
         for visitor in self.visitors:

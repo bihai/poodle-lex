@@ -32,6 +32,8 @@ Namespace $NAMESPACE
             EndOfStream
             $ENUM_TOKEN_IDS
         End Enum
+        Enum ModeId
+        End Enum
         Id As TokenId
         Text As ${RELATIVE_NAMESPACE}Unicode.Text
         

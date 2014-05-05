@@ -18,8 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-class ASTException(Exception):
-    pass
+from Lexer import RulesFileException
 
 class Node(object):
     """
@@ -32,7 +31,7 @@ class Node(object):
         self.line_number = line_number
         
     def throw(self, message):
-        raise ASTException("On line %d, %s" % (self.line_number, message))
+        raise RulesFileException("On line %d, %s" % (self.line_number, message))
 
 class Pattern(Node):
     """
@@ -68,7 +67,7 @@ class Define(Node):
     def __repr__(self):
         return "Define(%s, %s)" % (repr(self.id), repr(self.pattern))
 
-class SectionReference(object):
+class SectionReference(Node):
     """
     Represents an unresolved reference to a section
     @ivar name: the name of section being referenced
@@ -83,7 +82,12 @@ class SectionReference(object):
     def __repr__(self):
         return "SectionReference(%s)" % repr(self.name)
         
-class ReservedId(object):
+    def get_section(self, sections):
+        if self.name not in sections:
+            self.throw("unknown section '%s'" % self.name)
+        return sections[self.name]
+        
+class ReservedId(Node):
     """
     Represents a reserved ID
     @ivar id: string containing the id being reserved
@@ -98,7 +102,7 @@ class ReservedId(object):
     def __repr__(self):
         return "ReservedId(%s)" % repr(self.id)
         
-class Rule(object):
+class Rule(Node):
     """
     Represents a lexical analyzer rule with a 'action? id: pattern (section_action section?)?' syntax
     @ivar id: string containing the name of the rule
@@ -110,18 +114,17 @@ class Rule(object):
     def accept(self, visitor):
         visitor.visit_rule(self)
 
-    def __init__(self, id, pattern, rule_action=None, section_action=None, section=None, line_number=None):
+    def __init__(self, id, pattern, rule_action=None, section_action=None, line_number=None):
         self.id = id
         self.pattern = pattern
         self.rule_action = rule_action
         self.section_action = section_action
-        self.section = section
         self.line_number = line_number
         
     def __repr__(self):
-        return "Rule(Id=%s, %s, Action=%s, SectionAction=%s, Section=%s)" % (repr(self.id), repr(self.pattern), repr(self.rule_action), repr(self.section_action), repr(self.section))
+        return "Rule(Id=%s, %s, Action=%s, SectionAction=%s)" % (repr(self.id), repr(self.pattern), repr(self.rule_action), repr(self.section_action))
         
-class Section(object):
+class Section(Node):
     """
     Represents a grouping of rules, ids, and reserved keywords
     @ivar rules: list of Rule objects representing rules in the section, in order of priority
@@ -146,3 +149,6 @@ class Section(object):
         reserved_string = "Reserved=[%s]" % ", ".join(self.reserved_ids)
         section_string = "StandaloneSections=[%s]" % ", ".join(repr(section) for section in self.standalone_sections)
         return "Section(%s, %s, %s, %s, %s)" % (repr(self.id), rule_string, define_string, reserved_string, section_string)
+
+    def get_section(self, sections):
+        return self

@@ -190,8 +190,10 @@ class RegexParser(object):
         @return: a Regex.Variable object representing the variable instance
         """
         variable_name = ''
-        while self.next_is(string.ascii_letters):
+        if self.next_is(string.ascii_letters):
             variable_name += self.get_next()
+            while self.next_is(string.ascii_letters + string.digits + '_'):
+                variable_name += self.get_next()
         self.expect("}")
         return Regex.Variable(variable_name)
     

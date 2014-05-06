@@ -41,8 +41,8 @@ class LexicalAnalyzerLexer(object):
         ("colon", r"\:"),
         ("equals", r"="),
         ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
-        ("literalsingle", r"'(?:''|[^'])*'"),
-        ("literaldouble", r'"(?:""|[^"])*"'),
+        ("literalsingle", r"'(?:''|[^'\r\n])*'"),
+        ("literaldouble", r'"(?:""|[^"\r\n])*"'),
         ("plus", r'\+'),
         ("leftparenthesis", r'\('),
         ("rightparenthesis", r'\)')
@@ -59,7 +59,7 @@ class LexicalAnalyzerLexer(object):
         self.generator = self._tokens()
         self.token = None
         self.text = None
-        self.line = 0
+        self.line = 1
         
     def __iter__(self):
         return self
@@ -116,7 +116,7 @@ class LexicalAnalyzerLexer(object):
         if self.token is None:
             self.get_next()
         if self.token not in expected_tokens:
-            self.throw("Expected %s, found '%s'" % (" or ".join(['%s' % i for i in expected_tokens]), self.text))
+            self.throw("expected %s, found '%s'" % (" or ".join(['%s' % i for i in expected_tokens]), self.text))
         old_token, old_text = self.token, self.text
         self.get_next()
         return old_token, old_text
@@ -138,7 +138,7 @@ class LexicalAnalyzerLexer(object):
         while index < len(self.source):
             match = LexicalAnalyzerLexer._regex.match(self.source, index)
             if match is None:
-                self.throw("Unrecognized character: '%s'" % self.source[index])
+                self.throw("unrecognized syntax, starting with '%s'" % self.source[index])
             yield [(k, v) for k, v in match.groupdict().iteritems() if v is not None][0]
             index = match.end()
             

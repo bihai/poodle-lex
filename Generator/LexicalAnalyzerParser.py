@@ -32,9 +32,10 @@ class LexicalAnalyzerParser(object):
         Parse the rules file and return a string
         @return: a LexicalAnalyzer object described by the rules file
         """
+        self.lexer.skip('whitespace', 'comment', 'newline')
         while self.lexer.token != 'end of stream':
-            self.lexer.skip('whitespace', 'comment', 'newline')
             self.parse_statement()
+            self.lexer.skip('whitespace', 'comment', 'newline')
         return self.rules_file
         
     def parse_statement(self):

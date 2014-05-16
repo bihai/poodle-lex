@@ -78,7 +78,7 @@ class Rule(object):
         @return: a NonDeterministicFiniteAutomata object which represents the NFA equivalent of the rule's pattern
         """
         nfa_visitor = NonDeterministicFiniteAutomataBuilder(self.id, defines)
-        self.pattern.get_regex().accept(nfa_visitor)
+        self.pattern.accept(nfa_visitor)
         return nfa_visitor.get()
  
 class LexicalAnalyzer(object):

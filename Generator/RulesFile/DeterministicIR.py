@@ -19,37 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 from ..DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
 from .. import Automata
-
-class Section(object):
-    """
-    Represents a section in the intermediate representation. 
-    @ivar dfa: A DeterministicFinite Object representing the state machine of rule-set
-    @ivar priority: A list of strings, each the ID of a rule, in order of priority, with the highest first
-    """
-    def accept(self, visitor):
-        visitor.visit_section(self)
-    
-    def __init__(self, dfa, priority):
-        self.dfa = dfa
-        self.priority = priority 
-        
-class Rule(object):
-    """
-    Represents meta-data for a rule, including ID, action, and section
-    @ivar id: String containing the rule's identifier
-    @ivar action: string containing the action to take with the rule
-    @ivar section_action: tuple of a string a Section object. The string is the
-        action to take on the current section, either None, 'enter', or 'exit'.
-        If the action is 'enter', the Section object is the section to 
-        enter. Otherwise, the Section object is None.
-    """
-    def accept(self, visitor):
-        visitor.visit_rule(self)
-    
-    def __init__(self, id, action, section_action):
-        self.id = id
-        self.action = action
-        self.section_action = section_action
+from .. import HopcroftDFAMinimizer
 
 class DeterministicIR(object):
     """
@@ -58,7 +28,39 @@ class DeterministicIR(object):
     @ivar rules: A list of Rule objects representing metadata for each rule
     @ivar sections: A list of Section objects representing state machines for each section
     """
-    def __init__(self, non_deterministic_ir):
+
+    class Section(object):
+        """
+        Represents a section in the intermediate representation. 
+        @ivar dfa: A DeterministicFinite Object representing the state machine of rule-set
+        @ivar priority: A list of strings, each the ID of a rule, in order of priority, with the highest first
+        """
+        def accept(self, visitor):
+            visitor.visit_section(self)
+        
+        def __init__(self, dfa, priority):
+            self.dfa = dfa
+            self.priority = priority 
+            
+    class Rule(object):
+        """
+        Represents meta-data for a rule, including ID, action, and section
+        @ivar id: String containing the rule's identifier
+        @ivar action: string containing the action to take with the rule
+        @ivar section_action: tuple of a string a Section object. The string is the
+            action to take on the current section, either None, 'enter', or 'exit'.
+            If the action is 'enter', the Section object is the section to 
+            enter. Otherwise, the Section object is None.
+        """
+        def accept(self, visitor):
+            visitor.visit_rule(self)
+        
+        def __init__(self, id, action, section_action):
+            self.id = id
+            self.action = action
+            self.section_action = section_action
+
+    def __init__(self, non_deterministic_ir, minimizer=HopcroftDFAMinimizer.minimize):
         self.rules = {}
         self.sections = {}
         for id, section in non_deterministic_ir.sections.items():
@@ -66,8 +68,10 @@ class DeterministicIR(object):
             priority = []
             for rule in section.rules:
                 all_nfas.append(rule.nfa)
-                self.rules[rule.id] = Rule(rule.id, rule.action, rule.section_action)
+                self.rules[rule.id] = DeterministicIR.Rule(rule.id, rule.action, rule.section_action)
                 priority.append(rule.id)
             combined_nfa = Automata.NonDeterministicFiniteAutomata.alternate(all_nfas)
             dfa = DeterministicFiniteAutomataBuilder(combined_nfa).get()
-            self.sections[id] = Section(dfa, priority)
+            minimizer(dfa)
+            self.sections[id] = DeterministicIR.Section(dfa, priority)
+            

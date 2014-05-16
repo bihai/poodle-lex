@@ -21,6 +21,9 @@
 import AST
 from Lexer import RulesFileException, Lexer
 
+def parse(file, encoding):
+    return Parser(file, encoding).parse()
+
 class Parser(object):
     def __init__(self, file, encoding):
         self.lexer = Lexer(file, encoding)

@@ -68,7 +68,7 @@ class Visitor(object):
     def visit_section(self, section):
         pass
         
-    def leave_section(self):
+    def leave_section(self, section):
         pass
         
     def visit_section_reference(self, section_reference):
@@ -127,10 +127,10 @@ class Traverser(Visitor):
             reserved_id.accept(self)
         for subsection in section.standalone_sections:
             subsection.accept(self)
-        self.section.pop()
+        section = self.section.pop()
         
         for visitor in self.visitors:
-            visitor.leave_section()
+            visitor.leave_section(section)
     
     def visit_section_reference(self, section_reference):
         for visitor in self.visitors:

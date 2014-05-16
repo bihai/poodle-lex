@@ -41,8 +41,8 @@ class Lexer(object):
         ("colon", r"\:"),
         ("equals", r"="),
         ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
-        ("literalsingle", r"'(?:''|[^'])*'"),
-        ("literaldouble", r'"(?:""|[^"])*"'),
+        ("literalsingle", r"'(?:''|[^'\r\n])*'"),
+        ("literaldouble", r'"(?:""|[^"\r\n])*"'),
         ("plus", r'\+'),
         ("leftparenthesis", r'\('),
         ("rightparenthesis", r'\)')
@@ -131,7 +131,7 @@ class Lexer(object):
         if self.token is None:
             self.get_next()
         if self.token != 'identifier' or self.text.lower() not in [i.lower() for i in expected_text]:
-            self.throw("Expected '%s', found '%s'" % ("' or '".join(self.expected_text), self.text))
+            self.throw("Expected '%s', found '%s'" % ("' or '".join(expected_text), self.text))
         old_token, old_text = self.token, self.text
         self.get_next()
         return old_text
@@ -153,7 +153,7 @@ class Lexer(object):
         while index < len(self.source):
             match = Lexer._regex.match(self.source, index)
             if match is None:
-                self.throw("Unrecognized character: '%s'" % self.source[index])
+                self.throw("unrecognized syntax starting with '%s'" % self.source[index])
             yield [(k, v) for k, v in match.groupdict().iteritems() if v is not None][0]
             index = match.end()
             

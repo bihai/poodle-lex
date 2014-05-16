@@ -32,22 +32,30 @@ class Validator(Visitor):
         
     def visit_rule(self, rule):
         if rule.id.lower() in self.rules:
-            rule.throw("Duplicate rule ID '%s'" % rule.id)
+            rule.throw("duplicate rule ID '%s'" % rule.id)
         self.rules[rule.id.lower()] = rule
             
     def visit_reserved_id(self, reserved_id):
         if reserved_id.id.lower() in self.rules:
-            rule.throw("Duplicated reserved ID '%s'" % rule.id)
+            rule.throw("duplicated reserved ID '%s'" % rule.id)
         self.rules[reserved_id.id.lower()] = None
         
     def visit_define(self, define):
         define_id = self.traverser.get_scoped_id(define.id)
-        if define_id in self.sections:
-            define.throw("Duplicate variable ID '%s'" % define.id)
+        if define_id in self.defines:
+            define.throw("duplicate variable ID '%s'" % define.id)
         self.defines[define_id] = define
     
     def visit_section(self, section):
         section_id = self.traverser.get_scoped_id(section.id)
         if section_id in self.sections:
-            section.throw("Duplicate section ID '%s'")
+            section.throw("duplicate section ID '%s'")
         self.sections[section_id] = section
+        self.section_name = section.id
+
+    def leave_section(self, section):
+        current_section_id = self.traverser.get_scoped_id(section.id)
+        if len(current_section_id) > 0:
+            current_section = self.sections[current_section_id]
+            if len(current_section.rules) == 0:
+                current_section.throw("no rules in section '%s'" % section.id)

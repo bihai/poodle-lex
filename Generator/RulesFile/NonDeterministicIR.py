@@ -23,25 +23,41 @@ from .. import Automata
 from ..RegexParser import RegexParser
 from ..NonDeterministicFiniteAutomataBuilder import NonDeterministicFiniteAutomataBuilder
 
-class Section(object):
-    """
-    Represents a section in the intermediate representation
-    """
-    def __init__(self, rules=[]):
-        self.rules = list(rules)
-    
-class Rule(object):
-    """
-    Represents a rule in the intermediate representation
-    """
-    def __init__(self, id, nfa, action, section_action, line_number):
-        self.id = id
-        self.nfa = nfa
-        self.action = action
-        self.section_action = section_action
-        self.line_number = line_number
-            
 class NonDeterministicIR(object):
+    """
+    Represents an intermediate representation of a rules file in 
+    which all state machines have been reduced to non-deterministic
+    finite automata
+    @ivar sections: a dictionary with each key a ScopedId object pointing to 
+        a Sectionobject representing a state machine.
+    """
+    
+    class Section(object):
+        """
+        Represents a section in the intermediate representation
+        @ivar rules: a list of Rule objects, each representing a rule in the section, in order of priority 
+        """
+        def __init__(self, rules=[]):
+            self.rules = list(rules)
+        
+    class Rule(object):
+        """
+        Represents a rule in the intermediate representation
+        @ivar id: a string identifying the name of the rule
+        @ivar nfa: a NonDeterministicFinite object representing the NFA representation of rule's regular expression
+        @ivar action: a string representing the action to take with the rule's token
+        @ivar section_action: a tuple, with a string and Section object. The action can be 'enter', 
+            'exit' or None. If the action is 'enter', the Section object represents the section into 
+            which the lexical analyzer should enter after matching the rule.
+        @ivar line_number: the line of the rules file where the rule was declared.
+        """
+        def __init__(self, id, nfa, action, section_action, line_number):
+            self.id = id
+            self.nfa = nfa
+            self.action = action
+            self.section_action = section_action
+            self.line_number = line_number
+
     def __init__(self, root, defines, sections):
         builder = NonDeterministicIR.Builder(defines, sections)
         traverser = Traverser(builder)
@@ -54,10 +70,15 @@ class NonDeterministicIR(object):
         Visitor which constructs a NonDeterministicIR object from an
         AST node.
         """
-        def __init__(self, defines, sections):
-            self.all_defines = defines
+        def __init__(self, defines, sections):            
+            self.all_defines = {}
+            for id, define in defines.items():
+                try:
+                    self.all_defines[id] = RegexParser(define.pattern.regex, define.pattern.is_case_insensitive).parse()
+                except Exception as e:
+                    define.throw("define '%s': %s" % (define.id, str(e)))
             self.ast_sections = sections
-            self.all_sections = dict((section, Section()) for section in sections)
+            self.all_sections = dict((section, NonDeterministicIR.Section()) for section in sections)
             self.visible_defines = None
             self.visible_sections = None
             self.current_section = None
@@ -80,20 +101,20 @@ class NonDeterministicIR(object):
                     if key in ScopedId(self.current_section[:i]):
                         self.visible_defines[key[-1]] = self.all_defines[key]
                         
-        def leave_section(self):
+        def leave_section(self, section):
             """
             Update the scope upon leaving a section
             """
             self.visit_section(None)
         
         def visit_rule(self, rule):
+            nfa_builder = NonDeterministicFiniteAutomataBuilder(rule.id, self.visible_defines)
             try:
                 """
                 Resolve section references and variables, compile the rule
                 into an NFA, and add to the currently visited section.
                 """
                 regex = RegexParser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
-                nfa_builder = NonDeterministicFiniteAutomataBuilder(rule.id, self.visible_defines)
                 regex.accept(nfa_builder)
                 nfa = nfa_builder.get()
                 section_action = None
@@ -102,11 +123,14 @@ class NonDeterministicIR(object):
                     if section is not None:
                         section = section.get_section(self.visible_sections)
                     section_action = (action, section)
-                ir_rule = Rule(rule.id, nfa, rule.rule_action, section_action, rule.line_number)
+                ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule.rule_action, section_action, rule.line_number)
                 self.all_sections[self.current_section].rules.append(ir_rule)
                     
             except Exception as e:
                 rule.throw("rule '%s': %s" % (rule.id, str(e)))
-        
+                
         def get(self):
+            """
+            Return the sections that were compiled from the rules file
+            """
             return self.all_sections

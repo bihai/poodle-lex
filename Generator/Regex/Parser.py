@@ -139,23 +139,23 @@ class Parser(object):
             return Regex.Literal([(1, 0x10FFFF)])
         elif self.get_next_if(u'\\'):
             if self.get_next_if(u'w'):
-                return Regex.Literal([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
+                return Regex.Literal([Parser.lowercase, Parser.uppercase, Parser.underscore])
             elif self.get_next_if(u'W'):
-                return Regex.LiteralExcept([RegexParser.lowercase, RegexParser.uppercase, RegexParser.underscore])
+                return Regex.LiteralExcept([Parser.lowercase, Parser.uppercase, Parser.underscore])
             elif self.get_next_if(u'r'):
-                return Regex.Literal([RegexParser.carriage_return])
+                return Regex.Literal([Parser.carriage_return])
             elif self.get_next_if(u'n'):
-                return Regex.Literal([RegexParser.line_feed])
+                return Regex.Literal([Parser.line_feed])
             elif self.get_next_if(u't'):
-                return Regex.Literal([RegexParser.tab])
+                return Regex.Literal([Parser.tab])
             elif self.get_next_if(u's'):
-                return Regex.Literal([RegexParser.space])
+                return Regex.Literal([Parser.space])
             elif self.get_next_if(u'd'):
-                return Regex.Literal([RegexParser.digits])
+                return Regex.Literal([Parser.digits])
             elif self.get_next_if(u'v'):
-                return Regex.Literal([RegexParser.vertical_tab])
+                return Regex.Literal([Parser.vertical_tab])
             elif self.get_next_if(u'f'):
-                return Regex.Literal([RegexParser.form_feed])
+                return Regex.Literal([Parser.form_feed])
             elif self.get_next_if(u'x'):
                 codepoint = self.parse_hex_digits(2)
                 return Regex.Literal([(codepoint, codepoint)])
@@ -169,7 +169,7 @@ class Parser(object):
                 return get_literal(self.get_next(), self.is_case_insensitive)
         else:
             character = self.get_next()
-            if character in RegexParser.special:
+            if character in Parser.special:
                 raise RegexParserInvalidCharacter(character)
             return get_literal(character, self.is_case_insensitive)
    
@@ -308,18 +308,18 @@ class Parser(object):
     
     def parse_named_character_class(self):
         classes = {
-            u"alnum": [RegexParser.lowercase, RegexParser.uppercase, RegexParser.digits],
-            u"word": [RegexParser.lowercase, RegexParser.uppercase, RegexParser.digits, RegexParser.underscore],
-            u"alpha": [RegexParser.uppercase, RegexParser.lowercase],
-            u"blank": [RegexParser.space, RegexParser.tab],
+            u"alnum": [Parser.lowercase, Parser.uppercase, Parser.digits],
+            u"word": [Parser.lowercase, Parser.uppercase, Parser.digits, Parser.underscore],
+            u"alpha": [Parser.uppercase, Parser.lowercase],
+            u"blank": [Parser.space, Parser.tab],
             u"cntrl": [(0, 31)],
-            u"digit": [RegexParser.digits],
+            u"digit": [Parser.digits],
             u"graph": [(33, 127)],
-            u"lower": [RegexParser.lowercase],
+            u"lower": [Parser.lowercase],
             u"print": [(32, 127)],
             u"punct": [(ord(i), ord(i)) for i in "][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-"],
             u"space": [(ord(i), ord(i)) for i in string.whitespace],
-            u"xdigit": [RegexParser.digits, (ord('a'), ord('f')), (ord('A'), ord('F'))]
+            u"xdigit": [Parser.digits, (ord('a'), ord('f')), (ord('A'), ord('F'))]
         }
         self.expect(u':')
         class_name = ""

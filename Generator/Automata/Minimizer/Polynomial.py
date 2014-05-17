@@ -18,9 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import Automata
 import itertools
-from CoverageSet import CoverageSet
+from ...CoverageSet import CoverageSet
 
 def pair_id(i, j):
     """
@@ -35,7 +34,7 @@ def minimize(state_machine):
     Minimizes a deterministic finite automata (DFA) graph using an O(n^2) algorithm 
     which compares the distinctiveness of every pair of states. The automata passed 
     in is modified and nothing is returned.
-    @param state_machine: a DeterministicFiniteAutomata object representing the DFA to minimize.
+    @param state_machine: an Automata.DeterministicFinite object representing the DFA to minimize.
     """   
     states = [state for state in state_machine]
     is_distinct = set()

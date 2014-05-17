@@ -21,7 +21,6 @@
 from Visitor import Visitor, ScopedId, Traverser
 from .. import Automata
 from ..RegexParser import RegexParser
-from ..NonDeterministicFiniteAutomataBuilder import NonDeterministicFiniteAutomataBuilder
 
 class NonDeterministicIR(object):
     """
@@ -108,7 +107,7 @@ class NonDeterministicIR(object):
             self.visit_section(None)
         
         def visit_rule(self, rule):
-            nfa_builder = NonDeterministicFiniteAutomataBuilder(rule.id, self.visible_defines)
+            nfa_builder = Automata.NonDeterministicFiniteBuilder(rule.id, self.visible_defines)
             try:
                 """
                 Resolve section references and variables, compile the rule

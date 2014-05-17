@@ -17,9 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
-from ..DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
 from .. import Automata
-from .. import HopcroftDFAMinimizer
 
 class DeterministicIR(object):
     """
@@ -60,7 +58,7 @@ class DeterministicIR(object):
             self.action = action
             self.section_action = section_action
 
-    def __init__(self, non_deterministic_ir, minimizer=HopcroftDFAMinimizer.minimize):
+    def __init__(self, non_deterministic_ir, minimizer=Automata.Minimizer.hopcroft):
         self.rules = {}
         self.sections = {}
         for id, section in non_deterministic_ir.sections.items():
@@ -70,8 +68,8 @@ class DeterministicIR(object):
                 all_nfas.append(rule.nfa)
                 self.rules[rule.id] = DeterministicIR.Rule(rule.id, rule.action, rule.section_action)
                 priority.append(rule.id)
-            combined_nfa = Automata.NonDeterministicFiniteAutomata.alternate(all_nfas)
-            dfa = DeterministicFiniteAutomataBuilder(combined_nfa).get()
+            combined_nfa = Automata.NonDeterministicFinite.alternate(all_nfas)
+            dfa = Automata.DeterministicFiniteBuilder(combined_nfa).get()
             minimizer(dfa)
             self.sections[id] = DeterministicIR.Section(dfa, priority)
             

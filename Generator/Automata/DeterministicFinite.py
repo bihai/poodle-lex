@@ -20,9 +20,7 @@
 
 import collections
 import itertools
-import Automata
-from CoverageSet import CoverageSet
-from DeterministicFiniteAutomataBuilder import DeterministicFiniteAutomataBuilder
+from ..CoverageSet import CoverageSet
 
 class DeterministicState(object):
     """
@@ -41,7 +39,7 @@ class DeterministicState(object):
         self.ids = set()
         self.final_ids = set()
         
-class DeterministicFiniteAutomata(object):
+class DeterministicFinite(object):
     """
     Represents a deterministic finite automata (DFA). May be iterated to yield DeterministicState objects for each contained state.
     @ivar start_state: DeterministicState object representing the initial state
@@ -103,25 +101,10 @@ class DeterministicFiniteAutomata(object):
            
         return "digraph {\n%s\n}\n" % "\n".join(descriptions)
     
-    def minimize(self):
-        """
-        Minimizes the state machine using Brzozowski's method:
-            1. Reverse the DFA into an NFA
-            2. Convert back to DFA
-            3. Reverse the DFA into an NFA again
-            4. Convert back to a DFA
-            This method minimizes the DFA, but does not preserve information about ids.
-        @return: a DeterministicFiniteAutomata obect containing a minimized version of the DFA
-        """
-        reversed = self.reverse()
-        reversed_dfa = DeterministicFiniteAutomataBuilder(reversed).get()
-        double_reversed = reversed_dfa.reverse()
-        return DeterministicFiniteAutomataBuilder(double_reversed).get()
-
     def copy(self):
         """
         Returns a copy of the DFA
-        @return: a DeterministicFiniteAutomata object which is equavalent to this object.
+        @return: an Automata.DeterministicFinite object which is equavalent to this object.
         """
         new_states = dict([(state, DeterministicState()) for state in self])
         for state in self:
@@ -130,20 +113,20 @@ class DeterministicFiniteAutomata(object):
             new_states[state].final_ids = state.final_ids
             for destination, edges in state.edges.iteritems():
                 new_states[state].edges[new_states[destination]].update(edges)
-        self_copy = DeterministicFiniteAutomata()
+        self_copy = DeterministicFinite()
         self_copy.start_state = new_states[self.start_state]
         return self_copy
         
     def reverse(self):
         """
         Returns a reverse of the DFA, which is an NFA that starts at each end state of the DFA, and transitions towards the initial state.
-        @return: a NonDeterministicFiniteAutomata objct containing the reverse of the DFA.
+        @return: an Automata.NonDeterministicFinite object containing the reverse of the DFA.
         """
-        nfa_state_machine = Automata.NonDeterministicFiniteAutomata()
+        nfa_state_machine = NonDeterministicFinite()
         
         # First convert to an NFA by copying states and linking to start/end state
         for dfa_state in self:
-            dfa_state.nfa_proxy = Automata.NonDeterministicState()
+            dfa_state.nfa_proxy = NonDeterministicState()
             dfa_state.nfa_proxy.is_one_to_many_proxy = False
             if dfa_state == self.start_state:
                 dfa_state.nfa_proxy.epsilon_edges.add(nfa_state_machine.end_state)

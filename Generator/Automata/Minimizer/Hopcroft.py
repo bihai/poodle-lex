@@ -18,9 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import Automata
 import collections
-from CoverageSet import CoverageSet
+from ...CoverageSet import CoverageSet
 import pickle
 
 class StateGroup(object):
@@ -40,7 +39,7 @@ def minimize(state_machine):
     """
     Minimizes a deterministic finite automata (DFA) graph using Hopcroft's O(n*log(n)) 
     algorithm. The automata passed in is modified and nothing is returned.
-    @param state_machine: a DeterministicFiniteAutomata object representing the DFA to minimize.
+    @param state_machine: a Automata.DeterministicFinite object representing the DFA to minimize.
     """
     states = [state for state in state_machine]
     

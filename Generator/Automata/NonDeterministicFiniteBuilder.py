@@ -18,13 +18,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import Automata
-import Regex
+from .. import Regex
 import copy
 import string
-from RegexVariableResolver import RegexVariableResolver
+from ..RegexVariableResolver import RegexVariableResolver
+from NonDeterministicFinite import NonDeterministicFinite
 
-class NonDeterministicFiniteAutomataBuilder(object):
+class NonDeterministicFiniteBuilder(object):
     """
     Visitor object which converts a regular expression into a non-deterministic finite automata (NFA) graph. 
     """
@@ -39,7 +39,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
         Pushes the NFA onto a stack.
         @param literal: a Regex.Literal object representing the literal to convert.
         """
-        state_machine = Automata.NonDeterministicFiniteAutomata()
+        state_machine = NonDeterministicFinite()
         state_machine.start_state.edges[state_machine.end_state].update(literal.characters)
         self.state_machines.append(state_machine)
  
@@ -49,7 +49,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
         Pushes the NFA onto a stack.
         @param literal_except: a Regex.LiteralExcept object representing the inverse literal to convert.
         """
-        state_machine = Automata.NonDeterministicFiniteAutomata()
+        state_machine = NonDeterministicFinite()
         state_machine.start_state.edges[state_machine.end_state].add(1, 0x10FFFF)
         state_machine.start_state.edges[state_machine.end_state].difference_update(literal_except.characters)
         self.state_machines.append(state_machine)        
@@ -69,7 +69,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
         if repetition.max == Regex.Repetition.Infinity:
             # Kleene star
             inner_state_machine = copy.deepcopy(child_state_machine)
-            state_machine = Automata.NonDeterministicFiniteAutomata()
+            state_machine = NonDeterministicFinite()
             state_machine.start_state.epsilon_edges.add(inner_state_machine.start_state)
             inner_state_machine.end_state.epsilon_edges.add(state_machine.end_state)
             inner_state_machine.end_state.epsilon_edges.add(inner_state_machine.start_state)
@@ -82,16 +82,16 @@ class NonDeterministicFiniteAutomataBuilder(object):
             state_machines = [copy.deepcopy(child_state_machine) for i in xrange(repetition.max - repetition_min)]
             for state_machine in state_machines:
                 state_machine.start_state.epsilon_edges.add(state_machine.end_state)
-            state_machine = Automata.NonDeterministicFiniteAutomata.concatenate(state_machines)
+            state_machine = NonDeterministicFinite.concatenate(state_machines)
             
         # Prepend minimal repetition 
         if repetition_min > 0:
             head_state_machines = [copy.deepcopy(child_state_machine) for i in xrange(repetition_min)]
-            head_state_machine = Automata.NonDeterministicFiniteAutomata.concatenate(head_state_machines)
+            head_state_machine = NonDeterministicFinite.concatenate(head_state_machines)
             if state_machine is None:
                 state_machine = head_state_machine
             else:
-                state_machine = Automata.NonDeterministicFiniteAutomata.concatenate([head_state_machine, state_machine])
+                state_machine = NonDeterministicFinite.concatenate([head_state_machine, state_machine])
                 
         self.state_machines.append(state_machine)
         
@@ -106,7 +106,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
             child.accept(self)
             child_state_machines.append(self.state_machines.pop())
         
-        self.state_machines.append(Automata.NonDeterministicFiniteAutomata.concatenate(child_state_machines))
+        self.state_machines.append(NonDeterministicFinite.concatenate(child_state_machines))
                 
     def visit_alternation(self, alternation):
         """
@@ -118,7 +118,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
         for child in alternation.children:
             child.accept(self)
             child_state_machines.append(self.state_machines.pop())
-        self.state_machines.append(Automata.NonDeterministicFiniteAutomata.alternate(child_state_machines))
+        self.state_machines.append(NonDeterministicFinite.alternate(child_state_machines))
 
     def visit_variable(self, variable):
         """
@@ -131,7 +131,7 @@ class NonDeterministicFiniteAutomataBuilder(object):
     def get(self):
         """
         Returns the NFA graph for the top level regular expression visited by this object.
-        @return: a NonDeterministicFiniteAutomata object representing the NFA.
+        @return: an Automata.NonDeterministicFinite object representing the NFA.
         """
         if len(self.state_machines) > 0:
             for state in self.state_machines[0]:

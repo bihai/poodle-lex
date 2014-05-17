@@ -18,9 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import Automata
 import itertools
-from CoverageSet import CoverageSet
+from ..CoverageSet import CoverageSet
+from DeterministicFinite import DeterministicFinite, DeterministicState
 
 class EpsilonClosureCrawler(object):
     """
@@ -49,21 +49,21 @@ class EpsilonClosureCrawler(object):
         """
         return self.states
 
-class DeterministicFiniteAutomataBuilder(object):
+class DeterministicFiniteBuilder(object):
     """
     Creates a deterministic finite automata (DFA) from a non-deterministic finite automata (NFA) via epsilon closure.
     """
     def __init__(self, nfa_state_machine):
         """
-        @param nfa_state_machine: a NonDeterministicFiniteAutomata object representing the NFA to convert to a DFA
+        @param nfa_state_machine: an Automata.NonDeterministicFinite object representing the NFA to convert to a DFA
         """
         self.states = {}
         self.nfa_state_machine = nfa_state_machine
-        self.dfa_state_machine = Automata.DeterministicFiniteAutomata()
+        self.dfa_state_machine = DeterministicFinite()
         nfa_start_state = set([nfa_state_machine.start_state])
         nfa_start_state_closed = EpsilonClosureCrawler(nfa_start_state).get_states()
         dfa_start_state_id = frozenset(nfa_start_state_closed)
-        self.states[dfa_start_state_id] = Automata.DeterministicState()
+        self.states[dfa_start_state_id] = DeterministicState()
         for nfa_state in nfa_start_state_closed:
             self.states[dfa_start_state_id].ids.update(nfa_state.ids)
             self.states[dfa_start_state_id].final_ids.update(nfa_state.final_ids)
@@ -89,7 +89,7 @@ class DeterministicFiniteAutomataBuilder(object):
         for (min_v, max_v), destination_nfa_states in CoverageSet.segments(*pairs):
             destination_state_id = frozenset(EpsilonClosureCrawler(destination_nfa_states).get_states())
             if destination_state_id not in self.states:
-                self.states[destination_state_id] = Automata.DeterministicState()
+                self.states[destination_state_id] = DeterministicState()
                 for nfa_state in destination_state_id:
                     self.states[destination_state_id].ids.update(nfa_state.ids)
                     self.states[destination_state_id].final_ids.update(nfa_state.final_ids)
@@ -99,6 +99,6 @@ class DeterministicFiniteAutomataBuilder(object):
     def get(self):
         """
         Return the DFA created from the NFA passed into __init__
-        @return: a DetermintisticFiniteAutomata object representing the DFA converted from the NFA passed into __init__
+        @return: an Automata.DetermintisticFinite object representing the DFA converted from the NFA passed into __init__
         """
         return self.dfa_state_machine

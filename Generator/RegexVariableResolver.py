@@ -77,6 +77,6 @@ class RegexVariableResolver(object):
     def get(self):
         """
         Returns a copy of the 
-        @return: a NonDeterministicFiniteAutomata object representing the NFA.
+        @return: an Automata.NonDeterministicFinite object representing the NFA.
         """
         return self.stack[-1]

@@ -22,8 +22,8 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-from Generator import HopcroftDFAMinimizer
-from Generator import NaiveDFAMinimizer
+from Generator.Automata.Minimizer import hopcroft
+from Generator.Automata.Minimizer import polynomial
 from Generator import CommandArguments
 from Generator import LanguagePlugins
 from Generator import RulesFile
@@ -34,8 +34,8 @@ if getattr(sys, 'frozen', None) is None:
 this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
 
 minimizers = {
-    'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', HopcroftDFAMinimizer.minimize),
-    'polynomial': ('Minimize using a polynomial algorithm comparing each state', NaiveDFAMinimizer.minimize)
+    'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', hopcroft),
+    'polynomial': ('Minimize using a polynomial algorithm comparing each state', polynomial)
 }
 
 # Handle 'list' commands
@@ -95,6 +95,7 @@ try:
     nfa_ir = RulesFile.NonDeterministicIR(rules_file, validator.defines, validator.sections)
     dfa_ir = RulesFile.DeterministicIR(nfa_ir)
 except Exception as e:
+    raise
     print("Error processing rules. %s" % str(e), file=sys.stderr)
     sys.exit(1)
     

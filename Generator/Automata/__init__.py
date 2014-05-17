@@ -1,2 +1,4 @@
 from NonDeterministicFinite import NonDeterministicState, NonDeterministicFinite
 from DeterministicFinite import DeterministicState, DeterministicFinite
+from NonDeterministicFiniteBuilder import NonDeterministicFiniteBuilder
+from DeterministicFiniteBuilder import DeterministicFiniteBuilder

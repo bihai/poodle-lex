@@ -20,8 +20,7 @@
 
 import collections
 import itertools
-import Automata
-from CoverageSet import CoverageSet
+from ..CoverageSet import CoverageSet
 
 class NonDeterministicState(object):
     """
@@ -43,7 +42,7 @@ class NonDeterministicState(object):
         # epsilon_edges = set(sink states)
         self.epsilon_edges = set()
         
-class NonDeterministicFiniteAutomata(object):
+class NonDeterministicFinite(object):
     """
     Represents a non-deterministic finite automata (NFA) graph. 
     This object may be iterated to yield NonDetermisticState objects for each contained state.
@@ -115,8 +114,8 @@ class NonDeterministicFiniteAutomata(object):
         Merges a list of state machines by concatenating one after the other.
         Effectively places an epsilon transition between the end state of each automata and the initial state of the next.
         State machines are consumed by this function and cannot be used afterwards.
-        @param state_machines: An array of NonDeterministicFiniteAutomata objects representing the automata to be merged.
-        @return: NonDeterministicFiniteAutomata object representing the merged state machines.
+        @param state_machines: An array of Automata.NonDeterministicFinite objects representing the automata to be merged.
+        @return: An Automata.NonDeterministicFinite object representing the merged state machines.
         """
         if len(state_machines) == 1:
             return state_machines[0]
@@ -140,10 +139,10 @@ class NonDeterministicFiniteAutomata(object):
         Effectively creates a new initial state with epsilon edges to each automata'a initial state, 
         and a final state with epsilon edges from each automata's final state.
         State machines are consumed and cannot be used after calling this function
-        @param state_machines: a list of NonDeterministicFiniteAutomata objects representing the state machines to be merged.
-        @return: a NonDeterministicFiniteAutomata object representing the merged state machines.
+        @param state_machines: a list of Automata.NonDeterministicFinite objects representing the state machines to be merged.
+        @return: an Automata.NonDeterministicFinite object representing the merged state machines.
         """
-        alternated_state_machine = NonDeterministicFiniteAutomata()
+        alternated_state_machine = NonDeterministicFinite()
         for state_machine in state_machines:
             alternated_state_machine.start_state.epsilon_edges.add(state_machine.start_state)
             state_machine.end_state.epsilon_edges.add(alternated_state_machine.end_state)

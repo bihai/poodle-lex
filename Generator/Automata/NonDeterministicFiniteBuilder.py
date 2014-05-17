@@ -21,7 +21,6 @@
 from .. import Regex
 import copy
 import string
-from ..RegexVariableResolver import RegexVariableResolver
 from NonDeterministicFinite import NonDeterministicFinite
 
 class NonDeterministicFiniteBuilder(object):
@@ -124,7 +123,7 @@ class NonDeterministicFiniteBuilder(object):
         """
         Use a seprate visitor to resolve all variable names 
         """
-        resolver = RegexVariableResolver(self.defines)
+        resolver = Regex.VariableResolver(self.defines)
         variable.accept(resolver)
         resolver.get().accept(self)
 

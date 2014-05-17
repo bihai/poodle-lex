@@ -20,7 +20,7 @@
 
 from Visitor import Visitor, ScopedId, Traverser
 from .. import Automata
-from ..RegexParser import RegexParser
+from .. import Regex
 
 class NonDeterministicIR(object):
     """
@@ -73,7 +73,7 @@ class NonDeterministicIR(object):
             self.all_defines = {}
             for id, define in defines.items():
                 try:
-                    self.all_defines[id] = RegexParser(define.pattern.regex, define.pattern.is_case_insensitive).parse()
+                    self.all_defines[id] = Regex.Parser(define.pattern.regex, define.pattern.is_case_insensitive).parse()
                 except Exception as e:
                     define.throw("define '%s': %s" % (define.id, str(e)))
             self.ast_sections = sections
@@ -113,7 +113,7 @@ class NonDeterministicIR(object):
                 Resolve section references and variables, compile the rule
                 into an NFA, and add to the currently visited section.
                 """
-                regex = RegexParser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
+                regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
                 regex.accept(nfa_builder)
                 nfa = nfa_builder.get()
                 section_action = None

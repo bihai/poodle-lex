@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from CoverageSet import CoverageSet
+from ..CoverageSet import CoverageSet
 
 class Literal(object):
     """

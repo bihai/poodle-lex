@@ -18,12 +18,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from CoverageSet import CoverageSet
-import Regex
 import string
-from RegexExceptions import *
+import Regex
+from ..CoverageSet import CoverageSet
+from Exceptions import *
 
-class RegexParser(object):
+class Parser(object):
     """
     Converts a string containing a regular expression into a visitable regular expression object.
     """

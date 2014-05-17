@@ -19,9 +19,9 @@
 # DEALINGS IN THE SOFTWARE.
 
 import Regex
-from RegexExceptions import *
+from Exceptions import *
 
-class RegexVariableResolver(object):
+class VariableResolver(object):
     """
     Visitor object which copies a regular expression, except for variables. Variables are replaced with a regular expression found in defines.
     """

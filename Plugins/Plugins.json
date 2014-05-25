@@ -11,7 +11,12 @@
             "Description": "C++ programming language interface which consumes an std::istream",
             "Source": "Plugins/CPlusPlus/CPlusPlus.py",
             "Files": "Plugins/CPlusPlus/Template"
+        },
+        "test": {
+            "Description": "Test plugin",
+            "Source": "Plugins/Test/Test.py",
+            "Dependencies": ["Plugins/Test/Test2.py"],
+            "Files": "Plugins/Test/Template"
         }
     }
-} 
-    
+}

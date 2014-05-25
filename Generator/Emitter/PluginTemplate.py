@@ -21,25 +21,57 @@
 class PluginTemplateNotImplemented(Exception):
     def __init__(self):
         Exception.__init__(self, "Not implemented")
+        
+class TemplateToken(object):
+    """
+    Represents a single token in a single file
+    @ivar filename: string containing the name of the file being generated
+    @ivar stream: file object with which to write the stream output
+    @ivar token: string containing the name of the token to be processed
+    @ivar indent: integer containing the number of spaces preceding the token, 
+        or None if the token is not at the start of the line
+    """
+    def __init__(self, filename, stream):
+        self.filename = filename
+        self.stream = stream
+        self.token = None
+        self.indent = None
 
 class PluginTemplate(object):
     """
     Template from which language emitter plug-ins should derive
-    """    
-    def emit(self):
+    """
+    def process(self, token):
         """
-        Emit all generated code
+        Emit substituted text for a single token in a template file. This is called 
+        for each instance of a token in each generated file
+        @param token: TemplateToken object representing the token to be processed
         """
         raise PluginTemplateNotImplemented()
-    
+        
     def get_output_directories(self):
         """
-        Return a list of directories for Poodle-Lex to create in the output folder
+        Return a list of strings, each the relative path to a directory for 
+        Poodle-Lex to create in the output folder.
         """
         raise PluginTemplateNotImplemented()
-    
+        
     def get_files_to_copy(self):
         """
-        Return a list of files for Poodle-Lex to into the output directory
+        Return a list of strings, each containing the relative path to a file 
+        for Poodle-Lex to into the output directory.
         """
         raise PluginTemplateNotImplemented()
+        
+    def get_files_to_generate(self):
+        """
+        Specify files to generate using token replacement.
+        @return: a list of tuples, each with two elements and representing a  
+            file to be generated. The first element of each tuple is a string 
+            containing the path to the template file from which to generate, 
+            relative to the plugin's template folder. The second is a string 
+            containing the path to the file which is to be generated, relative 
+            to the output path.        
+        """
+        raise PluginTemplateNotImplemented()
+        

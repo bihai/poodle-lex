@@ -75,6 +75,7 @@ try:
     language_plugins[language].load()
     language_plugin = language_plugins[language]
 except Exception as e:
+    raise
     print("Unable to load language plug-in '%s': %s\n" % (language, str(e)), file=sys.stderr)
     sys.exit(1)
 
@@ -105,7 +106,7 @@ try:
     plugin_options.class_name = arguments.class_name
     plugin_options.namespace = arguments.namespace
     plugin_options.file_name = arguments.file_name
-    emitter = language_plugin.create(dfa_ir, arguments.OUTPUT_DIR, plugin_options)
+    emitter = language_plugin.create(dfa_ir, plugin_options)
     
     if not os.path.exists(arguments.OUTPUT_DIR):
         sys.stderr.write("Output directory not found\n")

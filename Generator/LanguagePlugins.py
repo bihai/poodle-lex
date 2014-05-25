@@ -18,7 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from Emitter import PluginTemplate
+import Emitter
+from Emitter.PluginTemplate import PluginTemplate
 import re
 import json
 import os.path
@@ -35,35 +36,43 @@ class PluginOptions(object):
         self.class_name = None
         self.namespace = None
         self.file_name = None
-
+        
 class Plugin(object):
     """
     Class representing a Poodle-Lex language emitter plug-in
     """
-    def __init__(self, source_path, plugin_files_directory, description): 
+    def __init__(self, source_path, plugin_files_directory, dependencies, description): 
         self.source_path = source_path
         self.plugin_files_directory = plugin_files_directory
         self.description = description
+        self.dependencies = dependencies
         self.module = None
+        self.dependency_modules = {}
         
     def load(self):
         """
         Loads the plug-in and verifies the interface
         """
+        for dependency in self.dependencies:
+            with open(dependency, 'r') as f:
+                module_name = os.path.splitext(os.path.basename(dependency))[0]
+                path_template = "Generator.Emitter.language_plugin_dependency_%s_%s"
+                module_path = path_template % (module_name, ''.join(random.choice(string.ascii_lowercase) for i in range(8)))
+                self.dependency_modules[module_name] = imp.load_module(module_path, f, dependency, (".py", 'r', imp.PY_SOURCE))
         with open(self.source_path, 'r') as f:
-            modulename = "Generator.Emitter.language_plugin_%s" % ''.join(random.choice(string.ascii_lowercase) for i in range(16))
-            self.module = imp.load_module(modulename, f, self.source_path, (".py", 'r', imp.PY_SOURCE))
+            module_path = "Generator.Emitter.language_plugin_%s" % ''.join(random.choice(string.ascii_lowercase) for i in range(16))
+            self.module = imp.load_module(module_path, f, self.source_path, (".py", 'r', imp.PY_SOURCE))
         if not hasattr(self.module, 'create_emitter') or not isinstance(self.module.create_emitter, types.FunctionType):
             raise Exception("Plug-in does not contain a 'create_emitter' function")
             
-    def create(self, lexical_analyzer, output_directory, plugin_options):
+    def create(self, lexical_analyzer, plugin_options):
         """
         Creates a LanugageEmitter object from the plug-in
         """
         if self.module is None:
             raise Exception("Plug-in not loaded")
-        emitter = self.module.create_emitter(lexical_analyzer, self.plugin_files_directory, output_directory, plugin_options)
-        if not issubclass(emitter.__class__, PluginTemplate.PluginTemplate):
+        emitter = self.module.create_emitter(lexical_analyzer, self.dependency_modules, plugin_options)
+        if not issubclass(emitter.__class__, PluginTemplate):
             raise Exception("Plug-in interface did not return a class of the correct type")
         return emitter
         
@@ -72,6 +81,21 @@ def is_text(text):
     Simple utility function to determine if an object is of type str or unicode
     """
     return isinstance(text, str) or isinstance(text, unicode)
+    
+def is_path(text, base_directory):
+    """
+    Simple utility function to determine if the object is an str, and represents a valid path
+    @return: a string with the resolved path, or None if not a path
+    """
+    if is_text(text):
+        if not os.path.isabs(text):
+            path = os.path.join(base_directory, text)
+        else:
+            path = text
+        if os.path.exists(path):
+            return path
+    return None
+                            
         
 def load(base_directory, file, encoding='utf-8'):
     """ 
@@ -96,24 +120,33 @@ def load(base_directory, file, encoding='utf-8'):
             if is_text and re.match("[a-zA-Z][a-zA-Z0-9_\-\+]*", plugin_id):
                 valid = True
                 plugin_paths = {}
+                dependencies = []
                 description = ""
                 for plugin_attr in plugin_file["Plugins"][plugin_id]:
                     if is_text(plugin_attr) and plugin_attr in ("Source", "Files"):
-                        if is_text(plugin_file["Plugins"][plugin_id][plugin_attr]):
-                            plugin_paths[plugin_attr] = plugin_file["Plugins"][plugin_id][plugin_attr]
-                            if not os.path.isabs(plugin_paths[plugin_attr]):
-                                plugin_paths[plugin_attr] = os.path.join(base_directory, plugin_paths[plugin_attr])
-                            if os.path.exists(os.path.join(base_directory, plugin_file["Plugins"][plugin_id][plugin_attr])):
-                                continue
+                        plugin_paths[plugin_attr] = is_path(plugin_file["Plugins"][plugin_id][plugin_attr], base_directory)
+                        if plugin_paths[plugin_attr] is None:
+                            valid = False
+                    elif plugin_attr == "Dependencies":
+                        raw_dependencies = plugin_file["Plugins"][plugin_id][plugin_attr]
+                        if not isinstance(raw_dependencies, list):
+                            valid = False
+                        dependencies = [is_path(i, base_directory) for i in raw_dependencies]
+                        if any(i is None for i in dependencies):   
+                            valid = False
                     elif plugin_attr == "Description":
                         if is_text(plugin_file["Plugins"][plugin_id][plugin_attr]):
                             description = plugin_file["Plugins"][plugin_id][plugin_attr]
-                            continue
-                    valid = False
+                        else:
+                            valid = False
                 if "Source" not in plugin_paths or "Files" not in plugin_paths:
                     valid = False
                 if valid:
-                    language_plugins[plugin_id] = Plugin(plugin_paths["Source"], plugin_paths["Files"], description)
+                    language_plugins[plugin_id] = Plugin(
+                        plugin_paths["Source"], 
+                        plugin_paths["Files"], 
+                        dependencies,
+                        description)
        
         if len(language_plugins) == 0:
             raise Exception("No plugins found")

@@ -31,9 +31,9 @@ class TemplateToken(object):
     @ivar indent: integer containing the number of spaces preceding the token, 
         or None if the token is not at the start of the line
     """
-    def __init__(self, filename, stream):
+    def __init__(self, filename):
         self.filename = filename
-        self.stream = stream
+        self.stream = None
         self.token = None
         self.indent = None
 

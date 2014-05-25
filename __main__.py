@@ -108,17 +108,9 @@ try:
     plugin_options.file_name = arguments.file_name
     emitter = language_plugin.create(dfa_ir, plugin_options)
     
-    if not os.path.exists(arguments.OUTPUT_DIR):
-        sys.stderr.write("Output directory not found\n")
-        sys.exit()
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
         sys.stderr.write("Output directory cannot be same as executable directory\n")
         sys.exit()
-    
-    for directory_name in emitter.get_output_directories():
-        real_directory_name = os.path.join(arguments.OUTPUT_DIR, directory_name)
-        if not os.path.exists(real_directory_name):
-            os.mkdir(real_directory_name)
             
     for file in emitter.get_files_to_copy():
         shutil.copy(os.path.join(language_plugin.plugin_files_directory, file), os.path.join(arguments.OUTPUT_DIR, file))

@@ -101,23 +101,22 @@ except Exception as e:
     print("Error processing rules. %s" % str(e), file=sys.stderr)
     sys.exit(1)
     
-# Copy non-generated files over
+# Emit output
 try:
     plugin_options = LanguagePlugins.PluginOptions()
     plugin_options.class_name = arguments.class_name
     plugin_options.namespace = arguments.namespace
     plugin_options.file_name = arguments.file_name
     emitter = language_plugin.create(dfa_ir, plugin_options)
-    
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
-        sys.stderr.write("Output directory cannot be same as executable directory\n")
-        sys.exit()
+        print("Output directory cannot be same as executable directory", file=sys.stderr)
+        sys.exit(1)
+    executor = LanguagePlugins.Executor(emitter, language_plugin.plugin_files_directory, arguments.OUTPUT_DIR)
+    executor.execute()
         
 except IOError as e:
-    sys.stderr.write("Unable to write to output directory because of an error\n")
-    sys.exit()
-    
-# try:
-    # emitter.emit()
-# except Exception as e:
-    # sys.stderr.write("An error occured while emitting code: '%s'" % str(e))
+    print("Unable to write to output directory because of an error", file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print("Unable to create lexical analyzer: %s" % str(e))
+    sys.exit(1)

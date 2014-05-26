@@ -38,6 +38,10 @@ class PluginOptions(object):
 class Plugin(object):
     """
     Class representing a Poodle-Lex language emitter plug-in
+    @ivar source_path: String containing the path to the main plugin file 
+        containing create_emitter()
+    @ivar plugin_files_directory: String containing path to the plugin files
+    @ivar description: String describing the plugin
     """
     def __init__(self, source_path, plugin_files_directory, dependencies, description): 
         self.source_path = source_path

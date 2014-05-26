@@ -18,10 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-import Emitter
-from Emitter.PluginTemplate import PluginTemplate
-import re
-import json
+from ..Emitter.PluginTemplate import PluginTemplate
 import os.path
 import random
 import string
@@ -29,7 +26,7 @@ import imp
 import sys
 import textwrap
 import types
-import LanguagePluginsParser
+import Parser
 
 class PluginOptions(object):
     def __init__(self):
@@ -78,7 +75,7 @@ class Plugin(object):
         return emitter
                                         
 def describe(base_folder, file, encoding):
-    language_plugins, default_language = LanguagePluginsParser.load(base_folder, file, encoding)
+    language_plugins, default_language = Parser.load(base_folder, file, encoding)
     left_column_size = len(max(language_plugins, key=lambda i: len(i))) + 1
     sys.stderr.write("Available output languages:\n")
     for language, plugin in language_plugins.iteritems():

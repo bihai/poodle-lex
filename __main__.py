@@ -27,7 +27,7 @@ from Generator.Automata.Minimizer import polynomial
 from Generator import CommandArguments
 from Generator import LanguagePlugins
 from Generator import RulesFile
-from Generator import LanguagePluginsParser
+from Generator import LanguagePlugins
 
 this_file = sys.executable
 if getattr(sys, 'frozen', None) is None:
@@ -61,7 +61,7 @@ minimizer_description, minimizer = minimizers[arguments.minimizer]
 language_plugins = None
 default_language = None
 try:
-    language_plugins, default_language = LanguagePluginsParser.load(this_folder, "Plugins/Plugins.json", 'utf-8')
+    language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
 except Exception as e: 
    print("Unable to load plug-in file: %s\n" % str(e), file=sys.stderr)
    sys.exit(1)

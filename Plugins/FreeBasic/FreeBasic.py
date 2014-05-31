@@ -29,8 +29,8 @@ from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
-def create_emitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
-    return FreeBasicEmitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options)
+def create_emitter(lexical_analyzer, dependencies, plugin_options):
+    return FreeBasicEmitter(lexical_analyzer, dependencies, plugin_options)
 
 class FreeBasicEmitter(PluginTemplate):
     """
@@ -156,6 +156,15 @@ class FreeBasicEmitter(PluginTemplate):
         self.namespace = plugin_options.namespace
         if self.namespace is None:
             self.namespace = FreeBasicEmitter.default_namespace
+
+    def get_output_directories(self):
+        return [os.path.join(*i) for i in [
+            ("Demo",),
+            ("Stream",),
+            ("Stream", "Windows"),
+            ("Stream", "Linux")
+        ]]
+
             
     # Public interface
     def emit(self):
@@ -217,14 +226,6 @@ class FreeBasicEmitter(PluginTemplate):
             for stream, token, indent in FileTemplate(support_template_file, support_output_file):
                 self.process_common_tokens(token, stream, description)
                     
-    def get_output_directories(self):
-        return [os.path.join(*i) for i in [
-            ("Demo",),
-            ("Stream",),
-            ("Stream", "Windows"),
-            ("Stream", "Linux")
-        ]]
-        
     def get_files_to_copy(self):
         return [os.path.join(*i) for i in [
             ("Stream", "Windows", "MemoryMapWindows.bas"),
@@ -266,22 +267,6 @@ class FreeBasicEmitter(PluginTemplate):
         else:
             raise Exception('Unrecognized token in %s: "%s"' % (description, token))
     
-    def map_state_ids(self):
-        """
-        Maps all states to an enum element in the FreeBasic source code.
-        """
-        self.ids[self.dfa.start_state] = "InitialState"
-        for state in self.dfa:
-            if state != self.dfa.start_state:
-                initial_id = "".join([i.title() for i in sorted(list(state.ids))])[:64]
-                id = initial_id
-                n = 1
-                while id in self.ids.values() or id.lower() in FreeBasicEmitter.reserved_keywords:
-                    id_prefix = initial_id[:64-len(str(n))]
-                    id = "%s%d" % (id_prefix, n)
-                    n += 1
-                self.ids[state] = id
-                
     def map_rule_names(self):
         """
         Maps all rule names to an enum element in the FreeBasic source code
@@ -297,84 +282,3 @@ class FreeBasicEmitter(PluginTemplate):
                 n += 1
             self.rule_ids[id] = code_id
         
-    def generate_state_machine(self, stream, indent):
-        """
-        Generates a state machine in FreeBasic source code represented by two tiers of "Select Case" statemenets.
-        @param stream: a Python file object to which the state machine should be written
-        @param indent: the number of spaces by which the code should be indented.
-        """
-        code = CodeEmitter(stream)
-        for i in xrange(indent/4):
-            code.indent()
-        
-        for i, state in enumerate(self.dfa):
-            if i != 0:
-                code.line()
-            code.line("Case %s.%s" % (self.namespace, self.ids[state]))
-            code.line("Select Case This.Character")
-            code.indent()
-            
-            def ranges(i):
-                for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
-                    b = list(b)
-                    yield b[0][1], b[-1][1]
-            
-            def format_case(range):
-                if range[0] == range[1]:
-                    return "%d" % range[0]
-                else:
-                    return "%d To %d" % range
-            
-            def emit_check_zero(invalid_otherwise):
-                code.line("If Stream->IsEndOfStream() Then")
-                code.indent()
-                code.line("Return %s.%sToken(%s.%sToken.EndOfStream, Poodle.Unicode.Text())" % (self.namespace, self.class_name, self.namespace, self.class_name))
-                code.dedent()
-                if invalid_otherwise:
-                    code.line("Else")
-                    code.indent()
-                    code.line("Return %s.%sToken(%s.%sToken.InvalidCharacter, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name))
-                    code.dedent()
-                code.line("End If")
-                
-            found_zero = False
-            for destination, edges in state.edges.iteritems():
-                code.line("Case %s" % ", ".join([format_case(i) for i in edges]))
-                if state == self.dfa.start_state:
-                    if 0 in zip(*iter(edges))[0]:
-                        # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
-                        found_zero = True
-                        emit_check_zero(invalid_otherwise=False)
-                rules = [rule for rule in self.lexical_analyzer.rules if rule.id in destination.ids]
-                if any([rule.action is not None and rule.action.lower() == 'capture' for rule in rules]):
-                    code.line("Capture = 1")
-                code.line("State = %s.%s" % (self.namespace, self.ids[destination]))
-                code.line()
-            
-            if state == self.dfa.start_state and not found_zero:
-                code.line("Case 0")
-                emit_check_zero(invalid_otherwise=True)
-                code.line()
-            
-            # else case (return token if in final state
-            code.line("Case Else")
-            if len(state.final_ids) > 0:
-                tokens_by_priority = [rule.id for rule in self.lexical_analyzer.rules]
-                token = min(state.final_ids, key = lambda x: tokens_by_priority.index(x)).title()
-                rule = [rule for rule in self.lexical_analyzer.rules if rule.id.title() == token][0]
-                if rule.action is not None and rule.action.lower() == 'skip':
-                    # Reset state machine if token is skipped
-                    code.line("State = %s.%s" % (self.namespace, self.ids[self.dfa.start_state]))
-                    code.line("Text = Poodle.Unicode.Text()")
-                    code.line("Continue Do")
-                elif rule.action is not None and rule.action.lower() == 'capture':
-                    code.line("Return %s.%sToken(%s.%sToken.%s, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name, self.rule_ids[token]))
-                else:
-                    code.line("Return %s.%sToken(%s.%sToken.%s, Poodle.Unicode.Text())" % (self.namespace, self.class_name, self.namespace, self.class_name, self.rule_ids[token]))
-            else:
-                code.line("Text.Append(This.Character)")
-                code.line("This.Character = This.Stream->GetCharacter()")
-                code.line("Return %s.%sToken(%s.%sToken.InvalidCharacter, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name))
-            
-            code.dedent()
-            code.line("End Select")

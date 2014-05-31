@@ -18,10 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-class PluginTemplateNotImplemented(Exception):
-    def __init__(self):
-        Exception.__init__(self, "Not implemented")
-        
+from abc import ABCMeta, abstractmethod
+
 class TemplateToken(object):
     """
     Represents a single token in a single file
@@ -39,29 +37,33 @@ class TemplateToken(object):
 
 class PluginTemplate(object):
     """
-    Template from which language emitter plug-ins should derive
+    Abstract class from which language emitter plug-ins should derive
     """
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
     def process(self, token):
         """
         Emit substituted text for a single token in a template file. This is called 
         for each instance of a token in each generated file
         @param token: TemplateToken object representing the token to be processed
         """
-        raise PluginTemplateNotImplemented()
+        pass
         
+    @abstractmethod        
     def get_output_directories(self):
         """
         Return a list of strings, each the relative path to a directory for 
         Poodle-Lex to create in the output folder.
         """
-        raise PluginTemplateNotImplemented()
+        pass
         
     def get_files_to_copy(self):
         """
         Return a list of strings, each containing the relative path to a file 
         for Poodle-Lex to into the output directory.
         """
-        raise PluginTemplateNotImplemented()
+        pass
         
     def get_files_to_generate(self):
         """
@@ -73,5 +75,5 @@ class PluginTemplate(object):
             containing the path to the file which is to be generated, relative 
             to the output path.        
         """
-        raise PluginTemplateNotImplemented()
+        pass
         

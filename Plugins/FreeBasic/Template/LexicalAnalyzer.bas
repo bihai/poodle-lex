@@ -70,21 +70,4 @@ Function $NAMESPACE.$CLASS_NAME.IsEndOfStream() As Integer
     Return This.Stream->IsEndOfStream()
 End Function
 
-Namespace $NAMESPACE
-    Enum ${CLASS_NAME}State
-        $ENUM_STATE_IDS
-    End Enum
-End Namespace
-
-Function $NAMESPACE.$CLASS_NAME.GetToken() As $NAMESPACE.${CLASS_NAME}Token
-    Dim State As $NAMESPACE.${CLASS_NAME}State = $NAMESPACE.$INITIAL_STATE
-    Dim Text As Poodle.Unicode.Text
-    Do
-        Dim Capture As Integer = 0
-        Select Case State:
-            $STATE_MACHINE
-        End Select
-        If Capture = 1 Then Text.Append(This.Character)
-        This.Character = This.Stream->GetCharacter()
-    Loop
-End Function
+$STATE_MACHINES

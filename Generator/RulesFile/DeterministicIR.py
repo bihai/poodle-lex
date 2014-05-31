@@ -17,14 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
+
 from .. import Automata
+from ..Automata import Minimizer
 
 class DeterministicIR(object):
     """
     Represents a lexical analyzer that has been reduced to deterministic
     finite automata.
-    @ivar rules: A list of Rule objects representing metadata for each rule
-    @ivar sections: A list of Section objects representing state machines for each section
+    @ivar rules: A dictionary with each string key being a rule's identifier, 
+        and the value being a Rule object containing metadata for the rule.
+    @ivar sections: A dictionary with each string key being a section's 
+        identifier, of Section objects representing state machines for each section
     """
 
     class Section(object):
@@ -57,8 +61,11 @@ class DeterministicIR(object):
             self.id = id
             self.action = action
             self.section_action = section_action
+            
+        def has_action(self, action):
+            return self.action is not None and self.action.lower() == action.lower()
 
-    def __init__(self, non_deterministic_ir, minimizer=Automata.Minimizer.hopcroft):
+    def __init__(self, non_deterministic_ir, minimizer=Minimizer.hopcroft):
         self.rules = {}
         self.sections = {}
         for id, section in non_deterministic_ir.sections.items():

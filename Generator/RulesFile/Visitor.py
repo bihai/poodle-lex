@@ -32,7 +32,10 @@ class ScopedId(object):
         return hash(self.ids)
     
     def __eq__(self, rhs):
-        return self.ids == rhs.ids
+        if isinstance(rhs, tuple):
+            return self.ids == rhs
+        else:
+            return self.ids == rhs.ids
         
     def __getitem__(self, index):
         return self.ids[index]

@@ -20,9 +20,11 @@
 
 from ..Emitter.FileTemplate import FileTemplate
 from ..Emitter.PluginTemplate import TemplateToken
+from LanguagePlugins import rethrow_formatted
 import shutil
 import os.path
 import os
+import sys
 
 class Executor(object):
     """
@@ -63,7 +65,7 @@ class Executor(object):
                 if not os.path.exists(real_directory_name):
                     os.mkdir(real_directory_name)
         except Exception as e:
-            raise Exception("While creating directories, " + str(e))
+            rethrow_formatted(e, "while creating directories")
             
     def copy_files(self):
         """
@@ -73,7 +75,7 @@ class Executor(object):
             for file in self.language_plugin.get_files_to_copy():
                 shutil.copy(os.path.join(self.plugin_files_directory, file), os.path.join(self.output_directory, file))
         except Exception as e:
-            raise Exception("While coping files, " + str(e))
+            rethrow_formatted(e, "while copying files")
             
     def generate_files(self):
         """
@@ -91,5 +93,6 @@ class Executor(object):
                     template_token.indent = indent
                     self.language_plugin.process(template_token)
         except Exception as e:
-            raise Exception("While generating files, " + str(e))
+            raise
+            rethrow_formatted(e, "while generating files")
             

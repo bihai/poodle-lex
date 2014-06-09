@@ -21,16 +21,16 @@
 #include "$BASE_FILE_NAME.bi"
 #include "UnicodeConstants.bi"
 
-Constructor $NAMESPACE.${CLASS_NAME}Token()
-    This.Id = $NAMESPACE.${CLASS_NAME}Token.InvalidCharacter
+Constructor $TYPE_TOKEN()
+    This.Id = $TYPE_TOKEN.InvalidCharacter
 End Constructor
 
-Constructor $NAMESPACE.${CLASS_NAME}Token(ByVal Id As $NAMESPACE.${CLASS_NAME}Token.TokenId, ByVal Text As Poodle.Unicode.Text)
+Constructor $TYPE_TOKEN(ByVal Id As $TYPE_TOKEN.TokenId, ByVal Text As Poodle.Unicode.Text)
     This.Id = Id
     This.Text = Text
 End Constructor
 
-Function $NAMESPACE.${CLASS_NAME}Token.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+Function $TYPE_TOKEN.ToString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
     Dim EncodedString As String
     Dim UnicodeString(1 To 4) As Poodle.Unicode.Text = { _
         Poodle.Unicode.Text("Token("), _
@@ -50,12 +50,12 @@ Function $NAMESPACE.${CLASS_NAME}Token.ToString(ByRef _Encoding As Poodle.Unicod
     Return EncodedString
 End Function
 
-Function $NAMESPACE.${CLASS_NAME}Token.GetIdAsString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
-    Var Text = Poodle.Unicode.Text(*$NAMESPACE.${CLASS_NAME}Token.IdNames(This.Id))
+Function $TYPE_TOKEN.GetIdAsString(ByRef _Encoding As Poodle.Unicode.StringEncoding) As String
+    Var Text = Poodle.Unicode.Text(*$TYPE_TOKEN.IdNames(This.Id))
     Return Text.ToString(_Encoding)
 End Function
 
-Dim $NAMESPACE.${CLASS_NAME}Token.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = { _
+Dim $TYPE_TOKEN.IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer = { _
     @"InvalidToken", _
     @"EndOfStream", _
     $TOKEN_IDNAMES

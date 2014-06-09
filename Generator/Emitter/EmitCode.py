@@ -36,18 +36,18 @@ class CodeEmitter(object):
             self.closing_line = closing_line
             
         def __enter__(self):
-            self.emitter.line(opening_line)
+            self.emitter.line(self.opening_line)
             self.emitter.indent()
         
-        def __exit__(self):
+        def __exit__(self, type, value, traceback):
             self.emitter.dedent()
-            self.emitter.line(closing_line)
+            self.emitter.line(self.closing_line)
         
     def __init__(self, stream=None, initial_indent=0, indent_spaces=4):
         """
         @param stream: Python file object to which lines should be written.
         """
-        self.indent_size = initial_indent*indent_spaces
+        self.indent_size = initial_indent
         self.indent_spaces = indent_spaces
         self.stream = stream
         
@@ -101,7 +101,7 @@ class CodeEmitter(object):
         @param opening_line: The text at the head of the block (such as "do" or "if")
         @param closing_line: The text at the tail of the block (such as "loop" or "end if")
         """
-        return Block(self, opening_line, closing_line)
+        return CodeEmitter.Block(self, opening_line, closing_line)
         
     def continue_block(self, *lines):
         """

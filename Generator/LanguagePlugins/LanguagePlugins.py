@@ -28,6 +28,22 @@ import textwrap
 import types
 import Parser
 
+def rethrow_formatted(e, action):
+    """
+    Format errors that occur from within plugin with line number and filename
+    @param e: an exception object to re-throw
+    @param action: string identifier describing what the program was doing when the exception was thrown
+    """
+    exception_type, exception_object, exception_traceback = sys.exc_info()
+    while exception_traceback.tb_next != None:
+        exception_traceback = exception_traceback.tb_next
+    filename = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
+    raise Exception("In '{filename}', line {line}, while {action}, {error}".format(
+        filename=filename,
+        line=exception_traceback.tb_lineno,
+        action=action,
+        error=str(e)))
+
 class PluginOptions(object):
     def __init__(self):
         self.is_backtracking = False
@@ -73,7 +89,10 @@ class Plugin(object):
         """
         if self.module is None:
             raise Exception("Plug-in not loaded")
-        emitter = self.module.create_emitter(lexical_analyzer, self.dependency_modules, plugin_options)
+        try:
+            emitter = self.module.create_emitter(lexical_analyzer, self.dependency_modules, plugin_options)
+        except Exception as e:
+            rethrow_formatted(e, 'while initializing language plugin')
         if not issubclass(emitter.__class__, PluginTemplate):
             raise Exception("Plug-in interface did not return a class of the correct type")
         return emitter

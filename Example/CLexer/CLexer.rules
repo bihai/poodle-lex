@@ -3,7 +3,14 @@ Skip Comment: "" +
     '/\*' + '([^\*]|\*+[^/\*])*' + '\*+/' + '|' + # Multi-line comments
     "//[^\r\n]*"                                  # Single-line comments    
 Skip Whitespace: '[ \t\v\n\f\r]+'
-Capture PPDirective: "#([^\r\n]|\\(\r|\n|\r\n))*"
+Capture PPInclude: "#include" Enter Section
+    IncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
+                      '\<([^\r\n\>\\]|\\([^\r]|\r\n))*\>'
+    Capture PPEndLine: '\r?\n' Exit Section
+    Skip PPIncludeWhitespace: '[ \t\v\f]+'
+        
+End Section
+Capture PPDirective: "#([^i]|i[^n])([^\r\n]|\\(\r|\n|\r\n))*"
 
 # Keywords
 Auto: 'auto'

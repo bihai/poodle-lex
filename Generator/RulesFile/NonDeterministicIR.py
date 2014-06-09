@@ -120,7 +120,8 @@ class NonDeterministicIR(object):
                 if rule.section_action is not None:
                     action, section = rule.section_action
                     if section is not None:
-                        section = section.get_section(self.visible_sections)
+                        rules_file_section = section.get_section(self.visible_sections)
+                        section = [key for key, value in self.ast_sections.items() if value == rules_file_section][0]
                     section_action = (action, section)
                 ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule.rule_action, section_action, rule.line_number)
                 self.all_sections[self.current_section].rules.append(ir_rule)

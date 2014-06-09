@@ -5,6 +5,7 @@
         "freebasic": {
             "Description": "FreeBasic programming language using proprietary Unicode streams",
             "Source": "Plugins/FreeBasic/FreeBasic.py",
+            "Dependencies": ["Plugins/FreeBasic/VariableFormatter.py", "Plugins/FreeBasic/StateMachine.py"],
             "Files": "Plugins/FreeBasic/Template"
         },
         "cpp": {

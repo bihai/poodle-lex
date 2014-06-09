@@ -21,31 +21,74 @@
 from CachedFormatter import CachedFormatter
 
 class VariableFormatter(object):
-    def __init__(self, plugin_options):
-        def token_method_formatter(section_id):
-            return ''.join(i.title() for i in section_id[1:]) if section_id is not None and len(section_id) > 0 else ''
+    def __init__(self, plugin_options, reserved_ids, poodle_namespace):
+        def section_id_formatter(section_id):
+            return ''.join(i for i in section_id[1:]) if section_id is not None and len(section_id) > 0 else ''
         def state_id_formatter(state):
-            return "State" + "".join([i.title() for i in sorted(list(state.ids))])   
-        self.plugin_options = plugin_options
-        self.cache = CachedFormatter(limit=64)
-        self.cache.add_cache('token_method_name', token_method_formatter)
-        self.cache.add_cache('state_id', state_id_formatter)
-        self.cache.add_token_method_name(None, '')
-        self.cache.add_token_method_name(('::main::'), 'Main')
-    
-    def token_type(self):
-        return "{namespace}.{class_name}Token".format(
-            namespace=self.plugin_options.namespace,
-            class_name=self.plugin_options.class_name)
-    
-    def section_type(self):
-        return "{namespace}.{class_name}Section".format(
-            namespace=self.plugin_options.namespace,
-            class_name=self.plugin_options.class_name)
+            return ''.join([i.title() for i in sorted(state.ids)])   
+        def token_id_formatter(id):
+            return id
             
-    def get_token_method_name(self, section):
-        return self.cache.get_token_method_name(section)
-    
-    def get_state_id(self, state):
-        self.cache.get_state_id(section)
+        self.poodle_namespace = poodle_namespace
+        self.plugin_options = plugin_options
+        self.cache = CachedFormatter(limit=64, reserved=reserved_ids)
+        self.cache.add_cache('section_id', section_id_formatter, cache_name='section_and_tokens')
+        self.cache.add_cache('token_id', token_id_formatter, cache_name='section_and_tokens')
+        self.cache.add_cache('state_id', state_id_formatter)
+        self.cache.add_section_id(None, '')
+        self.cache.add_section_id(('::main::',), 'Main')
+        for attr in dir(self.cache):
+            if any(attr.startswith(i) for i in ('get_', 'add_', 'clear_')):
+                setattr(self, attr, getattr(self.cache, attr))
+
+    def get_class_name(self):
+        return self.plugin_options.class_name
+
+    def get_default_encoding(self):
+        return self.get_scoped('Unicode.DefaultStringEncoding', is_relative=True, is_custom_namespace=False)
         
+    def get_mode_stack_class_name(self):
+        return self.get_class_name() + "Mode"
+        
+    def get_namespace(self):
+        return self.plugin_options.namespace
+
+    def get_scoped(self, id, is_relative, is_custom_namespace):
+        if is_relative:
+            if not is_custom_namespace and self.plugin_options.namespace != self.poodle_namespace:
+                return '{poodle}.{type}'.format(poodle=self.poodle_namespace, type=type_text)
+            else:
+                return id
+        else:
+            return '{namespace}.{type}'.format(namespace=self.plugin_options.namespace, type=id)
+
+    def get_state_machine_method_name(self, section, is_relative):
+        method_name = 'GetToken{id}'.format(id=self.cache.get_section_id(section))
+        if not is_relative:
+            method_name = '{class_name}.{method_name}'.format(
+                class_name=self.get_class_name(),
+                method_name=method_name)
+        return self.get_scoped(method_name, is_relative, is_custom_namespace=True)
+            
+    def get_type(self, type_name, is_relative):
+        if type_name == 'mode':
+            is_custom_namespace = True
+            type_text = "{class_name}.ModeId".format(class_name=self.get_mode_stack_class_name())
+        elif type_name == 'token':
+            is_custom_namespace = True
+            type_text = "{class_name}Token".format(class_name=self.plugin_options.class_name)
+        elif type_name == 'text':
+            is_custom_namespace = False
+            type_text = 'Unicode.Text'
+        elif type_name == 'encoding':
+            is_custom_namespace = False
+            type_text = 'Unicode.StringEncoding'
+        elif type_name == 'character':
+            is_custom_namespace = False
+            type_text = 'Unicode.Codepoint'
+        elif type_name == 'stream':
+            is_custom_namespace = False
+            type_text = 'CharacterStream'
+        else:
+            raise Exception("unrecognized type '{id}'".format(id=type_name))
+        return self.get_scoped(type_text, is_relative, is_custom_namespace)

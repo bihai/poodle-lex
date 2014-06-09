@@ -76,7 +76,6 @@ try:
     language_plugins[language].load()
     language_plugin = language_plugins[language]
 except Exception as e:
-    raise
     print("Unable to load language plug-in '%s': %s\n" % (language, str(e)), file=sys.stderr)
     sys.exit(1)
 
@@ -97,7 +96,6 @@ try:
     nfa_ir = RulesFile.NonDeterministicIR(rules_file, validator.defines, validator.sections)
     dfa_ir = RulesFile.DeterministicIR(nfa_ir)
 except Exception as e:
-    raise
     print("Error processing rules. %s" % str(e), file=sys.stderr)
     sys.exit(1)
     
@@ -115,8 +113,10 @@ try:
     executor.execute()
         
 except IOError as e:
+    raise
     print("Unable to write to output directory because of an error", file=sys.stderr)
     sys.exit(1)
 except Exception as e:
+    raise
     print("Unable to create lexical analyzer: %s" % str(e))
     sys.exit(1)

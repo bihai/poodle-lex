@@ -125,7 +125,7 @@ class Parser(object):
                     rule.section_action = ('enter', self.SectionReference(text))
             elif keyword == 'exit':
                 rule.section_action = ('exit', None)
-                self.expect_keywords('section')
+                self.lexer.expect_keywords('section')
 
     def parse_definition(self, name):
         """

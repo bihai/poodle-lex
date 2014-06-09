@@ -19,6 +19,11 @@
 # DEALINGS IN THE SOFTWARE.
 
 class CachedFormatter(object):
+    class ValueCache(object):
+        def __init__(self):
+            self.keys = {}
+            self.values = set()
+
     """
     Utility class for maintaining a list of names mapped to objects. Duplicate
     names are suffixed with a number.
@@ -29,7 +34,7 @@ class CachedFormatter(object):
         """
         self.limit = limit
         self.caches = {}
-        self.reserved = set(reserved)
+        self.reserved = set([i.lower() for i in reserved])
         
     def insert(self, cache, key, value):
         """
@@ -39,19 +44,20 @@ class CachedFormatter(object):
         @param key: object which is to be mapped to a value
         @param value: string representing the name which the object should map to
         """
-        if key in cache:
-            return key
-        n = 2
+        if key in cache.keys:
+            return cache.keys[key]
+        n = 1
         candidate = value[:self.limit]
-        while candidate in cache.values() or candidate in self.reserved:
-            prefix = str(n)
-            suffix = value[:self.limit-len(prefix)]
+        while candidate.lower() in cache.values or candidate.lower() in self.reserved:
+            suffix = str(n)
+            prefix = value[:self.limit-len(suffix)]
             candidate = prefix + suffix
             n += 1
-        cache[key] = candidate
+        cache.keys[key] = candidate
+        cache.values.add(candidate.lower())
         return candidate
     
-    def add_cache(self, name, formatter): 
+    def add_cache(self, name, formatter, cache_name=None): 
         """
         Adds a cache for a given formatter, and creates a 'get_xxx' method
         based on the name. Also creates a helper "add_xxx" method based on
@@ -59,14 +65,20 @@ class CachedFormatter(object):
         @param name: string containing the name of the cache to create
         @param formatter: function which creates a name given an object
         """
-        if name not in self.caches:
-            cache = self.caches[name] = {}
+        if cache_name is None:
+            cache_name = name
+        if cache_name not in self.caches:
+            cache = self.caches[cache_name] = CachedFormatter.ValueCache()
         else:
-            cache = self.caches[name]
+            cache = self.caches[cache_name]
         def get_value(param):
             return self.insert(cache, param, formatter(param))
         def add_value(key, value):
             self.insert(cache, key, value)
-        setattr(self, 'get_' + name, staticmethod(get_value))
-        setattr(self, 'add_' + name, staticmethod(add_value))
+        def clear():
+            cache.keys = {}
+            cache.values = set()
+        setattr(self, 'get_' + name, get_value)
+        setattr(self, 'add_' + name, add_value)
+        setattr(self, 'clear_' + name + 's', clear)
         

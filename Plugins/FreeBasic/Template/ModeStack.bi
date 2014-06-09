@@ -18,46 +18,27 @@
 ' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 ' DEALINGS IN THE SOFTWARE.
 
-#ifndef $HEADER_GUARD_NAME
-#define $HEADER_GUARD_NAME
+#ifndef $HEADER_GUARD_MODE_NAME
+#define $HEADER_GUARD_MODE_NAME
 
-#include "Stream\Unicode.bi"
-#include "Stream\CharacterStream.bi"
-$MODE_INCLUDE
+#define $STACK_DEPTH_ID $STACK_DEPTH
 
 Namespace $NAMESPACE
-    Type ${TYPE_REL_TOKEN}
-        Public:
-        Enum TokenId
-            InvalidCharacter
-            EndOfStream
-            $ENUM_TOKEN_IDS
+    Type $MODE_STACK_CLASS_NAME
+        Protected:
+        Enum ModeId
+            $ENUM_MODE_IDS
         End Enum
-
-        Id As TokenId
-        Text As ${TYPE_REL_TEXT}
-        
         Declare Constructor()
-        Declare Constructor(ByVal Id As TokenId, ByVal Text As ${TYPE_REL_TEXT})
-        Declare Function ToString(ByRef _Encoding As ${TYPE_REL_ENCODING} = *${DEFAULT_ENCODING}) As String
-        Declare Function GetIdAsString(ByRef _Encoding As ${TYPE_REL_ENCODING} = *${DEFAULT_ENCODING}) As String
+        Declare Property Mode() As ModeId
+        Declare Sub EnterSection(ByVal As ModeId)
+        Declare Sub ExitSection()
+        Declare Sub Reset()
         
         Private:
-        Static IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer 
+        Dim Stack(1 To $STACK_DEPTH_ID) As ModeId
+        Dim Index As Integer
     End Type
-    
-    Type $CLASS_NAME Extends $BASE_CLASS
-        Public:
-        Declare Constructor(Stream As ${TYPE_REL_STREAM} Ptr)
-        Declare Function IsEndOfStream() As Integer
-        Declare Function GetToken() As ${TYPE_REL_TOKEN}
-        
-        Private:
-        $STATE_MACHINE_DECLARATIONS
-        Stream As ${TYPE_REL_STREAM} Ptr
-        Character As ${TYPE_REL_CHARACTER}
-    End Type
-
 End Namespace
-    
+
 #endif

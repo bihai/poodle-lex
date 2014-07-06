@@ -39,23 +39,27 @@ class Lexer(object):
         ("whitespace", r"[ \t]+"),
         ("newline", r"\r\n|\r|\n"),
         ("colon", r"\:"),
+        ("comma", r"\,"),
         ("equals", r"="),
         ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
         ("literalsingle", r"'(?:''|[^'\r\n])*'"),
         ("literaldouble", r'"(?:""|[^"\r\n])*"'),
-        ("plus", r'\+'),
-        ("leftparenthesis", r'\('),
-        ("rightparenthesis", r'\)')
+        ("plus", r'\+')
     ]
     _pattern = "|".join(["(?P<%s>%s)" % (key, value) for key, value in _patterns])
     _regex = re.compile(_pattern, re.UNICODE or re.MULTILINE)
     
-    def __init__(self, file, encoding):
+    def __init__(self, file=None, stream=None, encoding="utf-8"):
         """
-        @param file: the name of the rules definition file to tokenize
+        @param file: string containing the name of the rules definition file to tokenize. Is used if stream is None.
+        @param stream: file stream containing the rules definition file to tokenize. "file" parameter is ignored if this is defined.
+        @param encoding: string containing the name of the encoding to use, using standard Python encoding names.
         """
-        with open(file, 'r') as f:
-            self.source = f.read().decode(encoding)
+        if stream is not None:
+            self.source = stream.read().decode(encoding)
+        else:
+            with open(file, 'r') as f:
+                self.source = f.read().decode(encoding)
         self.generator = self._tokens()
         self.token = None
         self.text = None
@@ -94,6 +98,16 @@ class Lexer(object):
         while self.token in tokens:
             self.get_next()
         return self.token, self.text
+        
+    def is_keyword(self, *keywords):
+        """
+        Tests if the current token is a keyword
+        @param keyword: list of strings, one for each keyword to test for
+        @return: True if the current token is one of the given keywords, False otherwise
+        """
+        if self.token is None:
+            self.get_next()
+        return self.token == 'identifier' and self.text.lower() in (i.lower() for i in keywords)
         
     def expect_string(self):
         """

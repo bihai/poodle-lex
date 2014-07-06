@@ -21,22 +21,24 @@
 import AST
 from Lexer import RulesFileException, Lexer
 
-def parse(file, encoding):
-    return Parser(file, encoding).parse()
+def parse(file, encoding="utf-8"):
+    return Parser(file=file, encoding=encoding).parse()
 
+def parse_stream(stream, encoding="utf-8"):
+    return Parser(stream=stream, encoding=encoding).parse()
+    
 class Parser(object):
-    def __init__(self, file, encoding):
-        self.lexer = Lexer(file, encoding)
+    def __init__(self, file=None, stream=None, encoding="utf-8"):
+        self.lexer = Lexer(file, stream, encoding)
         for NodeType in [
             AST.Rule,
             AST.Define,
-            AST.ReservedId,
             AST.Pattern,
             AST.Section,
             AST.SectionReference
         ]:
             setattr(self, NodeType.__name__, self.create_line_wrapper(NodeType))
-        self.rules_file = [self.Section('::main::')]
+        self.rules_file = [self.Section('::main::', None)]
         
     def create_line_wrapper(self, NodeType):
         """
@@ -46,8 +48,8 @@ class Parser(object):
         """
         parent_self = self
         class Wrapper(NodeType):
-            def __init__(self, *args):
-                NodeType.__init__(self, *args, line_number=parent_self.lexer.line)
+            def __init__(self, *args, **kw_args):
+                NodeType.__init__(self, *args, line_number=parent_self.lexer.line, **kw_args)
         Wrapper.__name__ = NodeType.__name__ + 'Wrapper'
         return Wrapper
         
@@ -61,6 +63,8 @@ class Parser(object):
             self.parse_statement()
             self.lexer.skip('whitespace', 'comment', 'newline')
             
+        if len(self.rules_file) > 1:
+            raise RulesFileException("'Section' without 'End Section'")
         return self.rules_file.pop()
         
     def parse_statement(self):
@@ -69,49 +73,79 @@ class Parser(object):
         to the AST object
         @return: None
         """
-        name_or_action = self.lexer.expect('identifier')
+        list_is_keyword = lambda x, y: len(x) == 1 and x[0].lower() == y.lower()    
+        
+        id, commands = self.parse_commands_and_id()
         self.lexer.skip('whitespace')
-        token, text = self.lexer.expect_one_of('colon', 'identifier')
-        if token == 'colon':
-            # ID: PATTERN (Exit Section | Enter (SECTION_ID | Section))?
-            self.parse_rule(name_or_action, None)
-        elif token == 'identifier':
-            if name_or_action.lower() == 'reserve':
-                # Reserve ID\
-                self.rules_file[-1].reserved_ids.append(self.ReservedID(text))
-            elif name_or_action.lower() == 'let':
-                # Let ID = PATTERN
-                self.lexer.skip('whitespace')
-                self.lexer.expect('equals')
-                self.parse_definition(text)
-            elif name_or_action.lower() == 'section':
-                # Section SECTION_ID
-                new_section = self.Section(text)
-                self.rules_file[-1].standalone_sections.append(new_section)
-                self.rules_file.append(new_section)
-            elif name_or_action.lower() == 'end' and text.lower() == 'section':
-                # End Section
-                if len(self.rules_file) < 2:
-                    self.lexer.throw('"End Section" statement when not in a section')
-                old_section = self.rules_file.pop()
-            else:
-                # ACTION ID: PATTERN (Exit Section | Enter (SECTION_ID | Section))?
-                self.lexer.skip('whitespace')
+        if list_is_keyword(commands, 'let'):
+            # Let ID = PATTERN
+            self.lexer.expect('equals')
+            self.lexer.skip('whitespace')
+            self.parse_definition(id)
+        elif len(commands) == 0 and id is not None and id.lower() == 'skip':
+            # Skip: RULE
+            self.lexer.expect('colon')
+            self.parse_rule(None, 'skip')
+        elif list_is_keyword(commands, 'section'):
+            # Section ID
+            self.lexer.skip('whitespace')
+            new_section = self.Section(id, self.rules_file[-1], inherits=self.lexer.is_keyword('inherits'))
+            self.rules_file[-1].add('section', new_section)
+            self.rules_file.append(new_section)
+        elif list_is_keyword(commands, 'end') and id.lower() == 'section':
+            # End Section
+            if len(self.rules_file) < 2:
+                self.lexer.throw('"End Section" statement when not in a section')
+            self.rules_file.pop()
+        else:
+            # (COMMAND (,COMMAND)*)? ID: RULE
+            if self.lexer.token == 'colon':
                 self.lexer.expect('colon')
-                self.parse_rule(text, name_or_action)
+            self.parse_rule(id, commands)
         self.lexer.skip('whitespace', 'comment')
         self.lexer.expect('newline')
-                
-    def parse_rule(self, name, action):
+        
+    def parse_commands_and_id(self):
+        """
+        Parse out a list of commands followed by an identifier
+        @return: tuple with a string of the rule name and a list of commands. If ID is not provided, it is None.
+        """
+        id = self.lexer.expect('identifier')
+        commands = []
+        self.lexer.skip('whitespace')
+        while self.lexer.token == 'comma':
+            self.lexer.expect('comma')
+            self.lexer.skip('whitespace')
+            commands.append(self.lexer.expect('identifier'))
+            self.lexer.skip('whitespace')
+        if len(commands) > 0:
+            commands.insert(0, id)
+            id = None
+        if id is None:
+            id = self.lexer.expect('identifier')
+        elif self.lexer.token == 'identifier':
+            commands.append(id)
+            id = self.lexer.expect('identifier')
+            
+        if len(commands) == 0 and id.lower() == 'skip':
+            # Special case: command "skip" can be used without identifier
+            return None, [id]
+        else:
+            return id, commands
+
+    def parse_rule(self, name, actions):
         """
         Parse an expression and add the rule to the current section
         @return: None
         """
+        self.lexer.skip('whitespace', 'comment')
+        if self.lexer.token == 'newline' or self.lexer.is_keyword('enter', 'exit'):
+            expression = None
+        else:
+            expression = self.parse_expression()
         self.lexer.skip('whitespace')
-        expression = self.parse_expression()
-        self.lexer.skip('whitespace')
-        rule = self.Rule(name, expression, action)
-        self.rules_file[-1].rules.append(rule)
+        rule = self.Rule(name, expression, actions)
+        self.rules_file[-1].add('rule', rule)
         if self.lexer.token == 'identifier':
             keyword = self.lexer.expect_keywords('enter', 'exit').lower()
             self.lexer.skip('whitespace')
@@ -119,14 +153,20 @@ class Parser(object):
                 self.lexer.skip('whitespace')
                 text = self.lexer.expect('identifier')
                 if text.lower() == 'section':
-                    rule.section_action = ('enter', self.Section(name))
-                    self.rules_file.append(rule.section_action[1])
+                    section = self.Section(name, self.rules_file[-1])
+                    self.lexer.skip('whitespace')
+                    if self.lexer.is_keyword('inherits'):
+                        self.lexer.expect('identifier')
+                        section.inherits = True
+                    rule.section_action = ('enter', section)
+                    self.rules_file[-1].add('section', section)
+                    self.rules_file.append(section)
                 else:
                     rule.section_action = ('enter', self.SectionReference(text))
             elif keyword == 'exit':
                 rule.section_action = ('exit', None)
                 self.lexer.expect_keywords('section')
-
+                
     def parse_definition(self, name):
         """
         Parse an expression and add the define to the current section
@@ -136,7 +176,7 @@ class Parser(object):
         self.lexer.skip('whitespace')
         expression = self.parse_expression()
         define = self.Define(name, expression)
-        self.rules_file[-1].defines.append(define)
+        self.rules_file[-1].add('define', define)
         
     def parse_expression(self):
         """

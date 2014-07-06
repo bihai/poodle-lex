@@ -19,88 +19,98 @@
 # DEALINGS IN THE SOFTWARE.
 
 from Lexer import RulesFileException
-
-class Node(object):
-    """
-    Visitable object which contains a line number
-    """
-    def accept(self, visitor):
-        self.throw("not implemented")
-        
-    def __init__(self, line_number):
-        self.line_number = line_number
-        
-    def throw(self, message):
-        raise RulesFileException("On line %d, %s" % (self.line_number, message))
+from ASTBase import Node, Scope
 
 class Pattern(Node):
     """
     Represents a regular expression string
     @ivar regex: string containing the regular expression
     @ivar is_case_insensitive: boolean which is true if the regular expression string should be case-insensitive
+    @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_pattern(self)
 
-    def __init__(self, regex, is_case_insensitive, line_number):
+    def __init__(self, regex, is_case_insensitive=False, line_number=None):
         self.regex = regex
         self.is_case_insensitive = is_case_insensitive
         self.line_number = line_number
+
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+    def __eq__(self, rhs):
+        return (isinstance(rhs, Pattern) and
+            self.regex == rhs.regex and
+            self.is_case_insensitive == rhs.is_case_insensitive)
     
     def __repr__(self):
-        return "Pattern(%s, %s)" % (self.regex, self.is_case_insensitive)
+        return "Pattern(\"%s\", %s)" % (self.regex, self.is_case_insensitive)
         
 class Define(Node):
     """
     Represents a 'Let id = pattern' variable declaration
     @ivar id: the name of the variable 
     @ivar pattern: a Pattern object representing the variable's value
+    @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_define(self)
         
-    def __init__(self, id, pattern, line_number):
+    def __init__(self, id, pattern, line_number=None):
         self.id = id
         self.pattern = pattern
         self.line_number = line_number
         
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+        
+    def __eq__(self, rhs):
+        return (isinstance(rhs, Define) and
+            self.id.lower() == rhs.id.lower() and 
+            self.pattern == rhs.pattern)
+        
     def __repr__(self):
         return "Define(%s, %s)" % (repr(self.id), repr(self.pattern))
+        
+class SectionBase(Node):
+    """
+    Common interface for resolving both SectionReference and Section into a Section object
+    """
+    def get_section(self, scope):
+        """
+        Get a resolved Section object represented by this object
+        @param scope: Scope object which contains
+        @return: Section object represented by this object
+        """
+        return None
 
-class SectionReference(Node):
+class SectionReference(SectionBase):
     """
     Represents an unresolved reference to a section
     @ivar name: the name of section being referenced
+    @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_section_reference(self)
         
-    def __init__(self, name, line_number):
+    def __init__(self, name, line_number=None):
         self.name = name
         self.line_number = line_number
         
     def __repr__(self):
         return "SectionReference(%s)" % repr(self.name)
         
-    def get_section(self, sections):
-        if self.name not in sections:
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+        
+    def __eq__(self, rhs):
+        return self.name.lower() == rhs.name.lower()
+        
+    def get_section(self, scope):
+        result = scope.find('section', self.name)
+        if result is None or len(result) == 0:
             self.throw("unknown section '%s'" % self.name)
-        return sections[self.name]
-        
-class ReservedId(Node):
-    """
-    Represents a reserved ID
-    @ivar id: string containing the id being reserved
-    """
-    def accept(self, visitor):
-        visitor.visit_reserved_id(self)
-    
-    def __init__(self, id, line_number):
-        self.id = id
-        self.line_number = line_number
-        
-    def __repr__(self):
-        return "ReservedId(%s)" % repr(self.id)
+        return result[0]
         
 class Rule(Node):
     """
@@ -110,45 +120,89 @@ class Rule(Node):
     @ivar rule_action: string containing the action to take with the token matched by the rule
     @ivar section_action: string containing the action to take after matching the rule
     @ivar section: Section or SectionReference object specifying which section the analyzer should enter after matching the rule
+    @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_rule(self)
 
-    def __init__(self, id, pattern, rule_action=None, section_action=None, line_number=None):
+    def __init__(self, id, pattern, rule_action=[], section_action=None, line_number=None):
         self.id = id
         self.pattern = pattern
-        self.rule_action = rule_action
+        self.rule_action = list(rule_action)
         self.section_action = section_action
         self.line_number = line_number
+        
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+        
+    def __eq__(self, rhs):
+        self_icase_rule_action = [i.lower() for i in self.rule_action]
+        rhs_icase_rule_action = [i.lower() for i in rhs.rule_action]
+        return (isinstance(rhs, Rule) and
+            Node.compare_nullable_icase(self.id, rhs.id) and
+            self.pattern == rhs.pattern and
+            self_icase_rule_action == rhs_icase_rule_action and
+            self.section_action == rhs.section_action)
         
     def __repr__(self):
         return "Rule(Id=%s, %s, Action=%s, SectionAction=%s)" % (repr(self.id), repr(self.pattern), repr(self.rule_action), repr(self.section_action))
         
-class Section(Node):
+class Section(Scope):
     """
     Represents a grouping of rules, ids, and reserved keywords
     @ivar rules: list of Rule objects representing rules in the section, in order of priority
     @ivar defines: list of Define objects representing variable definitions in the section, in order of priority
-    @ivar reserved_ids: list of strings representing reserved identifiers
     @ivar standalone_sections: list of sections not tied to a rule
+    @iver inherits: True if this section should fall back on its parent's rules, False otherwise
+    @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_section(self)
         
-    def __init__(self, id, rules=[], defines=[], reserved_ids=[], standalone_sections=[], line_number=None):
+    def __init__(self, id, parent=None, inherits=False, line_number=None, **resources):
+        Scope.__init__(self, parent, line_number, **resources)
         self.id = id
-        self.rules = list(rules)
-        self.defines = list(defines)
-        self.reserved_ids = list(reserved_ids)
-        self.standalone_sections = list(standalone_sections)
+        self.inherits = inherits
         self.line_number = line_number
+        for id, section in self.all('section'):
+            section.parent = self
+            self.children[id.lower()] = section
+        for id, rule in self.all('rule'):
+            if rule.section_action is not None:
+                action, target = rule.section_action
+                if isinstance(target, Section):
+                    self.add('section', target)
+                    target.parent = self
+            
+    def __ne__(self, rhs):
+        return not self.__eq__(rhs)
+        
+    def __eq__(self, rhs):
+        return (isinstance(rhs, Section) and
+            Node.compare_nullable_icase(self.id, rhs.id) and
+            self.inherits == rhs.inherits and
+            Scope.__eq__(self, rhs))
         
     def __repr__(self):
-        rule_string = "Rules=[%s]" % ", ".join(repr(rule) for rule in self.rules)
-        define_string = "Defines=[%s]" % ", ".join(repr(define) for define in self.defines)
-        reserved_string = "Reserved=[%s]" % ", ".join(self.reserved_ids)
-        section_string = "StandaloneSections=[%s]" % ", ".join(repr(section) for section in self.standalone_sections)
-        return "Section(%s, %s, %s, %s, %s)" % (repr(self.id), rule_string, define_string, reserved_string, section_string)
+        resources = []
+        for resource_type in self.resources:
+            formatted_type = resource_type.title()
+            contents = ', '.join(repr(i) for i in self.resources[resource_type].values())
+            resources.append('{type}=[{contents}]'.format(type=formatted_type, contents=contents))
+        return "Section({id}, {resources}, Inherits={inherits})".format(
+            id=repr(self.id), 
+            resources=resources,
+            inherits=self.inherits)
 
-    def get_section(self, sections):
-        return self
+    def get_qualified_name(self):
+        """
+        Return the qualified (hierarchical) name of the section.
+        @return: string representing the qualified name of the section
+        """
+        current_scope = self
+        qualified_name_items = []
+        while current_scope is not None:
+            qualified_name_items.insert(0, current_scope)
+            current_scope = current_scope.parent
+                
+        return '.'.join(i.id for i in qualified_name_items)

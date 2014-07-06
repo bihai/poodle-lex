@@ -31,6 +31,19 @@ class NonDeterministicFiniteBuilder(object):
         self.state_machines = []
         self.id = id
         self.defines = defines
+        
+    @staticmethod
+    def build(id, defines, regex):
+        """
+        Build a non-deterministic finite automata object from a regular expression
+        @param id: the ID of the non-deterministic finite automata
+        @param defines: a dict mapping string variable names to regular expression objects in the Regex namespace.
+        @param regex: a regular expression object in the Regex namespace to convert to a non-deterministic finite automata object
+        @return: an Automata.NonDeterministicFinite object
+        """
+        builder = NonDeterministicFiniteBuilder(id, defines)
+        regex.accept(builder)
+        return builder.get()
     
     def visit_literal(self, literal):
         """

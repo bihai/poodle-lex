@@ -1,4 +1,5 @@
-import AST
+from ASTBase import Node, Scope
+from AST import Pattern, Define, Rule, Section, SectionReference
 from NonDeterministicIR import NonDeterministicIR
 from DeterministicIR import DeterministicIR
 from Parser import parse

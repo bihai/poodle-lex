@@ -72,6 +72,10 @@ class Visitor(object):
         pass
         
     def leave_section(self, section):
+        """
+        Called when a traverser object moves up the section hierarchy.
+        @param section: The section being left
+        """
         pass
         
     def visit_section_reference(self, section_reference):
@@ -122,13 +126,11 @@ class Traverser(Visitor):
             section.accept(visitor)
             
         self.section.append(section)
-        for rule in section.rules:
+        for id, rule in section.all('rule'):
             rule.accept(self)
-        for define in section.defines:
+        for id, define in section.all('define'):
             define.accept(self)
-        for reserved_id in section.reserved_ids:
-            reserved_id.accept(self)
-        for subsection in section.standalone_sections:
+        for id, subsection in section.all('section'):
             subsection.accept(self)
         section = self.section.pop()
         

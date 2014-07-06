@@ -57,74 +57,87 @@ class NonDeterministicIR(object):
             self.section_action = section_action
             self.line_number = line_number
 
-    def __init__(self, root, defines, sections):
-        builder = NonDeterministicIR.Builder(defines, sections)
+    def __init__(self, root):
+        # Build non-deterministic finite automata from AST node
+        builder = NonDeterministicIR.Builder()
         traverser = Traverser(builder)
         root.accept(traverser)
-        self.sections = builder.get()
-        self.root = root
-    
+        
+        # Add metadata
+        self.sections = builder.sections
+        self.rule_ids = builder.rule_ids
+        self.root = root.get_qualified_name()
+        
     class Builder(Visitor):
         """
         Visitor which constructs a NonDeterministicIR object from an
         AST node.
+        @ivar sections: array of sections
+        @ivar rule_ids: dictionary of case-insensitiv rule ID strings to case-sensitive rule ID strings
         """
-        def __init__(self, defines, sections):            
-            self.all_defines = {}
-            for id, define in defines.items():
-                try:
-                    self.all_defines[id] = Regex.Parser(define.pattern.regex, define.pattern.is_case_insensitive).parse()
-                except Exception as e:
-                    define.throw("define '%s': %s" % (define.id, str(e)))
-            self.ast_sections = sections
-            self.all_sections = dict((section, NonDeterministicIR.Section()) for section in sections)
-            self.visible_defines = None
-            self.visible_sections = None
-            self.current_section = None
-        
+        def __init__(self):            
+            self.current_ast_section = None
+            self.current_ir_section = None
+            self.sections = {}
+            self.rule_ids = {}
+                    
         def visit_section(self, section):
-            """
-            Update the scope upon visiting a section
-            """
-            self.visible_defines = {}
-            self.visible_sections = {}
-            if section is not None:
-                self.current_section = self.traverser.get_scoped_id(section.id)
-            else:
-                self.current_section = self.traverser.get_scoped_id()
-            for i in range(1, len(self.current_section)+1):
-                for key, value in self.ast_sections.items():
-                    if key in ScopedId(self.current_section[:i]):
-                        self.visible_sections[key[-1]] = self.all_sections[key]
-                for key, value in self.all_defines.items():
-                    if key in ScopedId(self.current_section[:i]):
-                        self.visible_defines[key[-1]] = self.all_defines[key]
-                        
+            # Resolve all imports that weren't found during validation
+            for id, rule in section.all('future_import'):
+                reservation = section.find('reservation', rule.id)
+                if reservation is None:
+                    rule.throw('reservation not found for imported rule')
+                if rule.pattern is None:
+                    if reservation[0].pattern is None:
+                        rule.throw('pattern must be defined for imported rule if not defined by reservation rule')
+                    rule.pattern = reservation[0].pattern
+            self.current_ast_section = section
+            self.current_ir_section = NonDeterministicIR.Section()
+            self.sections[section.get_qualified_name()] = self.current_ir_section
+            
         def leave_section(self, section):
             """
             Update the scope upon leaving a section
             """
-            self.visit_section(None)
+            self.current_ast_section = section.parent
+            if self.current_ast_section is not None:
+                self.current_ir_section = self.sections[section.parent.get_qualified_name()]
+            else:
+                self.current_ir_section = None
         
         def visit_rule(self, rule):
-            nfa_builder = Automata.NonDeterministicFiniteBuilder(rule.id, self.visible_defines)
+            """
+            Resolve section references and variables, compile the rule
+            into an NFA, and add to the currently visited section.
+            """
+            class DefineLookup(object):
+                """
+                Lookup table class to resolve variable definition names into regular expression objects
+                """
+                def __contains__(self, item_name):
+                    return self.current_ast_section.find('define', name) is None
+                
+                def __getitem__(self, item_name):
+                    result = self.current_ast_section.find('define', name)
+                    if result is None:
+                        raise Exception("variable '{id}' not found".format(id=name))
+                    return Regex.Parser(result[0].pattern.regex, result[0].pattern.is_case_insensitive).parse() 
+                
             try:
-                """
-                Resolve section references and variables, compile the rule
-                into an NFA, and add to the currently visited section.
-                """
-                regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
-                regex.accept(nfa_builder)
-                nfa = nfa_builder.get()
-                section_action = None
-                if rule.section_action is not None:
-                    action, section = rule.section_action
-                    if section is not None:
-                        rules_file_section = section.get_section(self.visible_sections)
-                        section = [key for key, value in self.ast_sections.items() if value == rules_file_section][0]
-                    section_action = (action, section)
-                ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule.rule_action, section_action, rule.line_number)
-                self.all_sections[self.current_section].rules.append(ir_rule)
+                if 'reserve' not in rule.rule_action:
+                    regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
+                    nfa = Automata.NonDeterministicFiniteBuilder.build(rule.id, DefineLookup(), regex)
+                    section_action = None
+                    if rule.section_action is not None:
+                        action, section = rule.section_action
+                        if section is not None:
+                            rule_section = SectionResolver.resolve(section, this.current_section)
+                            section = rule_section.get_qualified_name()
+                        section_action = (action, section)
+                    ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule.rule_action, section_action, rule.line_number)
+                    self.current_ir_section.rules.append(ir_rule)
+                    if rule.id.lower() not in self.rule_ids:
+                        self.rule_ids[rule.id.lower()] = rule.id
                     
             except Exception as e:
                 rule.throw("rule '%s': %s" % (rule.id, str(e)))
@@ -133,4 +146,4 @@ class NonDeterministicIR(object):
             """
             Return the sections that were compiled from the rules file
             """
-            return self.all_sections
+            return self.sections

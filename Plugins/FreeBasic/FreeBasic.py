@@ -251,7 +251,7 @@ class FreeBasicEmitter(PluginTemplate):
                 code.line('#include "{include_file}"'.format(include_file=self.plugin_options.file_name + "ModeStack.bi"))
         elif token.token == 'MODE_SOURCE':
             if len(self.lexical_analyzer.sections) > 1:
-                token.stream.write(" ../{base_file_name}ModeStack.bas".format(base_file_name=self.plugin_options.file_name))
+                token.stream.write("../{base_file_name}ModeStack.bas".format(base_file_name=self.plugin_options.file_name))
         elif token.token == 'MODE_STACK_CLASS_NAME':
             token.stream.write(self.formatter.get_mode_stack_class_name())
         elif token.token == 'NAMESPACE':

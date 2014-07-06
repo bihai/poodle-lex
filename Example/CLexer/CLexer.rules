@@ -1,16 +1,24 @@
-# Comments, whitespace, and preprocessor
-Skip Comment: "" +
+# Comments
+Skip: "" +
     '/\*' + '([^\*]|\*+[^/\*])*' + '\*+/' + '|' + # Multi-line comments
     "//[^\r\n]*"                                  # Single-line comments    
-Skip Whitespace: '[ \t\v\n\f\r]+'
-Capture PPInclude: "#include" Enter Section
-    IncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
+    
+# Whitespace
+Skip: '[ \t\v\n\f\r]+'
+
+# Pre-processor tokens
+
+PPInclude: "#include" Enter Section
+    PPIncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
                       '\<([^\r\n\>\\]|\\([^\r]|\r\n))*\>'
-    Capture PPEndLine: '\r?\n' Exit Section
-    Skip PPIncludeWhitespace: '[ \t\v\f]+'
-        
+    PPSkipEndline: '\r?
+    PPEndLine: '\r?\n' Exit Section
+    Skip: '[ \t\v\f]+'
 End Section
-Capture PPDirective: "#([^i]|i[^n])([^\r\n]|\\(\r|\n|\r\n))*"
+Capture PPDirective: "#[a-z]+" Enter Section
+    As PPEndLine: '\r?\n' Exit Section
+    Skip: '[ \t\v\f]+'
+End Section
 
 # Keywords
 Auto: 'auto'

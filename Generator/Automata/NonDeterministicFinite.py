@@ -107,7 +107,7 @@ class NonDeterministicFinite(object):
                 descriptions.append('    %d -> %d [label="%s"]' % (state_index, states.index(destination), edge_label))
 
         return "digraph {\n%s\n}\n" % "\n".join(descriptions)
-
+        
     @staticmethod
     def concatenate(state_machines):
         """

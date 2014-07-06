@@ -110,17 +110,18 @@ class NonDeterministicIR(object):
             Resolve section references and variables, compile the rule
             into an NFA, and add to the currently visited section.
             """
+            current_ast_section = self.current_ast_section
             class DefineLookup(object):
                 """
                 Lookup table class to resolve variable definition names into regular expression objects
                 """
                 def __contains__(self, item_name):
-                    return self.current_ast_section.find('define', name) is None
+                    return current_ast_section.find('define', item_name) is not None
                 
                 def __getitem__(self, item_name):
-                    result = self.current_ast_section.find('define', name)
+                    result = current_ast_section.find('define', item_name)
                     if result is None:
-                        raise Exception("variable '{id}' not found".format(id=name))
+                        raise Exception("variable '{id}' not found".format(id=item_name))
                     return Regex.Parser(result[0].pattern.regex, result[0].pattern.is_case_insensitive).parse() 
                 
             try:

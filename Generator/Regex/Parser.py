@@ -97,7 +97,7 @@ class Parser(object):
         elif self.get_next_if(u'?'):
             return Regex.Repetition(child, 0, 1)
         # Need to look ahead two characters because it might be a variable following this one
-        elif self.next_is(u'{') and self.nth_next_is_not(2, string.ascii_letters):
+        elif self.next_is(u'{') and self.nth_next_is_not(2, string.ascii_letters + '.'):
             self.get_next()
             return self.parse_repetition(child)
         else:
@@ -190,7 +190,7 @@ class Parser(object):
         @return: a Regex.Variable object representing the variable instance
         """
         variable_name = ''
-        while self.next_is(string.ascii_letters):
+        while self.next_is(string.ascii_letters + '.'):
             variable_name += self.get_next()
         self.expect("}")
         return Regex.Variable(variable_name)

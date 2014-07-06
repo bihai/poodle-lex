@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<ParseErrors>
+    <RulesFile name="CaseInsensitiveAfterFirstPattern">
+        ParseErrorCaseInsensitive: "Hello" + i"Joseph"
+    </RulesFile>
+    <RulesFile name="SectionWithoutEndSection">
+        Section Top
+            Section Middle
+                Rules: "Hello"
+        End Section
+    </RulesFile>
+    <RulesFile name="EndSectionWithoutSection">
+        Rule: "Hello"
+        End Section
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersAtRuleStart">
+        this is not allowed: "Hi"
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersInsideRule1">
+        RuleName: u"Hi"
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersInsideRule2">
+        RuleName: "Hi" + Joe
+    </RulesFile>
+    <RulesFile name="AnonymousSection">
+        Section
+            RuleInsideSection: "Hi"
+        End Section
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersAtEndOfSection">
+        Section ID
+            RuleInsideSection: "Hi"
+        End Section ID
+    </RulesFile>
+    <RulesFile name="PatternWithoutRule">
+        GoodRule: "Pattern"
+        "BadPattern"
+    </RulesFile>
+</ParseErrors>
+    

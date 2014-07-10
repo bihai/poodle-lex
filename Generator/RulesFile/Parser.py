@@ -90,7 +90,7 @@ class Parser(object):
             # Section ID
             self.lexer.skip('whitespace')
             new_section = self.Section(id, self.rules_file[-1], inherits=self.lexer.is_keyword('inherits'))
-            self.rules_file[-1].add('section', new_section)
+            self.rules_file[-1].add_scope('section', new_section)
             self.rules_file.append(new_section)
         elif list_is_keyword(commands, 'end') and id.lower() == 'section':
             # End Section
@@ -159,7 +159,7 @@ class Parser(object):
                         self.lexer.expect('identifier')
                         section.inherits = True
                     rule.section_action = ('enter', section)
-                    self.rules_file[-1].add('section', section)
+                    self.rules_file[-1].add_scope('section', section)
                     self.rules_file.append(section)
                 else:
                     rule.section_action = ('enter', self.SectionReference(text))

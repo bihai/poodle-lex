@@ -51,20 +51,14 @@ class CPlusPlusEmitter(PluginTemplate):
     default_class_name = "LexicalAnalyzer"
     default_file_name = "LexicalAnalyzer"
     
-    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
+    def __init__(self, dfa_ir, dependencies, plugin_options):
         """
-        @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as C code.
-        @param plugin_files_directory: string specifying the location of template files
-        @param output_directory: string specifying the directory where output files should be emitted
-        @param plugin_options: LanguagePlugins.PluginOptions object with optional parameters which dictate the code generation behavior.
+        @param lexical_analyzer: DeterministicIR object representing the lexical analyzer to emit as FreeBasic code.
+        @param depedencies: dict mapping string module identifiers of dependencies to Python module objects.
+        @param plugin_options: LanguagePlugins.PluginOptions object containing options which affect the generation of code.
         """
-        self.lexical_analyzer = lexical_analyzer
-        self.plugin_files_directory = plugin_files_directory
-        self.output_directory = output_directory
-        self.ids = {}
-        self.rule_ids = {}
-        self.dfa = None
-
+        self.dfa_ir = dfa_ir
+        
         # Process plugin options
         for name, description in [
             (plugin_options.file_name, 'Base file name'),
@@ -85,7 +79,38 @@ class CPlusPlusEmitter(PluginTemplate):
         self.namespace = plugin_options.namespace
         if self.namespace is None:
             self.namespace = CPlusPlusEmitter.default_namespace
+      
+    def get_files_to_copy(self):
+        return []
+        return [os.path.join(*i) for i in [
+            ("demo", "demo.c"),
+            ("demo", "make_demo.bat"),
+            ("demo", "make_demo.sh")
+        ]]
+
+    def get_output_directories(self):
+        return [os.path.join(*i) for i in [
+            ("demo",)
+        ]]
         
+    def get_files_to_generate(self):
+        files = [
+            (self.h_file, self.plugin_options.file_name + ".h"),
+            (self.cpp_file, self.plugin_options.file_name + ".cpp"),
+            (self.demo_file, self.demo_file),
+            (self.windows_makefile, self.windows_makefile),
+            (self.linux_makefile, self.linux_makefile)
+        ]
+        if len(self.lexical_analyzer.sections) > 1:
+            files.extend((
+                (self.mode_bi_file, self.plugin_options.file_name + "ModeStack.bi"),
+                (self.mode_bas_file, self.plugin_options.file_name + "ModeStack.bas")
+            ))
+        return files
+
+      
+      
+      
     # Public interface
     def emit(self):
         """
@@ -147,10 +172,6 @@ class CPlusPlusEmitter(PluginTemplate):
                 else:
                     self.process_common_tokens(token, stream, description)
 
-    def get_output_directories(self):
-        return [os.path.join(*i) for i in [
-            ("demo",)
-        ]]
         
     def get_files_to_copy(self):
         return []
@@ -160,17 +181,15 @@ class CPlusPlusEmitter(PluginTemplate):
             ("demo", "make_demo.sh")
         ]]
 
-    # Private methods    
-    def process_common_tokens(self, token, stream, description):
-        if token == 'BASE_FILE_NAME':
-            stream.write(self.base_file_name)
-        elif token == 'NAMESPACE':
-            stream.write(self.namespace)
-        elif token == 'CLASS_NAME':
-            stream.write(self.class_name)
-        else:
-            raise Exception('Unrecognized token in %s: "%s"' % (description, token))
-    
+    def process(self, token):
+        if token.token == 'BASE_CLASS':
+            if len(self.lexical_analyzer.sections) > 1:
+                token.stream.write(self.formatter.get_mode_stack_class_name())
+            else:
+
+
+
+            
     @staticmethod
     def emit_enum_list(stream, indent, items):
         if len(items) == 0:

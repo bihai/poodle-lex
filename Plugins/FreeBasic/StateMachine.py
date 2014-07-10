@@ -29,8 +29,10 @@ class StateMachineEmitter(object):
         
         # Shortcuts
         self.dfa = dfa_ir.sections[section_id].dfa
-        self.priority = dfa_ir.sections[section_id].priority
-        self.rules = dfa_ir.rules
+        self.rules = dfa_ir.sections[section_id].rules
+        self.inherits = dfa_ir.sections[section_id].inherits
+        self.parent = dfa_ir.sections[section_id].parent
+        self.ids = dfa_ir.rule_ids
         self.start_state = self.dfa.start_state
         setattr(self, 'block', self.code.block.__get__(self.code))
         setattr(self, 'line', self.code.line.__get__(self.code))
@@ -101,11 +103,15 @@ class StateMachineEmitter(object):
             if len(state.final_ids) > 0:
                 self.generate_token_return_case(state)
             else:
-                self.line("Text.Append(This.Character)")
-                self.line("This.Character = This.Stream->GetCharacter()")
-                self.line("Return {token_type}({token_type}.{token_id}, Text)".format(
-                    token_type = self.formatter.get_type('token', is_relative=False),
-                    token_id = self.formatter.get_token_id('InvalidCharacter')))
+                if state == self.start_state and self.inherits:
+                    method_name = self.formatter.get_state_machine_method_name(self.parent, is_relative=True)
+                    self.line("Return This.{method_name}()".format(method_name=method_name))
+                else:
+                    self.line("Text.Append(This.Character)")
+                    self.line("This.Character = This.Stream->GetCharacter()")
+                    self.line("Return {token_type}({token_type}.{token_id}, Text)".format(
+                        token_type = self.formatter.get_type('token', is_relative=False),
+                        token_id = self.formatter.get_token_id('InvalidCharacter')))
 
     def generate_transition_table(self, state):
         """
@@ -120,7 +126,7 @@ class StateMachineEmitter(object):
                     # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
                     found_zero = True
                     self.generate_check_zero_or_eof(invalid_otherwise=False)
-            rules = [rule for id, rule in self.rules.items() if id in destination.ids]
+            rules = [rule for rule in self.rules if rule.id in destination.ids]
             if any([rule.has_action('capture') for rule in rules]):
                 self.line("Capture = 1")
             self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id=self.formatter.get_state_id(destination)))
@@ -156,9 +162,14 @@ class StateMachineEmitter(object):
                     token_id=self.formatter.get_token_id('InvalidCharacter')))
 
     def generate_token_return_case(self, state):
-        token = min(state.final_ids, key = lambda x: self.priority.index(x))
-        rule = self.rules[token]
-        if rule.action is not None and rule.action.lower() == 'skip':
+        rule = no_match = "::none::"
+        for rule_candidate in self.rules:
+            if rule_candidate.id in state.final_ids:
+                rule = rule_candidate
+                break
+        if rule == no_match:
+            raise Exception("Internal error - unable to determine matching rule")
+        if rule.action is not None and 'skip' in rule.action:
             # Reset state machine if token is skipped
             self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id = self.formatter.get_state_id(self.start_state)))
             self.line("Text = Poodle.Unicode.Text()")
@@ -173,7 +184,7 @@ class StateMachineEmitter(object):
                         section_id=self.formatter.get_section_id(section_id)))
                 elif section_action.lower() == 'exit':
                     self.line('This.ExitSection()')
-            if rule.action is not None and rule.action.lower() == 'capture':
+            if rule.action is not None and 'capture' in rule.action:
                 text="Text"
             else:
                 text="Poodle.Unicode.Text()"

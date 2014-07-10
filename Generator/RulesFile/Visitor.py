@@ -109,9 +109,9 @@ class Traverser(Visitor):
     def visit_rule(self, rule):
         for visitor in self.visitors:
             rule.accept(visitor)
-        if rule.section_action is not None:
-            if rule.section_action[1] is not None:
-                rule.section_action[1].accept(self)
+        #if rule.section_action is not None:
+        #    if rule.section_action[1] is not None:
+        #        rule.section_action[1].accept(self)
             
     def visit_define(self, define):
         for visitor in self.visitors:
@@ -124,7 +124,7 @@ class Traverser(Visitor):
     def visit_section(self, section):
         for visitor in self.visitors:
             section.accept(visitor)
-            
+
         self.section.append(section)
         for id, rule in section.all('rule'):
             rule.accept(self)

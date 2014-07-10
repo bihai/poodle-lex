@@ -88,12 +88,13 @@ try:
     traverser = RulesFile.Traverser(validator)
     rules_file.accept(traverser)
 except Exception as e:
+    raise
     print("Error parsing rules file. %s" % str(e), file=sys.stderr)
     sys.exit(1)
 
 # Compile rules file
 try:
-    nfa_ir = RulesFile.NonDeterministicIR(rules_file, validator.defines, validator.sections)
+    nfa_ir = RulesFile.NonDeterministicIR(rules_file)
     dfa_ir = RulesFile.DeterministicIR(nfa_ir)
 except Exception as e:
     print("Error processing rules. %s" % str(e), file=sys.stderr)

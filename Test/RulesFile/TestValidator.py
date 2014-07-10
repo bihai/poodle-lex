@@ -38,6 +38,12 @@ class TestValidator(unittest.TestCase):
                 rule_action = ['capture'])])
         self.assertRaises(RulesFileException, lambda: anonymous_nonskip.accept(Traverser(Validator())))
         
+        invalid_action = Section('::main::', None, rule = [
+            Rule(None,
+                pattern = "Placeholder",
+                rule_action = ['capture', 'nonsense'])])
+        self.assertRaises(RulesFileException, lambda: invalid_action.accept(Traverser(Validator())))
+        
         skip_capture = Section('::main::', None, rule = [
             Rule('SkipCapture',
                 pattern = 'SkipCapture',
@@ -61,6 +67,11 @@ class TestValidator(unittest.TestCase):
                 pattern = 'ReserveCapture',
                 rule_action = ['reserve', 'capture'])])
         self.assertRaises(RulesFileException, lambda: reserve_capture.accept(Traverser(Validator())))
+        
+        multiple_anonymous_ok = Section('::main::', None, rule = [
+            Rule(None, Pattern('Skipped1'), rule_action=['skip']),
+            Rule(None, Pattern('Skipped2'), rule_action=['skip'])])
+        multiple_anonymous_ok.accept(Traverser(Validator()))
         
     def test_section_with_no_rules(self):
         """

@@ -18,6 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 import collections
+import traceback
+
 from Visitor import Visitor
 
 class Validator(Visitor):
@@ -30,6 +32,7 @@ class Validator(Visitor):
         Visitor.__init__(self)
         self.rule_ids = set()
         self.sections = {}
+        self.defines = {}
         self.current_section = None
         
     def visit_rule(self, rule):
@@ -37,6 +40,10 @@ class Validator(Visitor):
         rule_id = rule.id.lower() if rule.id is not None else None
 
         # Check for bad command combinations
+        valid_rule_actions = set(('skip', 'reserve', 'import', 'capture'))
+        for action in rule_actions:
+            if action not in valid_rule_actions:
+                rule.throw("unrecognized action '{0}'".format(action))
         if rule.id == None and rule_actions != ['skip']:
             rule.throw("anonymous rules may only be skipped")
         if 'skip' in rule_actions and 'capture' in rule_actions:
@@ -46,7 +53,7 @@ class Validator(Visitor):
         if rule.pattern == None and 'import' not in rule_actions and 'reserve' not in rule_actions:
             rule.throw("rules not being either reserved or imported must have a pattern")
             
-        if rule_id in self.rule_ids and 'import' not in rule_actions:
+        if rule_id in self.rule_ids and 'import' not in rule_actions and rule_id is not None:
             rule.throw("duplicate rule ID '%s'" % rule.id)
         self.rule_ids.add(rule_id)
         
@@ -56,24 +63,26 @@ class Validator(Visitor):
             if reservation is None:
                 self.current_section.add('future_import', rule)
             elif rule.pattern is None:
-                if reservation.pattern is None:
+                if reservation[0].pattern is None:
                     rule.throw('pattern must be defined for imported rule if not defined by reservation rule')
-                rule.pattern = reservation.pattern
+                rule.pattern = reservation[0].pattern
             
         # Book reservation
         if 'reserve' in rule_actions:
             self.current_section.add('reservation', rule)
-            
+    
+        
     def visit_define(self, define):
         define_id = self.traverser.get_scoped_id(define.id)
         if define_id in self.defines:
             define.throw("duplicate variable ID '%s'" % define.id)
         self.defines[define_id] = define
     
+    #logger = logging.getLogger("joe")
     def visit_section(self, section):
         section_id = self.traverser.get_scoped_id(section.id)
         if section_id in self.sections:
-            section.throw("duplicate section ID '%s'")
+            section.throw("duplicate section ID '%s'" % section.id)
         self.sections[section_id] = section
         self.current_section = section
 

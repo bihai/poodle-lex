@@ -23,9 +23,11 @@ from CachedFormatter import CachedFormatter
 class VariableFormatter(object):
     def __init__(self, plugin_options, reserved_ids, poodle_namespace):
         def section_id_formatter(section_id):
-            return ''.join(i for i in section_id[1:]) if section_id is not None and len(section_id) > 0 else ''
+            path = section_id.split('.') if section_id is not None else None
+            path = [i.replace(':', '') for i in path] if path is not None else None
+            return ''.join(path[1:]) if section_id is not None and len(path) > 0 else ''
         def state_id_formatter(state):
-            return ''.join([i.title() for i in sorted(state.ids)])   
+            return ''.join([i.title() if i is not None else 'Anonymous' for i in sorted(state.ids)])   
         def token_id_formatter(id):
             return id
             
@@ -36,7 +38,7 @@ class VariableFormatter(object):
         self.cache.add_cache('token_id', token_id_formatter, cache_name='section_and_tokens')
         self.cache.add_cache('state_id', state_id_formatter)
         self.cache.add_section_id(None, '')
-        self.cache.add_section_id(('::main::',), 'Main')
+        self.cache.add_section_id('::main::', 'Main')
         for attr in dir(self.cache):
             if any(attr.startswith(i) for i in ('get_', 'add_', 'clear_')):
                 setattr(self, attr, getattr(self.cache, attr))

@@ -7,17 +7,18 @@ Skip: "" +
 Skip: '[ \t\v\n\f\r]+'
 
 # Pre-processor tokens
-
-PPInclude: "#include" Enter Section
-    PPIncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
-                      '\<([^\r\n\>\\]|\\([^\r]|\r\n))*\>'
-    PPSkipEndline: '\r?
-    PPEndLine: '\r?\n' Exit Section
-    Skip: '[ \t\v\f]+'
+Reserve PPEndLine: '\r?\n'
+PPInclude: "#include" Enter Section Inherits
+    Capture PPIncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
+                                '\<([^\r\n\>\\]|\\([^\r]|\r\n))*\>'
+    Import PPEndLine Exit Section
+    Skip: '{PPDirective.PPContinueNextLine}|{PPDirective.PPWhitespace}'
 End Section
-Capture PPDirective: "#[a-z]+" Enter Section
-    As PPEndLine: '\r?\n' Exit Section
-    Skip: '[ \t\v\f]+'
+Capture PPDirective: "#[a-z]+" Enter Section Inherits
+    Let PPContinueNextLine = '\\\r?\n'
+    Let PPWhitespace = '[ \t\v\f]+'
+    Skip: '{PPContinueNextLine}|{PPWhitespace}'
+    Import PPEndLine Exit Section
 End Section
 
 # Keywords

@@ -69,6 +69,10 @@ class DeterministicFiniteBuilder(object):
             self.states[dfa_start_state_id].final_ids.update(nfa_state.final_ids)
         self.dfa_state_machine.start_state = self.states[dfa_start_state_id]
         self.crawl(dfa_start_state_id)
+    
+    @staticmethod
+    def build(nfa):
+        return DeterministicFiniteBuilder(nfa).get()
         
     def crawl(self, state_id):
         """

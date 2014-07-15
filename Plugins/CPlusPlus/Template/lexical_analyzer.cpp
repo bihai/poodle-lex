@@ -24,7 +24,7 @@
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
-#include "$BASE_FILE_NAME.h"
+$INCLUDES
 
 using namespace $NAMESPACE;
 
@@ -34,6 +34,7 @@ $CLASS_NAME::$CLASS_NAME(std::istream* stream)
     this->character = 1;
     this->is_buffered = false;
     this->stream = stream;
+    $PUSH_INITIAL_MODE
 }
 
 Unicode::Codepoint $CLASS_NAME::peek_utf8_char()
@@ -105,51 +106,7 @@ void $CLASS_NAME::throw_error(std::string message)
     throw std::runtime_error(oss.str());
 }
 
-namespace $NAMESPACE
-{
-    enum State
-    {
-        $ENUM_STATE_IDS
-    };
-}
-
-$CLASS_NAME::Token $CLASS_NAME::get_token()
-{
-    $CLASS_NAME::Token token;
-    State state = $INITIAL_STATE;
-    Unicode::String text;
-    bool capture = false;
-   
-    // State machine
-    while (true)
-    {
-        Unicode::Codepoint c = this->peek_utf8_char();
-        switch(state)
-        {
-            case $INVALID_CHAR_STATE:
-            {
-                std::ostringstream oss;
-                oss << "Invalid token: '";
-                for (int i=0; i < text.size(); i++)
-                {
-                    if (text[i] > 31 && text[i] < 128)
-                        oss << (char)text[i];
-                    else
-                        oss << "\\x" << std::hex << std::setfill('0') << std::setw(2) << text[i];
-                }
-                oss << "'" << std::endl;
-                this->throw_error(oss.str());
-            }    
-            $STATE_MACHINE
-        }
-        
-        this->get_utf8_char();
-        if (capture)
-            text += c;
-    }
-    
-    return $CLASS_NAME::Token();
-}
+$STATE_MACHINES
 
 $CLASS_NAME::Token::Token()
     : id(INVALIDCHARACTER)

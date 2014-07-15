@@ -88,7 +88,6 @@ try:
     traverser = RulesFile.Traverser(validator)
     rules_file.accept(traverser)
 except Exception as e:
-    raise
     print("Error parsing rules file. %s" % str(e), file=sys.stderr)
     sys.exit(1)
 
@@ -114,10 +113,8 @@ try:
     executor.execute()
         
 except IOError as e:
-    raise
     print("Unable to write to output directory because of an error", file=sys.stderr)
     sys.exit(1)
 except Exception as e:
-    raise
     print("Unable to create lexical analyzer: %s" % str(e))
     sys.exit(1)

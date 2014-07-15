@@ -11,7 +11,7 @@
         "cpp": {
             "Description": "C++ programming language interface which consumes an std::istream",
             "Source": "Plugins/CPlusPlus/CPlusPlus.py",
-            "Dependencies": ["Plugins/CPlusPlus/StateMachine.py"],
+            "Dependencies": ["Plugins/CPlusPlus/VariableFormatter.py", "Plugins/CPlusPlus/StateMachine.py"],
             "Files": "Plugins/CPlusPlus/Template"
         },
         "test": {

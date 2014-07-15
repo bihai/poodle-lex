@@ -65,7 +65,7 @@ class StateMachineEmitter(object):
         self.formatter.clear_state_ids()
         self.formatter.add_state_id(self.start_state, 'InitialState')
         for id in ['state', 'text', 'capture', 'poodle']:
-            self.formatter.add_state_id(id, id)            
+            self.formatter.add_state_id(id, id)
             
         with self.block("Function {method_name}() As {token_type}".format(method_name=method_name, token_type=token_type), "End Function"):
             self.generate_state_enum()
@@ -164,7 +164,8 @@ class StateMachineEmitter(object):
     def generate_token_return_case(self, state):
         rule = no_match = "::none::"
         for rule_candidate in self.rules:
-            if rule_candidate.id in state.final_ids:
+            rule_candidate_id = rule_candidate.id.lower() if rule_candidate.id is not None else None
+            if rule_candidate_id in state.final_ids:
                 rule = rule_candidate
                 break
         if rule == no_match:

@@ -24,7 +24,7 @@
 
 #include <string>
 #include <iostream>
-
+$MODE_STACK_INCLUDE
 namespace $NAMESPACE
 {
     namespace Unicode
@@ -41,8 +41,6 @@ namespace $NAMESPACE
             public:
             enum TokenId
             {
-                INVALIDCHARACTER,
-                ENDOFSTREAM,
                 $ENUM_TOKEN_IDS
             };
             
@@ -52,19 +50,20 @@ namespace $NAMESPACE
             TokenId id;
             Unicode::String text;
         };
-        
+        $ENUM_SECTION_IDS
         $CLASS_NAME(std::istream* stream);
-        Token get_token();
+        $STATE_MACHINE_METHOD_DECLARATIONS
         void throw_error(std::string message);
         
         private:
         Unicode::Codepoint buffer;
         bool is_buffered;
-        std::istream* stream;
+        $MODE_STACK_DECLARATION
         int line;
         int character;
         Unicode::Codepoint get_utf8_char();
         Unicode::Codepoint peek_utf8_char();
+
     };
 }
 

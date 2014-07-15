@@ -131,8 +131,9 @@ class NonDeterministicIR(object):
             try:
             
                 if 'reserve' not in rule.rule_action:
+                    rule_id_lower = rule.id.lower () if rule.id is not None else None
                     regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
-                    nfa = Automata.NonDeterministicFiniteBuilder.build(rule.id, DefineLookup(), regex)
+                    nfa = Automata.NonDeterministicFiniteBuilder.build(rule_id_lower, DefineLookup(), regex)
                     section_action = None
                     if rule.section_action is not None:
                         action, section = rule.section_action
@@ -140,10 +141,11 @@ class NonDeterministicIR(object):
                             rule_section = SectionResolver.resolve(section, self.current_ast_section)
                             section = rule_section.get_qualified_name()
                         section_action = (action, section)
-                    ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule.rule_action, section_action, rule.line_number)
+                    rule_action = [i.lower() if i is not None else None for i in rule.rule_action]
+                    ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule_action, section_action, rule.line_number)
                     self.current_ir_section.rules.append(ir_rule)
-                    if rule.id is not None and rule.id.lower() not in self.rule_ids:
-                        self.rule_ids[rule.id.lower()] = rule.id
+                    if rule.id is not None and rule_id_lower not in self.rule_ids:
+                        self.rule_ids[rule.id] = rule.id
                     
             except Exception as e:
                 if rule.id is None:

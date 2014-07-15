@@ -78,7 +78,6 @@ class DeterministicIR(object):
             section_nfas = []
             section_rules = []
             for rule in section.rules:
-                self.rule_ids.add(rule.id)
                 section_nfas.append(rule.nfa)
                 section_rules.append(DeterministicIR.Rule(rule.id, rule.action, rule.section_action))
             combined_nfa = Automata.NonDeterministicFinite.alternate(section_nfas)

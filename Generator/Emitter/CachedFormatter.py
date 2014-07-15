@@ -36,7 +36,7 @@ class CachedFormatter(object):
         self.caches = {}
         self.reserved = set([i.lower() for i in reserved])
         
-    def insert(self, cache, key, value):
+    def insert(self, cache, key, value, formatter=None):
         """
         Inserts maps an object to a name, and modifies the name until the 
         cache has space.
@@ -46,6 +46,8 @@ class CachedFormatter(object):
         """
         if key in cache.keys:
             return cache.keys[key]
+        if formatter is not None:
+            value = formatter(key)
         n = 1
         candidate = value[:self.limit]
         while candidate.lower() in cache.values or candidate.lower() in self.reserved:
@@ -72,7 +74,7 @@ class CachedFormatter(object):
         else:
             cache = self.caches[cache_name]
         def get_value(param):
-            return self.insert(cache, param, formatter(param))
+            return self.insert(cache, param, None, formatter)
         def add_value(key, value):
             self.insert(cache, key, value)
         def clear():

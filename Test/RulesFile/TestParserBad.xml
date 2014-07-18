@@ -36,5 +36,11 @@
         GoodRule: "Pattern"
         "BadPattern"
     </RulesFile>
+    <RulesFile name="ReserveNoNewlineAtEnd" type="pass">
+        Rule1: "Hello"
+        Reserve Rule2</RulesFile>
+    <RulesFile name="RulesNoNewlineAtEnd" type="pass">
+        Rule1: "Hello"
+        Rule2: "Goodbye"</RulesFile>
 </ParseErrors>
     

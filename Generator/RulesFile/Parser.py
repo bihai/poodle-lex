@@ -103,7 +103,7 @@ class Parser(object):
                 self.lexer.expect('colon')
             self.parse_rule(id, commands)
         self.lexer.skip('whitespace', 'comment')
-        self.lexer.expect('newline')
+        self.lexer.expect_one_of('newline', 'endofstream')
         
     def parse_commands_and_id(self):
         """
@@ -139,7 +139,7 @@ class Parser(object):
         @return: None
         """
         self.lexer.skip('whitespace', 'comment')
-        if self.lexer.token == 'newline' or self.lexer.is_keyword('enter', 'exit'):
+        if self.lexer.token in ['newline', 'endofstream'] or self.lexer.is_keyword('enter', 'exit'):
             expression = None
         else:
             expression = self.parse_expression()

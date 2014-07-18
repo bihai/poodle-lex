@@ -39,9 +39,10 @@ class StateMachineEmitter(object):
         self.formatter.add_state_id(self.start_state, "INITIAL_STATE")
 
     def emit_state_machine(self):
+        section_id = self.section_id if len(self.dfa_ir.sections) > 1 else ''
         self.line("{token_type} {method_name}()".format(
             token_type = self.formatter.get_type('token', is_relative=False),
-            method_name = self.formatter.get_state_machine_method_name(self.section_id, is_relative=False)))
+            method_name = self.formatter.get_state_machine_method_name(section_id, is_relative=False)))
         with self.block("{", "}"):
             self.emit_state_enum()
             self.emit([

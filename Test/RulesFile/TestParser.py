@@ -5,9 +5,11 @@ import sys
 import xml.etree.ElementTree as ET
 import unittest
 from StringIO import StringIO
+from TestASTComparer import TestASTComparer
 sys.path.append(os.path.join("..", ".."))
 from Generator.RulesFile import Parser
 from Generator.RulesFile.AST import *
+
    
 class TestParser(unittest.TestCase):
     def test_bad_rules(self):
@@ -17,11 +19,8 @@ class TestParser(unittest.TestCase):
             test_name = child.attrib['name']
             test_content = child.text
             stream = StringIO(test_content)
-            try:
-                Parser.parse_stream(stream)
-            except RulesFileException:
-                continue
-            raise AssertionError("Test {0} failed to raise an exception".format(test_name))
+            if 'type' not in child.attrib or child.attrib['type'] != 'pass':
+                self.assertRaises(RulesFileException, lambda: Parser.parse_stream(stream))
 
     def test_rules_file(self):
         actual = Parser.parse('TestParserGood.rules')
@@ -100,6 +99,7 @@ class TestParser(unittest.TestCase):
                     Rule('RuleInsideNestedStandaloneSection',
                         pattern=Pattern('E Kale'),
                         section_action=('exit', None))])])])
+        TestASTComparer.compare(expected, actual)
         self.assertEqual(expected, actual)
         
 if __name__ == '__main__':

@@ -68,6 +68,9 @@ class Visitor(object):
     def visit_define(self, define): 
         pass
         
+    def visit_pattern(self, pattern):
+        pass
+        
     def visit_section(self, section):
         pass
         

@@ -72,19 +72,7 @@ class Define(Node):
     def __repr__(self):
         return "Define(%s, %s)" % (repr(self.id), repr(self.pattern))
         
-class SectionBase(Node):
-    """
-    Common interface for resolving both SectionReference and Section into a Section object
-    """
-    def get_section(self, scope):
-        """
-        Get a resolved Section object represented by this object
-        @param scope: Scope object which contains
-        @return: Section object represented by this object
-        """
-        return None
-
-class SectionReference(SectionBase):
+class SectionReference(Node):
     """
     Represents an unresolved reference to a section
     @ivar name: the name of section being referenced
@@ -105,12 +93,6 @@ class SectionReference(SectionBase):
         
     def __eq__(self, rhs):
         return self.name.lower() == rhs.name.lower()
-        
-    def get_section(self, scope):
-        result = scope.find('section', self.name)
-        if result is None or len(result) == 0:
-            self.throw("unknown section '%s'" % self.name)
-        return result[0]
         
 class Rule(Node):
     """
@@ -150,9 +132,7 @@ class Rule(Node):
 class Section(Scope):
     """
     Represents a grouping of rules, ids, and reserved keywords
-    @ivar rules: list of Rule objects representing rules in the section, in order of priority
-    @ivar defines: list of Define objects representing variable definitions in the section, in order of priority
-    @ivar standalone_sections: list of sections not tied to a rule
+    @ivar id: string which identifies the section within its containing scope
     @iver inherits: True if this section should fall back on its parent's rules, False otherwise
     @ivar line_number: integer with the line number in the source where this object was parsed
     """
@@ -173,6 +153,8 @@ class Section(Scope):
                 if isinstance(target, Section):
                     self.add('section', target)
                     target.parent = self
+                    if target.id is not None:
+                        self.children[target.id.lower()] = target
             
     def __ne__(self, rhs):
         return not self.__eq__(rhs)

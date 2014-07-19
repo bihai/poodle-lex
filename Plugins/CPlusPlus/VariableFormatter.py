@@ -39,7 +39,7 @@ class VariableFormatter(object):
         self.cache.add_token_id(None, 'ANONYMOUS')
         self.cache.add_token_id('endofstream', 'ENDOFSTREAM')
         self.cache.add_token_id('invalidcharacter', 'INVALIDCHARACTER')
-        self.cache.add_section_id(None, 'ANONYMOUS')
+        self.cache.add_section_id(None, '')
         self.cache.add_section_id('::main::', 'MAIN')
         self.cache.add_state_id('invalid_char_state', 'INVALID_CHAR_STATE')
         for attr in dir(self.cache):

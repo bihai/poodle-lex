@@ -60,7 +60,11 @@ class StateMachineEmitter(object):
         lexical analyzer
         """
         # Emit overall section DFA function
-        method_name = self.formatter.get_state_machine_method_name(self.section_id, is_relative=False)
+        if len(self.dfa_ir.sections) > 1:
+            id = self.section_id
+        else:
+            id = None
+        method_name = self.formatter.get_state_machine_method_name(id, is_relative=False)
         token_type = self.formatter.get_type('token', is_relative=False)
         self.formatter.clear_state_ids()
         self.formatter.add_state_id(self.start_state, 'InitialState')
@@ -95,6 +99,13 @@ class StateMachineEmitter(object):
         Emits the case for a single state
         """
         self.line("Case {scope}.{state_id}".format(scope="StateMachineState", state_id=self.formatter.get_state_id(state)))
+        capture = False
+        for rule in self.rules:
+            rule_id = rule.id.lower() if rule.id is not None else None
+            if 'capture' in rule.action and rule_id in state.ids:
+                capture = True
+        if capture:
+            self.line("Capture = 1")
         with self.block("Select Case This.Character", "End Select"):
             self.generate_transition_table(state)
             
@@ -127,8 +138,8 @@ class StateMachineEmitter(object):
                     found_zero = True
                     self.generate_check_zero_or_eof(invalid_otherwise=False)
             rules = [rule for rule in self.rules if rule.id in destination.ids]
-            if any([rule.has_action('capture') for rule in rules]):
-                self.line("Capture = 1")
+            #if any([rule.has_action('capture') for rule in rules]):
+            #    self.line("Capture = 1")
             self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id=self.formatter.get_state_id(destination)))
             self.line()
         if state == self.start_state and not found_zero:

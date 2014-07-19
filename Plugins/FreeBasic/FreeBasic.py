@@ -271,7 +271,8 @@ class FreeBasicEmitter(PluginTemplate):
                         token_type=self.formatter.get_type('token', True)))
         elif token.token == 'STATE_MACHINES':
             code = CodeEmitter(token.stream, token.indent)
-            self.StateMachineEmitter.generate_state_machine_switch(code, self.formatter, self.lexical_analyzer)
+            if len(self.lexical_analyzer.sections) > 1:
+                self.StateMachineEmitter.generate_state_machine_switch(code, self.formatter, self.lexical_analyzer)
             for i, section in enumerate(self.lexical_analyzer.sections):
                 code.line()
                 emitter = self.StateMachineEmitter(

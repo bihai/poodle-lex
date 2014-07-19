@@ -6,7 +6,7 @@ from Generator.CoverageSet import CoverageSet
 
 def get_simple_dfa():
     # Identical DFAs
-    dfa = Automata.DeterministicFiniteAutomata()
+    dfa = Automata.DeterministicFinite()
     dfa_s = [Automata.DeterministicState() for i in xrange(4)]
     dfa_s[0].edges[dfa_s[1]] = CoverageSet([(0, 1), (2, 3)])
     dfa_s[1].edges[dfa_s[2]] = CoverageSet([(0, 1), (2, 3)])

@@ -8,11 +8,7 @@ import tempfile
 import subprocess
 import difflib
 
-from Generator.LexicalAnalyzerParser import LexicalAnalyzerParserException
-from Generator.LexicalAnalyzer import LexicalAnalyzer
-from Generator.RegexParser import RegexParser
-from Generator.RegexExceptions import *
-from Generator import HopcroftDFAMinimizer
+from Generator import RulesFile
 from Generator import LanguagePlugins
 
 base_directory = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
@@ -20,20 +16,18 @@ base_directory = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(
 class TestCExampleFreeBasic(unittest.TestCase):
     def run_poodle_lex(self, language):
         output_dir = tempfile.mkdtemp()
-        rules_file = os.path.join(base_directory, "Example", "CLexer", "CLexer.rules")
-        lexer = LexicalAnalyzer.parse(rules_file, "utf-8", HopcroftDFAMinimizer.minimize)
+        rules_file_path = os.path.join(base_directory, "Example", "CLexer", "CLexer.rules")
+        rules_file = RulesFile.Parser.parse(rules_file_path, "utf-8")
+        rules_file.accept(RulesFile.Traverser(RulesFile.Validator()))
+        nfa_ir = RulesFile.NonDeterministicIR(rules_file)
+        dfa_ir = RulesFile.DeterministicIR(nfa_ir)
         language_plugins, default_language = LanguagePlugins.load(base_directory, "Plugins/Plugins.json", 'utf-8')
         language_plugins[language].load()
         language_plugin = language_plugins[language]
         plugin_options = LanguagePlugins.PluginOptions()
-        emitter = language_plugin.create(lexer, output_dir, plugin_options)
-        for directory_name in emitter.get_output_directories():
-            real_directory_name = os.path.join(output_dir, directory_name)
-            if not os.path.exists(real_directory_name):
-                os.mkdir(real_directory_name)
-        for file in emitter.get_files_to_copy():
-            shutil.copy(os.path.join(language_plugin.plugin_files_directory, file), os.path.join(output_dir, file))
-        emitter.emit()
+        emitter = language_plugin.create(dfa_ir, plugin_options)
+        executor = LanguagePlugins.Executor(emitter, language_plugin.plugin_files_directory, output_dir)
+        executor.execute()
         return output_dir
 
     def run_demo(self, output_dir, demo_base_name):

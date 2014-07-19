@@ -1,20 +1,19 @@
 import sys
 sys.path.append("..")
 import unittest
-from Generator.RegexVariableResolver import RegexVariableResolver
-from Generator.RegexParser import RegexParser
-from Generator.RegexExceptions import *
-from Generator import LexicalAnalyzer
+
+from Generator import RulesFile
 from Generator import Regex
+from Generator.Regex import RegexParserCircularReference, RegexParserUndefinedVariable
 
 class TestRegexResolver(unittest.TestCase):
     def test_simple_case(self):
         defines = {
-            'a': LexicalAnalyzer.Pattern("[abc]+"),
-            'b': LexicalAnalyzer.Pattern("[xyz]*{a}d")
+            'a': Regex.Parser("[abc]+").parse(),
+            'b': Regex.Parser("[xyz]*{a}d").parse()
         }
-        regex = RegexParser("Hello{b}Ok").parse()
-        resolver = RegexVariableResolver(defines)
+        regex = Regex.Parser("Hello{b}Ok").parse()
+        resolver = Regex.VariableResolver(defines)
         regex.accept(resolver)
         resolved = resolver.get()
         expected = Regex.Concatenation([
@@ -35,18 +34,18 @@ class TestRegexResolver(unittest.TestCase):
     
     def test_circular(self):
         defines = {
-            'Cat': LexicalAnalyzer.Pattern("Hello{Dog}Goodbye"),
-            'Dog': LexicalAnalyzer.Pattern("Start{Cow}Stop"),
-            'Cow': LexicalAnalyzer.Pattern("Up{Cat}Down")
+            'Cat': Regex.Parser("Hello{Dog}Goodbye").parse(),
+            'Dog': Regex.Parser("Start{Cow}Stop").parse(),
+            'Cow': Regex.Parser("Up{Cat}Down").parse()
         }
         unresolved = Regex.Variable("Cat")
-        resolver = RegexVariableResolver(defines)
+        resolver = Regex.VariableResolver(defines)
         self.assertRaises(RegexParserCircularReference, lambda: unresolved.accept(resolver))
         
     
     def test_undefined(self):
-        unresolved = RegexParser("Hello{Dog}Goodbye").parse()
-        resolver = RegexVariableResolver({})
+        unresolved = Regex.Parser("Hello{Dog}Goodbye").parse()
+        resolver = Regex.VariableResolver({})
         self.assertRaises(RegexParserUndefinedVariable, lambda: unresolved.accept(resolver))
     
 if __name__ == '__main__':

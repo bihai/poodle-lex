@@ -3,13 +3,12 @@ sys.path.append("..")
 import unittest
 from Generator import Automata
 from Generator.CoverageSet import CoverageSet
-from Generator import NaiveDFAMinimizer
-from Generator import HopcroftDFAMinimizer
-from Generator.LexicalAnalyzer import LexicalAnalyzer
+from Generator.Automata import Minimizer
+from Generator import RulesFile
 
 class TestDFAMinimization(unittest.TestCase):
     def test_minimization_simple(self):
-        dfa = Automata.DeterministicFiniteAutomata()
+        dfa = Automata.DeterministicFinite()
         states = [Automata.DeterministicState() for i in xrange(9)]
         states[0].edges[states[1]] = CoverageSet([(1, 1)])
         states[0].edges[states[2]] = CoverageSet([(2, 2)])
@@ -26,9 +25,9 @@ class TestDFAMinimization(unittest.TestCase):
         dfa.start_state = states[0]
         states[8].is_final = True
         states[8].final_ids = set(['Final'])
-        NaiveDFAMinimizer.minimize(dfa)
+        Minimizer.polynomial(dfa)
         
-        min_dfa = Automata.DeterministicFiniteAutomata()
+        min_dfa = Automata.DeterministicFinite()
         min_states = [Automata.DeterministicState() for i in xrange(6)]
         min_states[0].edges[min_states[1]] = CoverageSet([(1, 3)])
         min_states[1].edges[min_states[2]] = CoverageSet([(1, 3)])
@@ -43,7 +42,7 @@ class TestDFAMinimization(unittest.TestCase):
         self.assertEqual(dfa, min_dfa)
         
     def test_minimization_complex(self):
-        dfa = Automata.DeterministicFiniteAutomata()
+        dfa = Automata.DeterministicFinite()
         states = [Automata.DeterministicState() for i in xrange(8)]
         states[0].edges[states[1]] = CoverageSet([(1, 1)])
         states[0].edges[states[2]] = CoverageSet([(0, 0)])
@@ -66,10 +65,10 @@ class TestDFAMinimization(unittest.TestCase):
         states[7].final_ids = set(['Final'])
         dfa_copy = dfa.copy()
         
-        NaiveDFAMinimizer.minimize(dfa)
-        HopcroftDFAMinimizer.minimize(dfa_copy)
+        Minimizer.polynomial(dfa)
+        Minimizer.hopcroft(dfa_copy)
         
-        min_dfa = Automata.DeterministicFiniteAutomata()
+        min_dfa = Automata.DeterministicFinite()
         min_states = [Automata.DeterministicState() for i in xrange(5)]
         min_states[0].edges[min_states[0]] = CoverageSet([(1, 1)])
         min_states[0].edges[min_states[1]] = CoverageSet([(0, 0)])
@@ -86,14 +85,20 @@ class TestDFAMinimization(unittest.TestCase):
         self.assertEqual(dfa, dfa_copy)
 
     def test_complex_dfa_minimization_case(self):
-        NaiveLexer = LexicalAnalyzer.parse("TestDFAMinimization.rules", "utf8", minimizer=NaiveDFAMinimizer.minimize)
-        HopcroftLexer = LexicalAnalyzer.parse("TestDFAMinimization.rules", "utf8", minimizer=HopcroftDFAMinimizer.minimize)
-        NaiveLexer.finalize()
-        HopcroftLexer.finalize()
+        polynomial_rules = RulesFile.Parser.parse("TestDFAMinimization.rules", "utf8")
+        polynomial_nfa_ir = RulesFile.NonDeterministicIR(polynomial_rules)
+        polynomial_dfa_ir = RulesFile.DeterministicIR(polynomial_nfa_ir, minimizer=Minimizer.polynomial)
+        polynomial_dfa = polynomial_dfa_ir.sections['::main::'].dfa
+        
+        hopcroft_rules = RulesFile.Parser.parse("TestDFAMinimization.rules", "utf8")
+        hopcroft_nfa_ir = RulesFile.NonDeterministicIR(polynomial_rules)
+        hopcroft_dfa_ir = RulesFile.DeterministicIR(polynomial_nfa_ir, minimizer=Minimizer.hopcroft)
+        hopcroft_dfa = hopcroft_dfa_ir.sections['::main::'].dfa
+        
         final_state_count_expected = 224
-        self.assertEqual(NaiveLexer.get_min_dfa(), HopcroftLexer.get_min_dfa())
-        self.assertEqual(len([state for state in NaiveLexer.get_min_dfa()]), final_state_count_expected)
-        self.assertEqual(len([state for state in HopcroftLexer.get_min_dfa()]), final_state_count_expected)
+        self.assertEqual(polynomial_dfa, hopcroft_dfa)
+        self.assertEqual(len([state for state in polynomial_dfa]), final_state_count_expected)
+        self.assertEqual(len([state for state in hopcroft_dfa]), final_state_count_expected)
         
 if __name__ == '__main__':
     unittest.main()

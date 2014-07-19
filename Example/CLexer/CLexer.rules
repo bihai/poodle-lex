@@ -8,15 +8,19 @@ Skip: '[ \t\v\n\f\r]+'
 
 # Pre-processor tokens
 Reserve PPEndLine: '\r?\n'
-PPInclude: "#include" Enter Section Inherits
-    Capture PPIncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
-                                '\<([^\r\n\>\\]|\\([^\r]|\r\n))*\>'
-    Import PPEndLine Exit Section
-    Skip: '{PPDirective.PPContinueNextLine}|{PPDirective.PPWhitespace}'
-End Section
-Capture PPDirective: "#[a-z]+" Enter Section Inherits
+Capture PPDirective: "#" Enter Section Inherits
     Let PPContinueNextLine = '\\\r?\n'
     Let PPWhitespace = '[ \t\v\f]+'
+    PPDefine: "define"
+    PPIf: "if"
+    PPLine: "line"
+    PPError: "error"
+    PPInclude: "include" Enter Section Inherits
+        Capture PPIncludeParameter: '"([^\r\n"\\]|\\([^\r]|\r\n))*"' + '|' + 
+                                '\<([^\r\n\>\\]|\\([^\r]|\r\n))*\>'
+        Import PPEndLine Exit Section*2
+    End Section
+    
     Skip: '{PPContinueNextLine}|{PPWhitespace}'
     Import PPEndLine Exit Section
 End Section

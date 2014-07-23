@@ -1,4 +1,5 @@
 import sys
+import os.path
 sys.path.append("..")
 import unittest
 from Generator.CoverageSet import CoverageSet

@@ -25,12 +25,13 @@ import sys
 import StringIO
 import collections
 import itertools
+import copy
 from EmitCode import CodeEmitter
 from FileTemplate import FileTemplate
 from PluginTemplate import PluginTemplate
 
-def create_emitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
-    return FreeBasicEmitter(lexical_analyzer, plugin_files_directory, output_directory, plugin_options)
+def create_emitter(lexical_analyzer, dependencies, plugin_options):
+    return FreeBasicEmitter(lexical_analyzer, dependencies, plugin_options)
 
 class FreeBasicEmitter(PluginTemplate):
     """
@@ -115,22 +116,25 @@ class FreeBasicEmitter(PluginTemplate):
     ])
     bi_file = "LexicalAnalyzer.bi"
     bas_file = "LexicalAnalyzer.bas"
+    mode_bi_file = "ModeStack.bi"
+    mode_bas_file = "ModeStack.bas"
     demo_file = os.path.join("Demo", "Demo.bas")
     windows_makefile = os.path.join("Demo", "make_demo.bat")
     linux_makefile = os.path.join("Demo", "make_demo.sh")
     default_class_name = "LexicalAnalyzer"
-    default_namespace = "Poodle"
+    poodle_namespace = "Poodle"
+    default_namespace = poodle_namespace
     
-    def __init__(self, lexical_analyzer, plugin_files_directory, output_directory, plugin_options):
+    def __init__(self, lexical_analyzer, dependencies, plugin_options):
         """
-        @param lexical_analyzer: LexicalAnalyzer object representing the lexical analyzer to emit as FreeBasic code.
-        @param plugin_files_directory: string specifying the location of template files
-        @param output_directory: string specifying the directory where output files should be emitted
+        @param lexical_analyzer: DeterministicIR object representing the lexical analyzer to emit as FreeBasic code.
+        @param depedencies: dict mapping string module identifiers of dependencies to Python module objects.
         @param plugin_options: LanguagePlugins.PluginOptions object containing options which affect the generation of code.
         """
         self.lexical_analyzer = lexical_analyzer
-        self.plugin_files_directory = plugin_files_directory
-        self.output_directory = output_directory
+        self.plugin_options = copy.copy(plugin_options)
+        self.VariableFormatter = dependencies["VariableFormatter"].VariableFormatter
+        self.StateMachineEmitter = dependencies["StateMachine"].StateMachineEmitter
         self.ids = {}
         self.rule_ids = {}
         self.dfa = None
@@ -143,80 +147,22 @@ class FreeBasicEmitter(PluginTemplate):
         ]:
             if name is not None:
                 if re.match("[A-Za-z_][A-Za-z0-9_]*", name) is None:
-                    raise Exception("Invalid %s '%s'" % (description.lower(), name))
-                elif name in FreeBasicEmitter.reserved_keywords:
-                    raise Exception("%s '%s' is reserved" % (description, name))
+                    raise Exception("Invalid {object} '{name}'".format(object=description.lower(), name=name))
+                elif name.lower() in FreeBasicEmitter.reserved_keywords:
+                    raise Exception("{object} '{name}' is reserved".format(object=description, name=name))
         
-        self.class_name = plugin_options.class_name
-        if self.class_name is None:
-            self.class_name = FreeBasicEmitter.default_class_name
-        self.base_file_name = plugin_options.file_name
-        if self.base_file_name is None:
-            self.base_file_name = self.class_name
-        self.namespace = plugin_options.namespace
-        if self.namespace is None:
-            self.namespace = FreeBasicEmitter.default_namespace
+        if self.plugin_options.class_name is None:
+            self.plugin_options.class_name = FreeBasicEmitter.default_class_name
+        if self.plugin_options.file_name is None:
+            self.plugin_options.file_name = self.plugin_options.class_name
+        if self.plugin_options.namespace is None:
+            self.plugin_options.namespace = FreeBasicEmitter.default_namespace
             
-    # Public interface
-    def emit(self):
-        """
-        Emits the lexical analyzer as a FreeBasic header file and source file.
-        """
-        if not self.lexical_analyzer.is_finalized():
-            self.lexical_analyzer.finalize()
-        self.dfa = self.lexical_analyzer.get_min_dfa()
-        self.map_state_ids()
-        self.map_rule_names()
-        
-        # Emit lexical analyzer header
-        bi_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bi_file)
-        bi_output_file = os.path.join(self.output_directory, self.base_file_name + ".bi")
-        for stream, token, indent in FileTemplate(bi_template_file, bi_output_file):
-            if token == 'ENUM_TOKEN_IDS':
-                token_ids = [self.rule_ids[rule.id.title()] for rule in self.lexical_analyzer.rules]
-                token_ids.extend([self.rule_ids[id.title()] for id in self.lexical_analyzer.reserved_ids])
-                for id in token_ids:
-                    stream.write(" "*indent + id + "\n")
-            elif token == "HEADER_GUARD_NAME":
-                stream.write("%s_%s_BI" % (self.namespace.upper(), self.class_name.upper()))
-            elif token == "RELATIVE_NAMESPACE":
-                if self.namespace != FreeBasicEmitter.default_namespace:
-                    stream.write(FreeBasicEmitter.default_namespace + ".")
-            elif token == "TOKEN_IDNAMES_LIMIT":
-                stream.write(str(len(self.rule_ids)+1))
-            else:
-                self.process_common_tokens(token, stream, 'header file template')
-        
-        # Emit lexical analyzer source
-        bas_template_file = os.path.join(self.plugin_files_directory, FreeBasicEmitter.bas_file)
-        bas_output_file = os.path.join(self.output_directory, self.base_file_name + ".bas")
-        for stream, token, indent in FileTemplate(bas_template_file, bas_output_file):
-            if token == 'ENUM_STATE_IDS':
-                for state_id in sorted(list(self.ids.values())):
-                    stream.write(" "*indent + state_id + '\n')
-            elif token == 'INITIAL_STATE':
-                stream.write(self.ids[self.dfa.start_state])
-            elif token == 'STATE_MACHINE':
-                self.generate_state_machine(stream, indent)
-            elif token == "TOKEN_IDNAMES":
-                rule_id_list = [rule.id for rule in self.lexical_analyzer.rules]
-                rule_id_list.extend(self.lexical_analyzer.reserved_ids)
-                formatted_ids = ", _\n".join(" "*indent + "@\"%s\"" % rule_id for rule_id in rule_id_list)
-                stream.write(formatted_ids + "_ \n")
-            else:
-                self.process_common_tokens(token, stream, 'source file template')
-                
-        # Emit demo files
-        for support_file, description in [
-            (FreeBasicEmitter.demo_file, 'demo source template'),
-            (FreeBasicEmitter.windows_makefile, 'windows demo build script template'),
-            (FreeBasicEmitter.linux_makefile, 'linux demo build script template')
-        ]:
-            support_template_file = os.path.join(self.plugin_files_directory, support_file)
-            support_output_file = os.path.join(self.output_directory, support_file)
-            for stream, token, indent in FileTemplate(support_template_file, support_output_file):
-                self.process_common_tokens(token, stream, description)
-                    
+        self.formatter = self.VariableFormatter(
+            plugin_options=self.plugin_options, 
+            reserved_ids=self.reserved_keywords, 
+            poodle_namespace=self.poodle_namespace)
+
     def get_output_directories(self):
         return [os.path.join(*i) for i in [
             ("Demo",),
@@ -224,7 +170,7 @@ class FreeBasicEmitter(PluginTemplate):
             ("Stream", "Windows"),
             ("Stream", "Linux")
         ]]
-        
+
     def get_files_to_copy(self):
         return [os.path.join(*i) for i in [
             ("Stream", "Windows", "MemoryMapWindows.bas"),
@@ -252,129 +198,106 @@ class FreeBasicEmitter(PluginTemplate):
             ("Stream", "UTF32Stream.bas"),
             ("Stream", "UTF32Stream.bi")
         ]]
-               
-    # Private methods
-    def process_common_tokens(self, token, stream, description):
-        if token == 'CLASS_NAME':
-            stream.write(self.class_name)
-        elif token == 'BASE_FILE_NAME':
-            stream.write(self.base_file_name)
-        elif token == 'NAMESPACE':
-            stream.write(self.namespace)
-        elif token == "TOKEN_IDNAMES_LIMIT":
-            stream.write(str(len(self.rule_ids)+1))
-        else:
-            raise Exception('Unrecognized token in %s: "%s"' % (description, token))
-    
-    def map_state_ids(self):
-        """
-        Maps all states to an enum element in the FreeBasic source code.
-        """
-        self.ids[self.dfa.start_state] = "InitialState"
-        for state in self.dfa:
-            if state != self.dfa.start_state:
-                initial_id = "".join([i.title() for i in sorted(list(state.ids))])[:64]
-                id = initial_id
-                n = 1
-                while id in self.ids.values() or id.lower() in FreeBasicEmitter.reserved_keywords:
-                    id_prefix = initial_id[:64-len(str(n))]
-                    id = "%s%d" % (id_prefix, n)
-                    n += 1
-                self.ids[state] = id
-                
-    def map_rule_names(self):
-        """
-        Maps all rule names to an enum element in the FreeBasic source code
-        """
-        all_ids = [rule.id.title() for rule in self.lexical_analyzer.rules]
-        all_ids.extend([id.title() for id in self.lexical_analyzer.reserved_ids])
-        for id in all_ids:
-            n = 1
-            code_id = id[:64]
-            while code_id in self.rule_ids.values() or code_id.lower() in FreeBasicEmitter.reserved_keywords:
-                prefix = id[:64-len(str(n))]
-                code_id = '%s%d' % (prefix, n)
-                n += 1
-            self.rule_ids[id] = code_id
+
+    def get_files_to_generate(self):
+        files = [
+            (self.bi_file, self.plugin_options.file_name + ".bi"),
+            (self.bas_file, self.plugin_options.file_name + ".bas"),
+            (self.demo_file, self.demo_file),
+            (self.windows_makefile, self.windows_makefile),
+            (self.linux_makefile, self.linux_makefile)
+        ]
+        if len(self.lexical_analyzer.sections) > 1:
+            files.extend((
+                (self.mode_bi_file, self.plugin_options.file_name + "ModeStack.bi"),
+                (self.mode_bas_file, self.plugin_options.file_name + "ModeStack.bas")
+            ))
+        return files
         
-    def generate_state_machine(self, stream, indent):
-        """
-        Generates a state machine in FreeBasic source code represented by two tiers of "Select Case" statemenets.
-        @param stream: a Python file object to which the state machine should be written
-        @param indent: the number of spaces by which the code should be indented.
-        """
-        code = CodeEmitter(stream)
-        for i in xrange(indent/4):
-            code.indent()
-        
-        for i, state in enumerate(self.dfa):
-            if i != 0:
-                code.line()
-            code.line("Case %s.%s" % (self.namespace, self.ids[state]))
-            code.line("Select Case This.Character")
-            code.indent()
-            
-            def ranges(i):
-                for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
-                    b = list(b)
-                    yield b[0][1], b[-1][1]
-            
-            def format_case(range):
-                if range[0] == range[1]:
-                    return "%d" % range[0]
-                else:
-                    return "%d To %d" % range
-            
-            def emit_check_zero(invalid_otherwise):
-                code.line("If Stream->IsEndOfStream() Then")
-                code.indent()
-                code.line("Return %s.%sToken(%s.%sToken.EndOfStream, Poodle.Unicode.Text())" % (self.namespace, self.class_name, self.namespace, self.class_name))
-                code.dedent()
-                if invalid_otherwise:
-                    code.line("Else")
-                    code.indent()
-                    code.line("Return %s.%sToken(%s.%sToken.InvalidCharacter, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name))
-                    code.dedent()
-                code.line("End If")
-                
-            found_zero = False
-            for destination, edges in state.edges.iteritems():
-                code.line("Case %s" % ", ".join([format_case(i) for i in edges]))
-                if state == self.dfa.start_state:
-                    if 0 in zip(*iter(edges))[0]:
-                        # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
-                        found_zero = True
-                        emit_check_zero(invalid_otherwise=False)
-                rules = [rule for rule in self.lexical_analyzer.rules if rule.id in destination.ids]
-                if any([rule.action is not None and rule.action.lower() == 'capture' for rule in rules]):
-                    code.line("Capture = 1")
-                code.line("State = %s.%s" % (self.namespace, self.ids[destination]))
-                code.line()
-            
-            if state == self.dfa.start_state and not found_zero:
-                code.line("Case 0")
-                emit_check_zero(invalid_otherwise=True)
-                code.line()
-            
-            # else case (return token if in final state
-            code.line("Case Else")
-            if len(state.final_ids) > 0:
-                tokens_by_priority = [rule.id for rule in self.lexical_analyzer.rules]
-                token = min(state.final_ids, key = lambda x: tokens_by_priority.index(x)).title()
-                rule = [rule for rule in self.lexical_analyzer.rules if rule.id.title() == token][0]
-                if rule.action is not None and rule.action.lower() == 'skip':
-                    # Reset state machine if token is skipped
-                    code.line("State = %s.%s" % (self.namespace, self.ids[self.dfa.start_state]))
-                    code.line("Text = Poodle.Unicode.Text()")
-                    code.line("Continue Do")
-                elif rule.action is not None and rule.action.lower() == 'capture':
-                    code.line("Return %s.%sToken(%s.%sToken.%s, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name, self.rule_ids[token]))
-                else:
-                    code.line("Return %s.%sToken(%s.%sToken.%s, Poodle.Unicode.Text())" % (self.namespace, self.class_name, self.namespace, self.class_name, self.rule_ids[token]))
+    def process(self, token):
+        if token.token == 'BASE_CLASS':
+            if len(self.lexical_analyzer.sections) > 1:
+                token.stream.write(self.formatter.get_mode_stack_class_name())
             else:
-                code.line("Text.Append(This.Character)")
-                code.line("This.Character = This.Stream->GetCharacter()")
-                code.line("Return %s.%sToken(%s.%sToken.InvalidCharacter, Text)" % (self.namespace, self.class_name, self.namespace, self.class_name))
-            
-            code.dedent()
-            code.line("End Select")
+                token.stream.write('Object')
+        elif token.token == 'BASE_FILE_NAME':
+            token.stream.write(self.plugin_options.file_name)
+        elif token.token == 'CLASS_NAME':
+            token.stream.write(self.formatter.get_class_name())
+        elif token.token == 'DEFAULT_ENCODING':
+            token.stream.write(self.formatter.get_default_encoding())
+        elif token.token == 'ENUM_MODE_IDS':
+            code = CodeEmitter(token.stream, token.indent)
+            for section in self.lexical_analyzer.sections:
+                x = self.formatter.get_section_id(section)
+                code.line(x)
+        elif token.token == 'ENUM_TOKEN_IDS':
+            code = CodeEmitter(token.stream, token.indent)
+            rules = [id for id in self.lexical_analyzer.rule_ids if id is not None]
+            rules.append('SkippedToken')
+            for rule in sorted(rules):
+                code.line(self.formatter.get_token_id(rule))
+        elif token.token == 'HEADER_GUARD_NAME':
+            token.stream.write('{namespace}_{class_name}_BI'.format(
+                namespace = self.plugin_options.namespace.upper(),
+                class_name = self.plugin_options.class_name.upper()))
+        elif token.token == 'HEADER_GUARD_MODE_NAME':
+            token.stream.write('{namespace}_{class_name}_BI'.format(
+                namespace = self.plugin_options.namespace.upper(),
+                class_name = self.formatter.get_mode_stack_class_name().upper()))
+        elif token.token == 'INITIAL_MODE_ID':
+            token.stream.write(self.formatter.get_section_id('::main::'))
+        elif token.token == 'MODE_INCLUDE':
+            if len(self.lexical_analyzer.sections) > 1:
+                code = CodeEmitter(token.stream, token.indent)
+                code.line('#include "{include_file}"'.format(include_file=self.plugin_options.file_name + "ModeStack.bi"))
+        elif token.token == 'MODE_SOURCE':
+            if len(self.lexical_analyzer.sections) > 1:
+                token.stream.write("../{base_file_name}ModeStack.bas".format(base_file_name=self.plugin_options.file_name))
+        elif token.token == 'MODE_STACK_CLASS_NAME':
+            token.stream.write(self.formatter.get_mode_stack_class_name())
+        elif token.token == 'NAMESPACE':
+            token.stream.write(self.formatter.get_namespace())
+        elif token.token == 'STACK_DEPTH_ID':
+            token.stream.write('{namespace}_{class_name}_STACK_DEPTH'.format(
+                namespace=self.plugin_options.namespace.upper(),
+                class_name=self.formatter.get_mode_stack_class_name().upper()))
+        elif token.token == 'STACK_DEPTH':
+            token.stream.write('32')
+        elif token.token == 'STATE_MACHINE_DECLARATIONS':
+            if len(self.lexical_analyzer.sections) > 1:
+                code = CodeEmitter(token.stream, token.indent)
+                for section in self.lexical_analyzer.sections:
+                    code.line("Declare Function {method_name}() As {token_type}".format(
+                        method_name=self.formatter.get_state_machine_method_name(section, True),
+                        token_type=self.formatter.get_type('token', True)))
+        elif token.token == 'STATE_MACHINES':
+            code = CodeEmitter(token.stream, token.indent)
+            if len(self.lexical_analyzer.sections) > 1:
+                self.StateMachineEmitter.generate_state_machine_switch(code, self.formatter, self.lexical_analyzer)
+            for i, section in enumerate(self.lexical_analyzer.sections):
+                code.line()
+                emitter = self.StateMachineEmitter(
+                    code=code,
+                    formatter=self.formatter,
+                    dfa_ir=self.lexical_analyzer,
+                    section_id=section)
+                emitter.generate_state_machine()
+        elif token.token == 'TOKEN_IDNAMES':
+            code = CodeEmitter(token.stream, token.indent)
+            filtered_ids = [rule_id for rule_id in self.lexical_analyzer.rule_ids if rule_id is not None]
+            filtered_ids.append('SkippedToken')
+            for i, rule in enumerate(sorted(filtered_ids)):
+                template = '@"{name}"'.format(name=rule)
+                template += ", _" if i < len(filtered_ids)-1 else " _"
+                code.line(template.format(name=rule))
+        elif token.token == 'TOKEN_IDNAMES_LIMIT':
+            token.stream.write(str(len(self.lexical_analyzer.rule_ids)+2))
+        elif token.token.startswith('TYPE_REL_'):
+            type_name = token.token[len('TYPE_REL_'):].lower()
+            token.stream.write(self.formatter.get_type(type_name, True))
+        elif token.token.startswith('TYPE_'):
+            type_name = token.token[len('TYPE_'):].lower()
+            token.stream.write(self.formatter.get_type(type_name, False))
+        else:
+            raise Exception("Token '{id}' not recognized".format(id=token.token))

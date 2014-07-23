@@ -23,36 +23,39 @@
 
 #include "Stream\Unicode.bi"
 #include "Stream\CharacterStream.bi"
+$MODE_INCLUDE
 
 Namespace $NAMESPACE
-    Type ${CLASS_NAME}Token
+    Type ${TYPE_REL_TOKEN}
         Public:
         Enum TokenId
             InvalidCharacter
             EndOfStream
             $ENUM_TOKEN_IDS
         End Enum
+
         Id As TokenId
-        Text As ${RELATIVE_NAMESPACE}Unicode.Text
+        Text As ${TYPE_REL_TEXT}
         
         Declare Constructor()
-        Declare Constructor(ByVal Id As TokenId, ByVal Text As ${RELATIVE_NAMESPACE}Unicode.Text)
-        Declare Function ToString(ByRef _Encoding As ${RELATIVE_NAMESPACE}Unicode.StringEncoding = *${RELATIVE_NAMESPACE}Unicode.DefaultStringEncoding) As String
-        Declare Function GetIdAsString(ByRef _Encoding As ${RELATIVE_NAMESPACE}Unicode.StringEncoding = *${RELATIVE_NAMESPACE}Unicode.DefaultStringEncoding) As String
+        Declare Constructor(ByVal Id As TokenId, ByVal Text As ${TYPE_REL_TEXT})
+        Declare Function ToString(ByRef _Encoding As ${TYPE_REL_ENCODING} = *${DEFAULT_ENCODING}) As String
+        Declare Function GetIdAsString(ByRef _Encoding As ${TYPE_REL_ENCODING} = *${DEFAULT_ENCODING}) As String
         
         Private:
         Static IdNames(0 To $TOKEN_IDNAMES_LIMIT) As Const ZString Pointer 
     End Type
-
-    Type $CLASS_NAME Extends Object
+    
+    Type $CLASS_NAME Extends $BASE_CLASS
         Public:
-        Declare Constructor(Stream As ${RELATIVE_NAMESPACE}CharacterStream Ptr)
+        Declare Constructor(Stream As ${TYPE_REL_STREAM} Ptr)
         Declare Function IsEndOfStream() As Integer
-        Declare Function GetToken() As ${CLASS_NAME}Token
+        Declare Function GetToken() As ${TYPE_REL_TOKEN}
         
         Private:
-        Stream As ${RELATIVE_NAMESPACE}CharacterStream Ptr
-        Character As ${RELATIVE_NAMESPACE}Unicode.CodePoint
+        $STATE_MACHINE_DECLARATIONS
+        Stream As ${TYPE_REL_STREAM} Ptr
+        Character As ${TYPE_REL_CHARACTER}
     End Type
 
 End Namespace

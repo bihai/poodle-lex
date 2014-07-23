@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<ParseErrors>
+    <RulesFile name="CaseInsensitiveAfterFirstPattern">
+        ParseErrorCaseInsensitive: "Hello" + i"Joseph"
+    </RulesFile>
+    <RulesFile name="SectionWithoutEndSection">
+        Section Top
+            Section Middle
+                Rules: "Hello"
+        End Section
+    </RulesFile>
+    <RulesFile name="EndSectionWithoutSection">
+        Rule: "Hello"
+        End Section
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersAtRuleStart">
+        this is not allowed: "Hi"
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersInsideRule1">
+        RuleName: u"Hi"
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersInsideRule2">
+        RuleName: "Hi" + Joe
+    </RulesFile>
+    <RulesFile name="AnonymousSection">
+        Section
+            RuleInsideSection: "Hi"
+        End Section
+    </RulesFile>
+    <RulesFile name="ExtraIdentifiersAtEndOfSection">
+        Section ID
+            RuleInsideSection: "Hi"
+        End Section ID
+    </RulesFile>
+    <RulesFile name="PatternWithoutRule">
+        GoodRule: "Pattern"
+        "BadPattern"
+    </RulesFile>
+    <RulesFile name="ReserveNoNewlineAtEnd" type="pass">
+        Rule1: "Hello"
+        Reserve Rule2</RulesFile>
+    <RulesFile name="RulesNoNewlineAtEnd" type="pass">
+        Rule1: "Hello"
+        Rule2: "Goodbye"</RulesFile>
+    <RulesFile name="MissingColonOK" type="pass">
+        PlaceHolder: "PlaceHolder" Enter Section
+            Skip RuleName Exit Section
+        End Section
+    </RulesFile>
+    <RulesFile name="CaseInsensitiveRule" type="pass">
+        RuleName: i"Hello"
+    </RulesFile>
+    <RulesFile name="MissingColonBad">
+        PlaceHolder: "PlaceHolder" Enter Section
+            RuleName "Content" Exit Section
+        End Section
+    </RulesFile>
+</ParseErrors>
+    

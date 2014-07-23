@@ -18,70 +18,53 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
 
-from Generator.LexicalAnalyzerParser import LexicalAnalyzerParserException
-from Generator.LexicalAnalyzer import LexicalAnalyzer
-from Generator.RegexParser import RegexParser
-from Generator.RegexExceptions import *
-from Generator import NaiveDFAMinimizer
-from Generator import HopcroftDFAMinimizer
-from Generator import LanguagePlugins
-import argparse
+from __future__ import print_function
+import os
 import sys
 import shutil
-import os
-import os.path
-import traceback
+from Generator.Automata.Minimizer import hopcroft
+from Generator.Automata.Minimizer import polynomial
+from Generator import CommandArguments
+from Generator import LanguagePlugins
+from Generator import RulesFile
+from Generator import LanguagePlugins
 
 this_file = sys.executable
 if getattr(sys, 'frozen', None) is None:
     this_file = __file__
 this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
 
-# Use simple command parsing for simple commands
 minimizers = {
-    'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', HopcroftDFAMinimizer.minimize),
-    'polynomial': ('Minimize using a polynomial algorithm comparing each state', NaiveDFAMinimizer.minimize)
+    'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', hopcroft),
+    'polynomial': ('Minimize using a polynomial algorithm comparing each state', polynomial)
 }
-if len(sys.argv) > 1 and sys.argv[1] == 'list-minimizers':
+
+# Handle 'list' commands
+command, arguments = CommandArguments.handle()
+if command == 'list-minimizers':
     left_column_size = len(max(minimizers, key=lambda i: len(i))) + 1
-    sys.stderr.write("Supported DFA minimization algorithms:\n")
+    print("Supported DFA minimization algorithms:", file=sys.stderr)
     for name, (description, minimizer) in minimizers.iteritems():
-        sys.stderr.write("    %s%s%s\n" % (name, ' '*(left_column_size-len(name)), description))
+        print("    %s%s%s\n" % (name, ' '*(left_column_size-len(name)), description), file=sys.stderr)
     sys.exit(0)
+elif command == 'list-languages':
+    LanguagePlugins.describe(this_folder, "Plugins/Plugins.json", 'utf-8')
+    sys.exit(0)
+    
+# Check minimizer
+if arguments.minimizer not in minimizers:
+    print("Minimizer '%s' not recognized\n" % arguments.minimizer, file=sys.stderr)
+    sys.exit(1)
+minimizer_description, minimizer = minimizers[arguments.minimizer]
 
 # Load language plug-ins file and list languages if requested
 language_plugins = None
 default_language = None
 try:
-    if len(sys.argv) > 1 and sys.argv[1] == 'list-languages':
-        LanguagePlugins.describe(this_folder, "Plugins/Plugins.json", 'utf-8')
-        sys.exit(0)
-    else:
-        language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
+    language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
 except Exception as e: 
-   sys.stderr.write("Unable to load plug-in file: %s\n" % str(e))
-   sys.exit()
-
-# Parse complex options
-arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("RULES_FILE", help="Rules file")
-arg_parser.add_argument("OUTPUT_DIR", help="Containing directory for output files")
-arg_parser.add_argument("-e", "--encoding", help="Rules file encoding", default="utf-8")
-arg_parser.add_argument("-n", "--print-nfa", help="Print a graph of the NFA of the ruleset to a .dot file", metavar="DOT_FILE")
-arg_parser.add_argument("-d", "--print-dfa", help="Print a graph of the non-minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
-arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
-arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Use '--action=list-minimizers' for list of options", default="hopcroft", metavar="ALGORITHM")
-arg_parser.add_argument("-l", "--language", help="Output programming language. Use '--action=list-languages' for list of options", default=None)
-arg_parser.add_argument("-c", "--class-name", help="The name of the lexical analyzer class to generate", default=None)
-arg_parser.add_argument("-f", "--file-name", help="The base name of the generated source files", default=None)
-arg_parser.add_argument("-s", "--namespace", help="The namespace name of the lexical analyzer class to generate", default=None)
-arguments = arg_parser.parse_args()
-
-# Check minimizer
-if arguments.minimizer not in minimizers:
-    sys.stderr.write("Minimizer '%s' not recognized\n" % arguments.minimizer)
-    sys.exit()
-minimizer_description, minimizer = minimizers[arguments.minimizer]
+   print("Unable to load plug-in file: %s\n" % str(e), file=sys.stderr)
+   sys.exit(1)
 
 # Load language plug-in
 language = arguments.language
@@ -93,75 +76,45 @@ try:
     language_plugins[language].load()
     language_plugin = language_plugins[language]
 except Exception as e:
-    sys.stderr.write("Unable to load language plug-in '%s': %s\n" % (language, str(e)))
-    sys.exit()    
+    print("Unable to load language plug-in '%s': %s\n" % (language, str(e)), file=sys.stderr)
+    sys.exit(1)
 
+# Parse rules file
+rules_file = None
+dfa_ir = None
 try:
-    lexer = LexicalAnalyzer.parse(arguments.RULES_FILE, arguments.encoding, minimizer=minimizer)
-    lexer.finalize()
-    
-    # Export automata if requested
-    if arguments.print_nfa is not None:
-        try:
-            with open(arguments.print_nfa, 'w') as f:
-                f.write(repr(lexer.get_nfa()))
-        except IOError:
-            sys.stderr.write("Unable to open nfa .dot file\n")
-
-    if arguments.print_dfa is not None:
-        try:            
-            with open(arguments.print_dfa, 'w') as f:
-                f.write(repr(lexer.get_dfa()))
-        except IOError:
-            sys.stderror.write("Unable to open minimized dfa .dot file\n")
-            
-    if arguments.print_min_dfa is not None:
-        try:            
-            with open(arguments.print_min_dfa, 'w') as f:
-                f.write(repr(lexer.get_min_dfa()))
-        except IOError:
-            sys.stderror.write("Unable to open minimized dfa .dot file\n")
-except RegexParserException as e:
-    sys.stderr.write("Unable to parse rule '%s': %s\n" % (e.rule_id, e.message))
-    sys.exit()
-    
-except LexicalAnalyzerParserException as e:
-    sys.stderr.write("Error parsing rules file: %s\n" % e.message)
-    sys.exit()
-    
+    rules_file = RulesFile.parse(arguments.RULES_FILE, arguments.encoding)
+    validator = RulesFile.Validator()
+    traverser = RulesFile.Traverser(validator)
+    rules_file.accept(traverser)
 except Exception as e:
-    sys.stderr.write("Internal error while generating the lexical analyzer: %s" % str(e))
-    sys.exit()    
+    print("Error parsing rules file. %s" % str(e), file=sys.stderr)
+    sys.exit(1)
 
-# Copy non-generated files over
+# Compile rules file
+try:
+    nfa_ir = RulesFile.NonDeterministicIR(rules_file)
+    dfa_ir = RulesFile.DeterministicIR(nfa_ir)
+except Exception as e:
+    print("Error processing rules. %s" % str(e), file=sys.stderr)
+    sys.exit(1)
+    
+# Emit output
 try:
     plugin_options = LanguagePlugins.PluginOptions()
     plugin_options.class_name = arguments.class_name
     plugin_options.namespace = arguments.namespace
     plugin_options.file_name = arguments.file_name
-    emitter = language_plugin.create(lexer, arguments.OUTPUT_DIR, plugin_options)
-    
-    if not os.path.exists(arguments.OUTPUT_DIR):
-        sys.stderr.write("Output directory not found\n")
-        sys.exit()
+    emitter = language_plugin.create(dfa_ir, plugin_options)
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
-        sys.stderr.write("Output directory cannot be same as executable directory\n")
-        sys.exit()
-    
-    for directory_name in emitter.get_output_directories():
-        real_directory_name = os.path.join(arguments.OUTPUT_DIR, directory_name)
-        if not os.path.exists(real_directory_name):
-            os.mkdir(real_directory_name)
-            
-    for file in emitter.get_files_to_copy():
-        shutil.copy(os.path.join(language_plugin.plugin_files_directory, file), os.path.join(arguments.OUTPUT_DIR, file))
+        print("Output directory cannot be same as executable directory", file=sys.stderr)
+        sys.exit(1)
+    executor = LanguagePlugins.Executor(emitter, language_plugin.plugin_files_directory, arguments.OUTPUT_DIR)
+    executor.execute()
         
 except IOError as e:
-    sys.stderr.write("Unable to write to output directory because of an error\n")
-    raise e
-    sys.exit()
-    
-try:
-    emitter.emit()
+    print("Unable to write to output directory because of an error", file=sys.stderr)
+    sys.exit(1)
 except Exception as e:
-    sys.stderr.write("An error occured while emitting code: '%s'" % str(e))
+    print("Unable to create lexical analyzer: %s" % str(e))
+    sys.exit(1)

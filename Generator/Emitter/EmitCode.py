@@ -24,24 +24,46 @@ class CodeEmitter(object):
     @ivar indent_size: integer representing the current indentation
     @ivar stream: Python file object to which lines should be written
     """
-    def __init__(self, stream=None):
+    
+    class Block(object):
+        """
+        Object which hides some boilerplate code for writing indented 
+        blocks behind python's "with" statement
+        """
+        def __init__(self, emitter, opening_line, closing_line):
+            self.emitter = emitter
+            self.opening_line = opening_line
+            self.closing_line = closing_line
+            
+        def __enter__(self):
+            if self.opening_line != "":
+                self.emitter.line(self.opening_line)
+            self.emitter.indent()
+        
+        def __exit__(self, type, value, traceback):
+            self.emitter.dedent()
+            if self.closing_line != "":
+                self.emitter.line(self.closing_line)
+        
+    def __init__(self, stream=None, initial_indent=0, indent_spaces=4):
         """
         @param stream: Python file object to which lines should be written.
         """
-        self.indent_size = 0
+        self.indent_size = initial_indent
+        self.indent_spaces = indent_spaces
         self.stream = stream
         
     def indent(self):
         """
-        Increases the current indentation by four spaces.
+        Increases the current indentation
         """
-        self.indent_size += 4
+        self.indent_size += self.indent_spaces
         
     def dedent(self):
         """
-        Decreases the current indentation by four spaces.
+        Decreases the current indentation
         """
-        self.indent_size -= 4
+        self.indent_size -= self.indent_spaces
         
     def open_line(self):    
         """
@@ -72,6 +94,30 @@ class CodeEmitter(object):
             self.open_line()
             self.write(line)
             self.close_line()
+            
+    def block(self, opening_line="", closing_line=""):
+        """
+        Returns an object for use with Python's "with" statement. Code
+        printed inside the with statement will be indented and wrapped
+        in opening and closing lines. Omitting opening_line and closing_line
+        will indent, but not print any lines (useful for printing
+        single-line blocks without braces in C-like languages)
+        @param opening_line: The text at the head of the block (such as "do" or "if")
+        @param closing_line: The text at the tail of the block (such as "loop" or "end if")
+        """
+        return CodeEmitter.Block(self, opening_line, closing_line)
+        
+    def continue_block(self, *lines):
+        """
+        For use inside "with code.block()" sections, this method ends the 
+        current block body and starts another. Useful, for instance, with
+        "if, then else" statements with multiple bodies.
+        @param line: Lines of text to divide the two sections
+        """
+        self.dedent()
+        for line_of_code in lines:
+            self.line(line_of_code)
+        self.indent()
         
     def inherit(self, parent):
         """
@@ -81,3 +127,16 @@ class CodeEmitter(object):
         self.stream = parent.stream
         self.indent_size = parent.indent_size
 
+    def emit(self, lines):
+        """
+        Emit list of strings as a block of lines. 
+        @param lines: list of either strings or sub-lists
+        """
+        for line in lines:
+            # unpythonic, but distinguishes str from other iterables
+            if hasattr(line, '__iter__'):
+                self.indent()
+                self.emit(line)
+                self.dedent()
+            else:
+                self.line(line)

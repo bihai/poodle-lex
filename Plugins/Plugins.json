@@ -5,13 +5,20 @@
         "freebasic": {
             "Description": "FreeBasic programming language using proprietary Unicode streams",
             "Source": "Plugins/FreeBasic/FreeBasic.py",
+            "Dependencies": ["Plugins/FreeBasic/VariableFormatter.py", "Plugins/FreeBasic/StateMachine.py"],
             "Files": "Plugins/FreeBasic/Template"
         },
         "cpp": {
             "Description": "C++ programming language interface which consumes an std::istream",
             "Source": "Plugins/CPlusPlus/CPlusPlus.py",
+            "Dependencies": ["Plugins/CPlusPlus/VariableFormatter.py", "Plugins/CPlusPlus/StateMachine.py"],
             "Files": "Plugins/CPlusPlus/Template"
+        },
+        "test": {
+            "Description": "Test plugin",
+            "Source": "Plugins/Test/Test.py",
+            "Dependencies": ["Plugins/Test/Test2.py"],
+            "Files": "Plugins/Test/Template"
         }
     }
-} 
-    
+}

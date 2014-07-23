@@ -48,12 +48,12 @@
     try
     {
         $NAMESPACE::$CLASS_NAME lexer(&f);
-        $CLASS_NAME::Token token;
-        do
+        $CLASS_NAME::Token token = lexer.get_token();
+        while (token.id != $CLASS_NAME::Token::ENDOFSTREAM)
         {
-            token = lexer.get_token();
             debug_token(token);
-        } while (token.id != $CLASS_NAME::Token::ENDOFSTREAM);
+            token = lexer.get_token();
+        }
     }
     catch (std::runtime_error ex)
     {

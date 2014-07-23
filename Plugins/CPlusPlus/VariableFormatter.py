@@ -35,7 +35,7 @@ class VariableFormatter(object):
         self.cache = CachedFormatter(limit=64, reserved=reserved_ids)
         self.cache.add_cache('section_id', section_id_formatter, cache_name='section_and_tokens')
         self.cache.add_cache('token_id', token_id_formatter, cache_name='section_and_tokens')
-        self.cache.add_cache('state_id', state_id_formatter)
+        self.cache.add_cache('state_id', state_id_formatter, cache_name='section_and_tokens')
         self.cache.add_token_id(None, 'ANONYMOUS')
         self.cache.add_token_id('endofstream', 'ENDOFSTREAM')
         self.cache.add_token_id('invalidcharacter', 'INVALIDCHARACTER')

@@ -233,7 +233,9 @@ class FreeBasicEmitter(PluginTemplate):
                 code.line(x)
         elif token.token == 'ENUM_TOKEN_IDS':
             code = CodeEmitter(token.stream, token.indent)
-            for rule in sorted(id for id in self.lexical_analyzer.rule_ids if id is not None):
+            rules = [id for id in self.lexical_analyzer.rule_ids if id is not None]
+            rules.append('SkippedToken')
+            for rule in sorted(rules):
                 code.line(self.formatter.get_token_id(rule))
         elif token.token == 'HEADER_GUARD_NAME':
             token.stream.write('{namespace}_{class_name}_BI'.format(
@@ -284,12 +286,13 @@ class FreeBasicEmitter(PluginTemplate):
         elif token.token == 'TOKEN_IDNAMES':
             code = CodeEmitter(token.stream, token.indent)
             filtered_ids = [rule_id for rule_id in self.lexical_analyzer.rule_ids if rule_id is not None]
+            filtered_ids.append('SkippedToken')
             for i, rule in enumerate(sorted(filtered_ids)):
                 template = '@"{name}"'.format(name=rule)
                 template += ", _" if i < len(filtered_ids)-1 else " _"
                 code.line(template.format(name=rule))
         elif token.token == 'TOKEN_IDNAMES_LIMIT':
-            token.stream.write(str(len(self.lexical_analyzer.rule_ids)+1))
+            token.stream.write(str(len(self.lexical_analyzer.rule_ids)+2))
         elif token.token.startswith('TYPE_REL_'):
             type_name = token.token[len('TYPE_REL_'):].lower()
             token.stream.write(self.formatter.get_type(type_name, True))

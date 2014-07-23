@@ -41,7 +41,7 @@ class Lexer(object):
         ("colon", r"\:"),
         ("comma", r"\,"),
         ("equals", r"="),
-        ("identifier", r"[A-Za-z][A-Za-z0-9_]*"),
+        ("identifier", r"[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*"),
         ("literalsingle", r"'(?:''|[^'\r\n])*'"),
         ("literaldouble", r'"(?:""|[^"\r\n])*"'),
         ("plus", r'\+')

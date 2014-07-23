@@ -89,7 +89,10 @@ class Parser(object):
         elif list_is_keyword(commands, 'section'):
             # Section ID
             self.lexer.skip('whitespace')
-            new_section = self.Section(id, self.rules_file[-1], inherits=self.lexer.is_keyword('inherits'))
+            inherits = self.lexer.is_keyword('inherits')
+            if inherits:
+                self.lexer.get_next()
+            new_section = self.Section(id, self.rules_file[-1], inherits=inherits)
             self.rules_file[-1].add_scope('section', new_section)
             self.rules_file.append(new_section)
         elif list_is_keyword(commands, 'end') and id.lower() == 'section':
@@ -99,7 +102,7 @@ class Parser(object):
             self.rules_file.pop()
         else:
             # (COMMAND (,COMMAND)*)? ID: RULE
-            if self.lexer.token == 'colon':
+            if self.lexer.token in ('colon', 'literalsingle', 'literaldouble'):
                 self.lexer.expect('colon')
             self.parse_rule(id, commands)
         self.lexer.skip('whitespace', 'comment')
@@ -139,7 +142,7 @@ class Parser(object):
         @return: None
         """
         self.lexer.skip('whitespace', 'comment')
-        if self.lexer.token in ['newline', 'endofstream'] or self.lexer.is_keyword('enter', 'exit'):
+        if self.lexer.token in ['newline', 'endofstream'] or self.lexer.is_keyword('enter', 'exit', 'switch'):
             expression = None
         else:
             expression = self.parse_expression()
@@ -147,9 +150,9 @@ class Parser(object):
         rule = self.Rule(name, expression, actions)
         self.rules_file[-1].add('rule', rule)
         if self.lexer.token == 'identifier':
-            keyword = self.lexer.expect_keywords('enter', 'exit').lower()
+            keyword = self.lexer.expect_keywords('enter', 'exit', 'switch').lower()
             self.lexer.skip('whitespace')
-            if keyword == 'enter':
+            if keyword == 'enter' or keyword == 'switch':
                 self.lexer.skip('whitespace')
                 text = self.lexer.expect('identifier')
                 if text.lower() == 'section':
@@ -158,11 +161,11 @@ class Parser(object):
                     if self.lexer.is_keyword('inherits'):
                         self.lexer.expect('identifier')
                         section.inherits = True
-                    rule.section_action = ('enter', section)
+                    rule.section_action = (keyword, section)
                     self.rules_file[-1].add_scope('section', section)
                     self.rules_file.append(section)
                 else:
-                    rule.section_action = ('enter', self.SectionReference(text))
+                    rule.section_action = (keyword, self.SectionReference(text))
             elif keyword == 'exit':
                 rule.section_action = ('exit', None)
                 self.lexer.expect_keywords('section')

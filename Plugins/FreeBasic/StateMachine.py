@@ -43,16 +43,21 @@ class StateMachineEmitter(object):
         method_name = formatter.get_state_machine_method_name(None, is_relative=False)
         token_type = formatter.get_type('token', is_relative=False)
         with code.block("Function {method_name}() As {token_type}".format(method_name=method_name, token_type=token_type), "End Function"):
-            with code.block("Select Case This.Mode", "End Select"):
-                for i, section in enumerate(dfa_ir.sections):
-                    if i != 0:
-                        code.line()
-                    if i == len(dfa_ir.sections)-1:
-                        code.line("Case Else")
-                    else:
-                        code.line("Case {section}".format(section=formatter.get_section_id(section)))
-                    method_name = formatter.get_state_machine_method_name(section, is_relative=True)
-                    code.line("Return This.{method_name}()".format(method_name=method_name))
+            code.line("Dim ScannedToken As {token_type}".format(token_type=token_type))
+            with code.block("Do", "Loop While ScannedToken.Id = {token_type}.{id}".format(
+                token_type=formatter.get_type('token', is_relative=True),
+                id=formatter.get_token_id('SkippedToken'))):
+                with code.block("Select Case This.Mode", "End Select"):
+                    for i, section in enumerate(dfa_ir.sections):
+                        if i != 0:
+                            code.line()
+                        if i == len(dfa_ir.sections)-1:
+                            code.line("Case Else")
+                        else:
+                            code.line("Case {section}".format(section=formatter.get_section_id(section)))
+                        method_name = formatter.get_state_machine_method_name(section, is_relative=True)
+                        code.line("ScannedToken = This.{method_name}()".format(method_name=method_name))
+            code.line("Return ScannedToken")
         
     def generate_state_machine(self):
         """
@@ -181,16 +186,23 @@ class StateMachineEmitter(object):
                 break
         if rule == no_match:
             raise Exception("Internal error - unable to determine matching rule")
+        
         if rule.action is not None and 'skip' in rule.action:
-            # Reset state machine if token is skipped
-            self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id = self.formatter.get_state_id(self.start_state)))
-            self.line("Text = Poodle.Unicode.Text()")
-            self.line("Continue Do")
+            if len(self.dfa_ir.sections) > 1:
+                self.line("Return {token_type}({token_type}.{token_id}, Unicode.Text())".format(
+                    token_type = self.formatter.get_type('token', is_relative=False),
+                    token_id=self.formatter.get_token_id('SkippedToken')))
+            else:
+                # Reset state machine if token is skipped
+                self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id = self.formatter.get_state_id(self.start_state)))
+                self.line("Text = Poodle.Unicode.Text()")
+                self.line("Continue Do")
         else:
             if rule.section_action is not None:
                 section_action, section_id = rule.section_action
-                if section_action.lower() == 'enter':
-                    self.line('This.EnterSection({namespace}.{class_name}.{section_id})'.format( 
+                if section_action.lower() in ('enter', 'switch'):
+                    self.line('This.{action}Section({namespace}.{class_name}.{section_id})'.format( 
+                        action = section_action.title(),
                         namespace=self.formatter.get_namespace(),
                         class_name=self.formatter.get_mode_stack_class_name(),
                         section_id=self.formatter.get_section_id(section_id)))

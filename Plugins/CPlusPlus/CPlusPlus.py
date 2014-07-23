@@ -115,6 +115,7 @@ class CPlusPlusEmitter(PluginTemplate):
             ids = sorted(self.dfa_ir.rule_ids)
             ids.insert(0, 'invalidcharacter')
             ids.insert(0, 'endofstream')
+            ids.insert(0, 'skippedtoken')
             for i, id in enumerate(ids):
                 id_key = self.formatter.get_token_id(id)
                 if i != len(ids)-1:
@@ -195,15 +196,20 @@ class CPlusPlusEmitter(PluginTemplate):
             class_name = self.class_name))
 
         with code.block('{', '}'):
-            code.line('switch(mode.top())')
-            with code.block('{', '}'):
-                for section in sorted(i for i in self.dfa_ir.sections if i != '::main::'):
-                    with code.block('case {mode_id}:'.format(mode_id = self.formatter.get_section_id(section))):
-                        code.line('return {method_name}();'.format(
-                            method_name = self.formatter.get_state_machine_method_name(section, is_relative=True)))
-                
-                with code.block('default:'):
-                    code.line('return {method_name}();'.format(
-                        method_name = self.formatter.get_state_machine_method_name('::main::', is_relative=True)))
+            code.line('{token_type} token;'.format(token_type=self.formatter.get_type('token', is_relative=False)))
+            code.line("do")
+            with code.block('{', '}} while(token.id == Token::{id});'.format(id=self.formatter.get_token_id('skippedtoken'))):
+                code.line('switch(mode.top())')
+                with code.block('{', '}'):
+                    for section in sorted(i for i in self.dfa_ir.sections if i != '::main::'):
+                        with code.block('case {mode_id}:'.format(mode_id = self.formatter.get_section_id(section))):
+                            code.line('token = {method_name}();'.format(
+                                method_name = self.formatter.get_state_machine_method_name(section, is_relative=True)))
+                            code.line('break;')
+                    
+                    with code.block('default:'):
+                        code.line('token = {method_name}();'.format(
+                            method_name = self.formatter.get_state_machine_method_name('::main::', is_relative=True)))
+            code.line('return token;')
                         
                     

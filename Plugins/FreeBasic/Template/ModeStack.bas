@@ -43,3 +43,7 @@ End Sub
 Sub $NAMESPACE.$MODE_STACK_CLASS_NAME.ExitSection()
     If This.Index > 1 Then This.Index -= 1
 End Sub
+
+Sub $NAMESPACE.$MODE_STACK_CLASS_NAME.SwitchSection(ByVal Id As $TYPE_MODE)
+    This.Stack(This.Index) = Id
+End Sub

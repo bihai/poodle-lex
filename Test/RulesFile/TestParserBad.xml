@@ -42,5 +42,18 @@
     <RulesFile name="RulesNoNewlineAtEnd" type="pass">
         Rule1: "Hello"
         Rule2: "Goodbye"</RulesFile>
+    <RulesFile name="MissingColonOK" type="pass">
+        PlaceHolder: "PlaceHolder" Enter Section
+            Skip RuleName Exit Section
+        End Section
+    </RulesFile>
+    <RulesFile name="CaseInsensitiveRule" type="pass">
+        RuleName: i"Hello"
+    </RulesFile>
+    <RulesFile name="MissingColonBad">
+        PlaceHolder: "PlaceHolder" Enter Section
+            RuleName "Content" Exit Section
+        End Section
+    </RulesFile>
 </ParseErrors>
     

@@ -139,6 +139,8 @@ class NonDeterministicIR(object):
                         action, section = rule.section_action
                         if section is not None:
                             rule_section = SectionResolver.resolve(section, self.current_ast_section)
+                            if rule_section is None:
+                                raise Exception("section '{id}' not found".format(id=section.name))
                             section = rule_section.get_qualified_name()
                         section_action = (action, section)
                     rule_action = [i.lower() if i is not None else None for i in rule.rule_action]

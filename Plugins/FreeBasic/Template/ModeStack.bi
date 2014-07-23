@@ -33,6 +33,7 @@ Namespace $NAMESPACE
         Declare Property Mode() As ModeId
         Declare Sub EnterSection(ByVal As ModeId)
         Declare Sub ExitSection()
+        Declare Sub SwitchSection(ByVal As ModeId)
         Declare Sub Reset()
         
         Private:

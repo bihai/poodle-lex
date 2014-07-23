@@ -39,7 +39,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(RulesFileException, lambda: anonymous_nonskip.accept(Traverser(Validator())))
         
         invalid_action = Section('::main::', None, rule = [
-            Rule(None,
+            Rule('UnrecognizedCommand',
                 pattern = "Placeholder",
                 rule_action = ['capture', 'nonsense'])])
         self.assertRaises(RulesFileException, lambda: invalid_action.accept(Traverser(Validator())))

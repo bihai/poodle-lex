@@ -40,7 +40,8 @@ If InputFile.GetStatus() = Poodle.CharacterStream.CharacterStreamInvalid Then
 End If
 
 Var LexicalAnalyzer = $NAMESPACE.$CLASS_NAME(@InputFile)
-While LexicalAnalyzer.IsEndOfStream() = 0
-    Var Token = LexicalAnalyzer.GetToken()
+Var Token = LexicalAnalyzer.GetToken()
+Do While Token.Id <> $NAMESPACE.LexicalAnalyzerToken.EndOfStream
     Print Token.ToString()
-Wend
+    Token = LexicalAnalyzer.GetToken()
+Loop

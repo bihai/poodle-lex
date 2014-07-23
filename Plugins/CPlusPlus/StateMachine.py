@@ -129,27 +129,35 @@ class StateMachineEmitter(object):
                 raise Exception("internal error, final ID has no rule")
                 
             # Section action - push or pop mode if necessary
-            mode_action = None
+            mode_actions = []
             if matching_rule is not None and matching_rule.section_action is not None:
                 action, section = matching_rule.section_action
-                if action == 'enter':
-                    mode_action = 'mode.push({id});'.format(id=self.formatter.get_section_id(section))
-                elif action == 'exit':
-                    mode_action = 'mode.pop();'
-            
+                if action == 'enter' or action == 'switch':
+                    mode_actions.append('mode.push({id});'.format(id=self.formatter.get_section_id(section)))
+                if action == 'exit' or action == 'switch':
+                    mode_actions.insert(0, 'mode.pop();')
+                    if len(mode_actions) > 1:
+                        mode_actions = ['{', mode_actions, '}']
+                    else:
+                        mode_actions = [mode_actions]
+                    mode_actions = ['if (mode.size() > 1)'] + mode_actions
+                
             # Emit final action
             if 'skip' in rule.action:
-                block = [
-                    'state = {id};'.format(id=self.formatter.get_state_id(self.start_state)),
-                    'text.clear();',
-                    'continue;']
+                if len(self.dfa_ir.sections) > 1:
+                    block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id('skippedtoken'))]
+                else:
+                    block = [
+                        'state = {id};'.format(id=self.formatter.get_state_id(self.start_state)),
+                        'text.clear();',
+                        'continue;']
             elif 'capture' in rule.action:
                 block = ['return Token(Token::{id}, text);'.format(id=self.formatter.get_token_id(matching_rule.id))]
             else:
                 block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id(matching_rule.id))]
                 
-            if mode_action is not None:
-                block.insert(0, mode_action)
+            if mode_actions is not None and len(mode_actions) > 0:
+                block[0:0] = mode_actions
                
             if is_in_if:
                 if len(block) > 1:

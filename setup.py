@@ -79,10 +79,6 @@ includes = [
     'Generator.Emitter.EmitCode',
     'Generator.Emitter.FileTemplate',
     'Generator.Emitter.PluginTemplate'
-    #os.path.join('Generator', 'Emitter', 'CachedFormatter.py'),
-    #os.path.join('Generator', 'Emitter', 'EmitCode.py'),
-    #os.path.join('Generator', 'Emitter', 'FileTemplate.py'),
-    #os.path.join('Generator', 'Emitter', 'PluginTemplate.py')
 ]
 excludes = []
 packages = ['blist']

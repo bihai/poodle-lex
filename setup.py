@@ -25,8 +25,12 @@ from cx_Freeze import setup,Executable
 includefiles = [
     os.path.join('Plugins', 'Plugins.json'),
     os.path.join('Plugins', 'FreeBasic', 'FreeBasic.py'),
+    os.path.join('Plugins', 'FreeBasic', 'StateMachine.py'),
+    os.path.join('Plugins', 'FreeBasic', 'VariableFormatter.py'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'LexicalAnalyzer.bas'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'LexicalAnalyzer.bi'),
+    os.path.join('Plugins', 'FreeBasic', 'Template', 'ModeStack.bas'),
+    os.path.join('Plugins', 'FreeBasic', 'Template', 'ModeStack.bi'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Stream', 'Windows', 'MemoryMapWindows.bi'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Stream', 'Windows', 'MemoryMapWindows.bas'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Stream', 'Linux', 'MemoryMapLinux.bi'),
@@ -55,6 +59,8 @@ includefiles = [
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Demo', 'make_demo.sh'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Demo', 'Demo.bas'),
     os.path.join('Plugins', 'CPlusPlus', 'CPlusPlus.py'),
+    os.path.join('Plugins', 'CPlusPlus', 'StateMachine.py'),
+    os.path.join('Plugins', 'CPlusPlus', 'VariableFormatter.py'),
     os.path.join('Plugins', 'CPlusPlus', 'Template', 'lexical_analyzer.cpp'),
     os.path.join('Plugins', 'CPlusPlus', 'Template', 'lexical_analyzer.h'),
     os.path.join('Plugins', 'CPlusPlus', 'Template', 'demo', 'demo.cpp'),
@@ -68,7 +74,16 @@ includefiles = [
     'LICENSE',
     'CHANGELIST'
 ]
-includes = []
+includes = [
+    'Generator.Emitter.CachedFormatter',
+    'Generator.Emitter.EmitCode',
+    'Generator.Emitter.FileTemplate',
+    'Generator.Emitter.PluginTemplate'
+    #os.path.join('Generator', 'Emitter', 'CachedFormatter.py'),
+    #os.path.join('Generator', 'Emitter', 'EmitCode.py'),
+    #os.path.join('Generator', 'Emitter', 'FileTemplate.py'),
+    #os.path.join('Generator', 'Emitter', 'PluginTemplate.py')
+]
 excludes = []
 packages = ['blist']
 target_name = "Poodle-Lex"
@@ -76,13 +91,14 @@ if platform.system() == "Windows":
     target_name += ".exe"
 setup(
     name = 'Poodle-Lex',
-    version = '1.0.1',
+    version = '1.9.4',
     description = 'A lexical analyzer generator with support for multiple languages.',
     author = 'Parker Michaels',
     author_email = 'parkertomatoes@gmail.com',
     options = {
         'build_exe': {
             'excludes':excludes,
+            'includes':includes,
             'packages':packages,
             'include_files':includefiles
         },

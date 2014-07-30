@@ -31,6 +31,7 @@ class StateMachineEmitter(object):
         self.dfa = dfa_ir.sections[section_id].dfa
         self.rules = dfa_ir.sections[section_id].rules
         self.inherits = dfa_ir.sections[section_id].inherits
+        self.exits = dfa_ir.sections[section_id].exits
         self.parent = dfa_ir.sections[section_id].parent
         self.ids = dfa_ir.rule_ids
         self.start_state = self.dfa.start_state
@@ -106,7 +107,7 @@ class StateMachineEmitter(object):
         self.line("Case {scope}.{state_id}".format(scope="StateMachineState", state_id=self.formatter.get_state_id(state)))
         capture = False
         for rule in self.rules:
-            rule_id = rule.id.lower() if rule.id is not None else None
+            rule_id = (rule.id[0].lower() if rule.id[0] is not None else None, rule.id[1], rule.id[2])
             if 'capture' in rule.action and rule_id in state.ids:
                 capture = True
         if capture:
@@ -119,9 +120,17 @@ class StateMachineEmitter(object):
             if len(state.final_ids) > 0:
                 self.generate_token_return_case(state)
             else:
-                if state == self.start_state and self.inherits:
-                    method_name = self.formatter.get_state_machine_method_name(self.parent, is_relative=True)
-                    self.line("Return This.{method_name}()".format(method_name=method_name))
+                if state == self.start_state and (self.exits or self.inherits):
+                    if self.exits:
+                        self.line('This.ExitSection()')
+                    if self.inherits:
+                        method_name = self.formatter.get_state_machine_method_name(self.parent, is_relative=True)
+                        self.line("Return This.{method_name}()".format(method_name=method_name))
+                    elif self.exits:
+                        # Need to return something to avoid an error
+                        self.line("Return {token_type}({token_type}.{token_id}, Unicode.Text())".format(
+                            token_type = self.formatter.get_type('token', is_relative=False),
+                            token_id=self.formatter.get_token_id('SkippedToken')))
                 else:
                     self.line("Text.Append(This.Character)")
                     self.line("This.Character = This.Stream->GetCharacter()")
@@ -180,13 +189,25 @@ class StateMachineEmitter(object):
     def generate_token_return_case(self, state):
         rule = no_match = "::none::"
         for rule_candidate in self.rules:
-            rule_candidate_id = rule_candidate.id.lower() if rule_candidate.id is not None else None
+            rule_candidate_id = (rule_candidate.id[0].lower() if rule_candidate.id[0] is not None else None, rule_candidate.id[1], rule_candidate.id[2])
             if rule_candidate_id in state.final_ids:
                 rule = rule_candidate
                 break
         if rule == no_match:
             raise Exception("Internal error - unable to determine matching rule")
-        
+
+        if rule.section_action is not None:
+            section_action, section_id = rule.section_action
+            if section_action is not None:
+                if section_action.lower() in ('enter', 'switch'):
+                    self.line('This.{action}Section({namespace}.{class_name}.{section_id})'.format( 
+                        action = section_action.title(),
+                        namespace=self.formatter.get_namespace(),
+                        class_name=self.formatter.get_mode_stack_class_name(),
+                        section_id=self.formatter.get_section_id(section_id)))
+                elif section_action.lower() == 'exit':
+                    self.line('This.ExitSection()')
+            
         if rule.action is not None and 'skip' in rule.action:
             if len(self.dfa_ir.sections) > 1:
                 self.line("Return {token_type}({token_type}.{token_id}, Unicode.Text())".format(
@@ -198,22 +219,12 @@ class StateMachineEmitter(object):
                 self.line("Text = Poodle.Unicode.Text()")
                 self.line("Continue Do")
         else:
-            if rule.section_action is not None:
-                section_action, section_id = rule.section_action
-                if section_action.lower() in ('enter', 'switch'):
-                    self.line('This.{action}Section({namespace}.{class_name}.{section_id})'.format( 
-                        action = section_action.title(),
-                        namespace=self.formatter.get_namespace(),
-                        class_name=self.formatter.get_mode_stack_class_name(),
-                        section_id=self.formatter.get_section_id(section_id)))
-                elif section_action.lower() == 'exit':
-                    self.line('This.ExitSection()')
             if rule.action is not None and 'capture' in rule.action:
                 text="Text"
             else:
                 text="Poodle.Unicode.Text()"
             self.line("Return {token_type}({token_type}.{token_id}, {text})".format(
                 token_type = self.formatter.get_type('token', is_relative=False),
-                token_id = self.formatter.get_token_id(rule.id),
+                token_id = self.formatter.get_token_id(rule.id[0]),
                 text=text))
             

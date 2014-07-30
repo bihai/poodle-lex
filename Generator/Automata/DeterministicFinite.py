@@ -69,11 +69,14 @@ class DeterministicFinite(object):
         descriptions.append('    %d [label="start", shape=none];' % len(states))
         for state in states:
             if len(state.ids) > 0 and not state.is_final:
-                descriptions.append('    %d [label="%d\\n(%s)"];' % (states.index(state), states.index(state), ", ".join(state.ids)))
+                ids = [str(i) if i is not None else 'Anonymous' for i in state.ids]
+                descriptions.append('    %d [label="%d\\n(%s)"];' % (states.index(state), states.index(state), ", ".join(ids)))
             elif len(state.final_ids) == 0 and state.is_final:
                 descriptions.append('    %d [shape=octagon];' % (states.index(state)))
             elif len(state.final_ids) > 0 and state.is_final:
-                descriptions.append('    %d [label="%d\\n(%s)\\n(%s)",shape=octagon];' % (states.index(state), states.index(state), ", ".join(state.ids), ", ".join(state.final_ids)))
+                ids = [str(i) if i is not None else 'Anonymous' for i in state.ids]
+                final_ids = [str(i) if i is not None else 'Anonymous' for i in state.final_ids]
+                descriptions.append('    %d [label="%d\\n(%s)\\n(%s)",shape=octagon];' % (states.index(state), states.index(state), ", ".join(ids), ", ".join(final_ids)))
             
         descriptions.append('    %d -> %d' % (len(states), start_state_index))
         

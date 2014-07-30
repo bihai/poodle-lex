@@ -38,15 +38,18 @@ class DeterministicIR(object):
         @ivar rules: A list of rule objects, in order of priority, containing meta data for each rule ID in order of priority
         @ivar inherits: True if the state machine should fall back to the parent's state machine if the state machine is
             put into an error state on the first character
+        @ivar exits: True if the state machine should return to the parent's state machine if the state machine is
+            put into an error state on the first character
         @ivar parent: String containing a qualified section ID of the section's hierarchical parent
         """
         def accept(self, visitor):
             visitor.visit_section(self)
         
-        def __init__(self, dfa, rules, inherits, parent):
+        def __init__(self, dfa, rules, inherits, exits, parent):
             self.dfa = dfa
             self.rules = rules
             self.inherits = inherits
+            self.exits = exits
             self.parent = parent
             
     class Rule(object):
@@ -83,5 +86,5 @@ class DeterministicIR(object):
             combined_nfa = Automata.NonDeterministicFinite.alternate(section_nfas)
             dfa = Automata.DeterministicFiniteBuilder.build(combined_nfa)
             minimizer.__call__(dfa)
-            self.sections[id] = DeterministicIR.Section(dfa, section_rules, section.inherits, section.parent)
+            self.sections[id] = DeterministicIR.Section(dfa, section_rules, section.inherits, section.exits, section.parent)
             

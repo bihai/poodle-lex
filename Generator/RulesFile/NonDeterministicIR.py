@@ -37,9 +37,10 @@ class NonDeterministicIR(object):
         Represents a section in the intermediate representation
         @ivar rules: a list of Rule objects, each representing a rule in the section, in order of priority 
         """
-        def __init__(self, rules=[], inherits=False, parent=None):
+        def __init__(self, rules=[], inherits=False, exits=False, parent=None):
             self.rules = list(rules)
             self.inherits = inherits
+            self.exits = exits
             self.parent = parent
         
     class Rule(object):
@@ -96,7 +97,7 @@ class NonDeterministicIR(object):
                     rule.pattern = reservation[0].pattern
             self.current_ast_section = section
             parent_id = section.parent.get_qualified_name() if section.parent is not None else None
-            self.current_ir_section = NonDeterministicIR.Section(inherits=section.inherits, parent=parent_id)
+            self.current_ir_section = NonDeterministicIR.Section(inherits=section.inherits, exits=section.exits, parent=parent_id)
             self.sections[section.get_qualified_name()] = self.current_ir_section
             
         def leave_section(self, section):
@@ -132,21 +133,22 @@ class NonDeterministicIR(object):
             
                 if 'reserve' not in rule.rule_action:
                     rule_id_lower = rule.id.lower () if rule.id is not None else None
+                    action, section = rule.section_action if rule.section_action is not None else (None, None)
+                    rule_id = (rule.id, action, section)
+                    nfa_id = (rule_id_lower, action, section)
                     regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
-                    nfa = Automata.NonDeterministicFiniteBuilder.build(rule_id_lower, DefineLookup(), regex)
+                    nfa = Automata.NonDeterministicFiniteBuilder.build(nfa_id, DefineLookup(), regex)
                     section_action = None
-                    if rule.section_action is not None:
-                        action, section = rule.section_action
-                        if section is not None:
-                            rule_section = SectionResolver.resolve(section, self.current_ast_section)
-                            if rule_section is None:
-                                raise Exception("section '{id}' not found".format(id=section.name))
-                            section = rule_section.get_qualified_name()
-                        section_action = (action, section)
+                    if section is not None:
+                        rule_section = SectionResolver.resolve(section, self.current_ast_section)
+                        if rule_section is None:
+                            raise Exception("section '{id}' not found".format(id=section.name))
+                        section = rule_section.get_qualified_name()
+                    section_action = (action, section)
                     rule_action = [i.lower() if i is not None else None for i in rule.rule_action]
-                    ir_rule = NonDeterministicIR.Rule(rule.id, nfa, rule_action, section_action, rule.line_number)
+                    ir_rule = NonDeterministicIR.Rule(rule_id, nfa, rule_action, section_action, rule.line_number)
                     self.current_ir_section.rules.append(ir_rule)
-                    if rule.id is not None and rule_id_lower not in self.rule_ids:
+                    if rule.id is not None and rule_id not in self.rule_ids:
                         self.rule_ids[rule.id] = rule.id
                     
             except Exception as e:

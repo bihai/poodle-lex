@@ -1,0 +1,377 @@
+# Pre-processor
+Reserve PPEnd: "\r?\n"
+PPStart: "#" Enter Section Inherits
+    Import PPEnd Exit Section
+    
+    #Conditional compilation
+    PPIf: i"if" Switch PPArgs
+    PPIfDef: i"ifdef" Switch PPArgs
+    PPIfNDef: i"ifndef" Switch PPArgs
+    PPElif: i"elif" Switch PPArgs
+    PPElseIf: i"elseif" Switch PPArgs
+    PPElse: i"else" Switch PPArgs
+    PPEndIf: i"endif" Switch PPArgs
+    
+    #Text replacement
+    PPDefine: i"define" Switch PPArgs
+    PPMacro: i"macro" Switch PPArgs
+    PPEndMacro: i"endmacro" Switch PPArgs
+    PPUndef: i"undef" Switch PPArgs
+    
+    # File directives
+    PPInclude: i"include" Switch PPInclude
+    PPIncLib: i"inclib" Switch PPArgs
+    PPLibPath: i"libpath" Switch PPArgs
+    
+    # Control directives
+    PPPragma: i"pragma" Switch PPArgs
+    PPLang: i"lang" Switch PPArgs
+    PPPrint: i"print" Switch PPErrorPrint
+    PPError: i"error" Switch PPErrorPrint
+    PPAssert: i"assert" Switch PPArgs
+    PPLine: i"line" Switch PPArgs
+End Section
+
+Section PPArgs Inherits
+    Import PPEnd Exit Section
+    PPDefined: i"defined"
+    PPJoinTokens: '##'
+    PPToString: '#'
+End Section
+
+Section PPInclude Inherits
+    Import PPEnd Exit Section
+    PPOnce: i"once"
+End Section
+
+Section PPErrorPrint
+    Import PPEnd Exit Section
+    Reserve PPMessage
+    Let Common = "[^ \t'/\r\n]"
+    Let NoUnderscore = "[^ \t'/\r\n_]"
+    Let WS = "[ \t]"
+
+    Skip: "/'" Enter MultiLineComment
+    Capture,Import PPMessage: '/?(' + 
+        '(({Common}|{WS}*{NoUnderscore})*{WS}+)' + '|' +
+        '(({Common}|{WS}*{NoUnderscore})+{WS}*)' + 
+    ')'
+    Import PPMessage: '/'
+    Skip: "{SingleLineComment}"
+    Skip: "_\r?\n"
+End Section
+
+# Keywords
+KeywordAbs: i"abs"
+KeywordAbstract: i"abstract"
+KeywordAccess: i"access"
+KeywordACos: i"acos"
+KeywordAlias: i"alias"
+KeywordAnd: i"and"
+KeywordAndAlso: i"andalso"
+KeywordAny: i"any"
+KeywordAppend: i"append"
+KeywordAs: i"as"
+KeywordAsc: i"asc"
+KeywordASin: i"asin"
+KeywordAsm: i"asm"
+KeywordATan2: i"ATAN2"
+KeywordAtn: i"atn"
+KeywordBase: i"base"
+KeywordBinary: i"binary"
+KeywordByRef: i"byref"
+KeywordByte: i"byte"
+KeywordByVal: i"byval"
+KeywordCall: i"call"
+KeywordCase: i"case"
+KeywordCast: i"cast"
+KeywordCByte: i"cbyte"
+KeywordCChort: i"cshort"
+KeywordCDbl: i"cdbl"
+KeywordCDecl: i"cdecl"
+KeywordChr: i"chr"
+KeywordCInt: i"cint"
+KeywordCircle: i"circle"
+KeywordClass: i"class"
+KeywordCLng: i"clng"
+KeywordCLngInt: i"clngint"
+KeywordClose: i"close"
+KeywordColor: i"color"
+KeywordCommon: i"common"
+KeywordConst: i"const"
+KeywordConstructor: i"constructor"
+KeywordContinue: i"continue"
+KeywordCos: i"cos"
+KeywordCPtr: i"cptr"
+KeywordCSign: i"csign"
+KeywordCSng: i"csng"
+KeywordCUByte: i"cubyte"
+KeywordCUInt: i"cuint"
+KeywordCULng: i"culng"
+KeywordCULngInt: i"culngint"
+KeywordCUnsg: i"cunsg"
+KeywordCUShort: i"cushort"
+KeywordCvd: i"cvd"
+KeywordCvi: i"cvi"
+KeywordCvl: i"cvl"
+KeywordCvLongInt: i"cvlongint"
+KeywordCvs: i"cvs"
+KeywordCvShort: i"cvshort"
+KeywordData: i"data"
+KeywordDeclare: i"declare"
+KeywordDefByte: i"defbyte"
+KeywordDefDbl: i"defdbl"
+KeywordDefined: i"defined"
+KeywordDefInt: i"defint"
+KeywordDefLng: i"deflng"
+KeywordDefLongInt: i"deflongint"
+KeywordDefShort: i"defshort"
+KeywordDefSng: i"defsng"
+KeywordDefStr: i"defstr"
+KeywordDefUByte: i"defubyte"
+KeywordDefUInt: i"defuint"
+KeywordDefULng: i"defulng"
+KeywordDefULongInt: i"defulongint"
+KeywordDefUShort: i"defushort"
+KeywordDelete: i"delete"
+KeywordDestructor: i"destructor"
+KeywordDim: i"dim"
+KeywordDo: i"do"
+KeywordDouble: i"double"
+KeywordDraw: i"draw"
+KeywordDynamic: i"dynamic"
+KeywordElse: i"else"
+KeywordElseIf: i"elseif"
+KeywordEncoding: i"encoding"
+KeywordEnd: i"end"
+KeywordEndIf: i"endif"
+KeywordEnum: i"enum"
+KeywordEqv: i"eqv"
+KeywordErase: i"erase"
+KeywordErr: i"err"
+KeywordError: i"error"
+KeywordExit: i"exit"
+KeywordExp: i"exp"
+KeywordExplicit: i"explicit"
+KeywordExport: i"export"
+KeywordExtends: i"extends"
+KeywordExtern: i"extern"
+KeywordField: i"field"
+KeywordFix: i"fix"
+KeywordFor: i"for"
+KeywordFrac: i"frac"
+KeywordFunction: i"function"
+KeywordGet: i"get"
+KeywordGoSub: i"gosub"
+KeywordGoto: i"goto"
+KeywordIf: i"if"
+KeywordIIf: i"iif"
+KeywordImageCreate: i"imagecreate"
+KeywordImp: i"imp"
+KeywordImplements: i"implements"
+KeywordImport: i"import"
+KeywordInclude: i"include"
+KeywordInput: i"input"
+KeywordInstr: i"instr"
+KeywordInstrRev: i"instrrev"
+KeywordInt: i"int"
+KeywordInteger: i"integer"
+KeywordIs: i"is"
+KeywordLBound: i"lbound"
+KeywordLCase: i"lcase"
+KeywordLen: i"len"
+KeywordLet: i"let"
+KeywordLib: i"lib"
+KeywordLine: i"line"
+KeywordLocal: i"local"
+KeywordLock: i"lock"
+KeywordLog: i"log"
+KeywordLong: i"long"
+KeywordLongInt: i"longint"
+KeywordLoop: i"loop"
+KeywordLPrint: i"lprint"
+KeywordLSet: i"lset"
+KeywordLTrim: i"ltrim"
+KeywordMid: i"mid"
+KeywordMkd: i"mkd"
+KeywordMki: i"mki"
+KeywordMkl: i"mkl"
+KeywordMkLongInt: i"mklongint"
+KeywordMks: i"mks"
+KeywordMkShort: i"mkshort"
+KeywordMod: i"mod"
+KeywordName: i"name"
+KeywordNamespace: i"namespace"
+KeywordNew: i"new"
+KeywordNext: i"next"
+KeywordNot: i"not"
+KeywordOn: i"on"
+KeywordOpen: i"open"
+KeywordOperator: i"operator"
+KeywordOption: i"option"
+KeywordOr: i"or"
+KeywordOrElse: i"orelse"
+KeywordOutput: i"output"
+KeywordOverload: i"overload"
+KeywordPaint: i"paint"
+KeywordPalette: i"palette"
+KeywordPascal: i"pascal"
+KeywordPeek: i"peek"
+KeywordPoint: i"point"
+KeywordPointer: i"pointer"
+KeywordPoke: i"poke"
+KeywordPreserve: i"preserve"
+KeywordPreset: i"preset"
+KeywordPrint: i"print"
+KeywordPrivate: i"private"
+KeywordProcPtr: i"procptr"
+KeywordProperty: i"property"
+KeywordProtected: i"protected"
+KeywordPSet: i"pset"
+KeywordPtr: i"ptr"
+KeywordPublic: i"public"
+KeywordPut: i"put"
+KeywordRandom: i"random"
+KeywordRead: i"read"
+KeywordReDim: i"redim"
+KeywordRem: i"rem"
+KeywordRestore: i"restore"
+KeywordResume: i"resume"
+KeywordReturn: i"return"
+KeywordRSet: i"rset"
+KeywordRTrim: i"rtrim"
+KeywordSAdd: i"sadd"
+KeywordScope: i"scope"
+KeywordScreen: i"screen"
+KeywordSeek: i"seek"
+KeywordSelect: i"select"
+KeywordSgn: i"sgn"
+KeywordShared: i"shared"
+KeywordShl: i"shl"
+KeywordShort: i"short"
+KeywordShr: i"shr"
+KeywordSin: i"sin"
+KeywordSingle: i"single"
+KeywordSizeOf: i"sizeof"
+KeywordSpc: i"spc"
+KeywordSqr: i"sqr"
+KeywordStatic: i"static"
+KeywordStdCall: i"stdcall"
+KeywordStep: i"step"
+KeywordStr: i"str"
+KeywordString: i"string"
+KeywordStrPtr: i"strptr"
+KeywordSub: i"sub"
+KeywordSwap: i"swap"
+KeywordTab: i"tab"
+KeywordTan: i"tan"
+KeywordThen: i"then"
+KeywordThreadCall: i"threadcall"
+KeywordTo: i"to"
+KeywordTrim: i"trim"
+KeywordType: i"type"
+KeywordTypeOf: i"typeof"
+KeywordUBound: i"ubound"
+KeywordUbyte: i"ubyte"
+KeywordUCase: i"ucase"
+KeywordUInteger: i"uinteger"
+KeywordULong: i"ulong"
+KeywordULongInt: i"ulongint"
+KeywordUnion: i"union"
+KeywordUnlock: i"unlock"
+KeywordUnsigned: i"unsigned"
+KeywordUntil: i"until"
+KeywordUShort: i"ushort"
+KeywordUsing: i"using"
+KeywordVar: i"var"
+KeywordVarPtr: i"varptr"
+KeywordVa_First: i"VA_FIRST"
+KeywordView: i"view"
+KeywordVirtual: i"virtual"
+KeywordWChr: i"wchr"
+KeywordWEnd: i"wend"
+KeywordWhile: i"while"
+KeywordWidth: i"width"
+KeywordWindow: i"window"
+KeywordWInput: i"winput"
+KeywordWith: i"with"
+KeywordWrite: i"write"
+KeywordWStr: i"wstr"
+KeywordWString: i"wstring"
+KeywordXor: i"xor"
+KeywordZString: i"zstring"
+
+# Numerical constants
+Reserve IntSuffix: i"\%|L"
+Reserve LongSuffix: i"\&|u"
+Reserve UnsignedIntSuffix: i"u"
+Reserve LongIntSuffix: i"ll"
+Reserve UnsignedLongIntSuffix: i"ull"
+Reserve SingleSuffix: i"f|\!"
+Reserve DoubleSuffix: "#"
+Section NumberSuffix Exits
+    Capture, Import IntSuffix: Exit Section
+    Capture, Import LongSuffix: Exit Section
+    Capture, Import UnsignedIntSuffix: Exit Section
+    Capture, Import LongintSuffix: Exit Section
+    Capture, Import UnsignedLongIntSuffix: Exit Section
+    Capture, Import SingleSuffix: Exit Section
+    Capture, Import DoubleSuffix: Exit Section
+    Section Decimal Inherits, Exits
+        Capture FloatExponent: i"e([\+\-][0-9]+)?" Exit Section
+        Capture DoubleExponent: i"d([\+\-][0-9]+)?" Exit Section
+    End Section
+End Section
+
+Let DecIntDigits = "[0-9]+"
+Let DecFloatDigits = "[0-9]+\.[0-9]*|[0-9]*\.[0-9]+"
+DecConstant: "\-({DecIntDigits}|{DecFloatDigits})" Enter NumberSuffix.Decimal
+HexConstant: i"\&h[0-9a-f]+" Enter NumberSuffix
+OctConstant: i"\&o[0-7]+" Enter NumberSuffix
+BinConstant: i"\&b[0-1]+" Enter NumberSuffix
+
+# Operators
+OpEquals: "\="
+OpLessThan: "\<"
+OpGreaterThan: "\>"
+OpPlus: "\+"
+OpMinus: "\-"
+OpMultiply: "\*"
+OpDivide: "\/"
+OpIntDivide: "\\"
+OpExponent: "\^"
+
+# Delimiters
+DelPeriod: "\."
+DelColon: "\:"
+DelComma: "\,"
+DelSemicolon: "\;"
+DelLeftParenthesis: "\("
+DelRightParenthesis: "\)"
+DelLeftCurlyBrace: "\{"
+DelRightCurlyBrace: "\}"
+DelLeftSquareBracket: "\["
+DelRightSqureBracket: "\]"
+
+# String literals
+Capture StringLiteral: '\$?"([^"\r\n]|"")*"'
+Capture EscapedStringLiteral: '\!"[^"]|\\."'
+
+# Identifier
+Capture Identifier: i"[a-z_][a-z0-9_]*"
+
+# Whitespace and comments
+Let SingleLineComment = "'[^\r\n]*"
+Newline: "\r?\n"
+Skip: "[ \t]+"
+Skip: "_[ \t]*\r?\n"
+Skip: "{SingleLineComment}"
+Skip: "/'" Enter MultiLineComment
+Section MultiLineComment
+    Let CommentContent = '' +
+        "[^'/]|/*" + '|' +
+        "'+[^/']" + '|' +
+        "/+[^/']"
+    Skip: "(/*[^'/]|'*[^'/])*/+'" Enter MultiLineComment
+    Skip: "('*[^'/]|/*[^'/])*'+/" Exit Section
+End Section

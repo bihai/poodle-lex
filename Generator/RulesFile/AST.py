@@ -134,15 +134,17 @@ class Section(Scope):
     Represents a grouping of rules, ids, and reserved keywords
     @ivar id: string which identifies the section within its containing scope
     @iver inherits: True if this section should fall back on its parent's rules, False otherwise
+    @iver exits: True if this section should fall back on its parent's rules and exit the section if it does so, False otherwise
     @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_section(self)
         
-    def __init__(self, id, parent=None, inherits=False, line_number=None, **resources):
+    def __init__(self, id, parent=None, inherits=False, exits=False, line_number=None, **resources):
         Scope.__init__(self, parent, line_number, **resources)
         self.id = id
         self.inherits = inherits
+        self.exits = exits
         self.line_number = line_number
         for id, section in self.all('section'):
             section.parent = self
@@ -163,6 +165,7 @@ class Section(Scope):
         return (isinstance(rhs, Section) and
             Node.compare_nullable_icase(self.id, rhs.id) and
             self.inherits == rhs.inherits and
+            self.exits == rhs.exits and
             Scope.__eq__(self, rhs))
         
     def __repr__(self):
@@ -171,10 +174,11 @@ class Section(Scope):
             formatted_type = resource_type.title()
             contents = ', '.join(repr(i) for i in self.resources[resource_type].values())
             resources.append('{type}=[{contents}]'.format(type=formatted_type, contents=contents))
-        return "Section({id}, {resources}, Inherits={inherits})".format(
+        return "Section({id}, {resources}, Inherits={inherits}, Exits={exits})".format(
             id=repr(self.id), 
             resources=resources,
-            inherits=self.inherits)
+            inherits=self.inherits,
+            exits=self.exits)
 
     def get_qualified_name(self):
         """

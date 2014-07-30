@@ -93,5 +93,6 @@ class Executor(object):
                     template_token.indent = indent
                     self.language_plugin.process(template_token)
         except Exception as e:
+            raise
             rethrow_formatted(e, "while generating files")
             

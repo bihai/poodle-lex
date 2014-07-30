@@ -114,7 +114,10 @@ try:
         
 except IOError as e:
     print("Unable to write to output directory because of an error", file=sys.stderr)
+    raise
     sys.exit(1)
+    
 except Exception as e:
     print("Unable to create lexical analyzer: %s" % str(e))
+    raise
     sys.exit(1)

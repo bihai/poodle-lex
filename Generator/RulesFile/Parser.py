@@ -89,10 +89,10 @@ class Parser(object):
         elif list_is_keyword(commands, 'section'):
             # Section ID
             self.lexer.skip('whitespace')
-            inherits = self.lexer.is_keyword('inherits')
-            if inherits:
-                self.lexer.get_next()
-            new_section = self.Section(id, self.rules_file[-1], inherits=inherits)
+            attributes = self.parse_section_attributes()
+            inherits = 'inherits' in attributes
+            exits = 'exits' in attributes
+            new_section = self.Section(id, self.rules_file[-1], inherits=inherits, exits=exits)
             self.rules_file[-1].add_scope('section', new_section)
             self.rules_file.append(new_section)
         elif list_is_keyword(commands, 'end') and id.lower() == 'section':
@@ -158,9 +158,9 @@ class Parser(object):
                 if text.lower() == 'section':
                     section = self.Section(name, self.rules_file[-1])
                     self.lexer.skip('whitespace')
-                    if self.lexer.is_keyword('inherits'):
-                        self.lexer.expect('identifier')
-                        section.inherits = True
+                    attributes = self.parse_section_attributes()
+                    section.inherits = 'inherits' in attributes
+                    section.exits = 'exits' in attributes
                     rule.section_action = (keyword, section)
                     self.rules_file[-1].add_scope('section', section)
                     self.rules_file.append(section)
@@ -199,4 +199,22 @@ class Parser(object):
             string_value += self.lexer.expect_string()
             self.lexer.skip('whitespace')
         return self.Pattern(string_value, is_case_insensitive)
+        
+    def parse_section_attributes(self):
+        """
+        Parse a comma-delimited list of section attributes
+        """
+        attributes = set()
+        while self.lexer.is_keyword('inherits', 'exits'):
+            keyword = self.lexer.expect('identifier').lower()
+            if keyword in attributes:
+                raise Exception("duplicate attribute '{keyword}'".format(keyword=keyword))
+            attributes.add(keyword)
+            self.lexer.skip('whitespace')
+            if self.lexer.token == 'comma':
+                self.lexer.get_next()
+                self.lexer.skip('whitespace')
+            else:
+                break
+        return attributes
         

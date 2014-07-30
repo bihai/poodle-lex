@@ -27,7 +27,7 @@ class VariableFormatter(object):
             path = [i.replace(':', '') for i in path] if path is not None else None
             return ''.join(path[1:]) if section_id is not None and len(path) > 0 else ''
         def state_id_formatter(state):
-            return ''.join([i.title() if i is not None else 'Anonymous' for i in sorted(state.ids)])   
+            return ''.join([i[0].title() if i[0] is not None else 'Anonymous' for i in sorted(state.ids)])   
         def token_id_formatter(id):
             return id
             

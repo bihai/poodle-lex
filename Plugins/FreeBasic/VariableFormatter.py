@@ -20,23 +20,36 @@
 
 from CachedFormatter import CachedFormatter
 
+class StateIdFormatter(object):
+    def __init__(self, rules, reserved_ids):
+        def state_id_formatter(state):
+            state_id = ''
+            for rule in self.rules:
+                if rule.id in state.ids:    
+                    state_id += rule.name if rule.name is not None else 'Anonymous'
+            return state_id
+        self.cache = CachedFormatter(limit=64, reserved=reserved_ids)
+        self.cache.add_cache('state_id', state_id_formatter)
+        self.rules = rules
+        for attr in dir(self.cache):
+            if any(attr.startswith(i) for i in ('get_', 'add_', 'clear_')):
+                setattr(self, attr, getattr(self.cache, attr))
+
 class VariableFormatter(object):
     def __init__(self, plugin_options, reserved_ids, poodle_namespace):
         def section_id_formatter(section_id):
             path = section_id.split('.') if section_id is not None else None
             path = [i.replace(':', '') for i in path] if path is not None else None
             return ''.join(path[1:]) if section_id is not None and len(path) > 0 else ''
-        def state_id_formatter(state):
-            return ''.join([i[0].title() if i[0] is not None else 'Anonymous' for i in sorted(state.ids)])   
         def token_id_formatter(id):
             return id
             
         self.poodle_namespace = poodle_namespace
         self.plugin_options = plugin_options
+        self.reserved_ids = reserved_ids
         self.cache = CachedFormatter(limit=64, reserved=reserved_ids)
         self.cache.add_cache('section_id', section_id_formatter, cache_name='section_and_tokens')
         self.cache.add_cache('token_id', token_id_formatter, cache_name='section_and_tokens')
-        self.cache.add_cache('state_id', state_id_formatter)
         self.cache.add_section_id(None, '')
         self.cache.add_section_id('::main::', 'Main')
         for attr in dir(self.cache):
@@ -94,3 +107,6 @@ class VariableFormatter(object):
         else:
             raise Exception("unrecognized type '{id}'".format(id=type_name))
         return self.get_scoped(type_text, is_relative, is_custom_namespace)
+
+    def get_state_id_formatter(self, rules):
+        return StateIdFormatter(rules, self.reserved_ids)

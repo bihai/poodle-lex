@@ -233,7 +233,8 @@ class FreeBasicEmitter(PluginTemplate):
                 code.line(x)
         elif token.token == 'ENUM_TOKEN_IDS':
             code = CodeEmitter(token.stream, token.indent)
-            rules = [id for id in self.lexical_analyzer.rule_ids if id is not None]
+            rules = [id for id in self.lexical_analyzer.rule_ids.values() if id is not None]
+            print rules
             rules.append('SkippedToken')
             for rule in sorted(rules):
                 code.line(self.formatter.get_token_id(rule))
@@ -285,7 +286,7 @@ class FreeBasicEmitter(PluginTemplate):
                 emitter.generate_state_machine()
         elif token.token == 'TOKEN_IDNAMES':
             code = CodeEmitter(token.stream, token.indent)
-            filtered_ids = [rule_id for rule_id in self.lexical_analyzer.rule_ids if rule_id is not None]
+            filtered_ids = [rule_id for rule_id in self.lexical_analyzer.rule_ids.values() if rule_id is not None]
             filtered_ids.append('SkippedToken')
             for i, rule in enumerate(sorted(filtered_ids)):
                 template = '@"{name}"'.format(name=rule)

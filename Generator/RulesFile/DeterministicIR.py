@@ -66,7 +66,8 @@ class DeterministicIR(object):
         def accept(self, visitor):
             visitor.visit_rule(self)
         
-        def __init__(self, id, action, section_action):
+        def __init__(self, name, id, action, section_action):
+            self.name = name
             self.id = id
             self.action = action
             self.section_action = section_action
@@ -75,16 +76,17 @@ class DeterministicIR(object):
             return action in self.action
 
     def __init__(self, non_deterministic_ir, minimizer=Minimizer.hopcroft):
-        self.rule_ids = set(non_deterministic_ir.rule_ids)
+        self.rule_ids = dict(non_deterministic_ir.rule_ids)
         self.sections = {}
         for id, section in non_deterministic_ir.sections.items():
             section_nfas = []
             section_rules = []
             for rule in section.rules:
                 section_nfas.append(rule.nfa)
-                section_rules.append(DeterministicIR.Rule(rule.id, rule.action, rule.section_action))
+                section_rules.append(DeterministicIR.Rule(rule.name, rule.id, rule.action, rule.section_action))
             combined_nfa = Automata.NonDeterministicFinite.alternate(section_nfas)
             dfa = Automata.DeterministicFiniteBuilder.build(combined_nfa)
             minimizer.__call__(dfa)
             self.sections[id] = DeterministicIR.Section(dfa, section_rules, section.inherits, section.exits, section.parent)
+            
             

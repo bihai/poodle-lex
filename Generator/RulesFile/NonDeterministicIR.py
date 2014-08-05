@@ -22,6 +22,7 @@ from Visitor import Visitor, Traverser
 from SectionResolver import SectionResolver
 from .. import Automata
 from .. import Regex
+from ..Common import lower_nullable
 
 class NonDeterministicIR(object):
     """
@@ -31,7 +32,6 @@ class NonDeterministicIR(object):
     @ivar sections: a dictionary with each key a string representing a qualified section
         name, and each value a Sectionobject representing a state machine.
     """
-    
     class Section(object):
         """
         Represents a section in the intermediate representation
@@ -46,21 +46,23 @@ class NonDeterministicIR(object):
     class Rule(object):
         """
         Represents a rule in the intermediate representation
-        @ivar id: a string identifying the name of the rule
+        @ivar name: a string identifying the name of the rule's token
         @ivar nfa: a NonDeterministicFinite object representing the NFA representation of rule's regular expression
         @ivar action: a string representing the action to take with the rule's token
         @ivar section_action: a tuple, with a string and Section object. The action can be 'enter', 
             'exit' or None. If the action is 'enter', the Section object represents the section into 
             which the lexical analyzer should enter after matching the rule.
         @ivar line_number: the line of the rules file where the rule was declared.
+        @ivar id: a unique string for this rule and its properties
         """
-        def __init__(self, id, nfa, action, section_action, line_number):
-            self.id = id
+        def __init__(self, name, id, nfa, action, section_action, line_number):
+            self.name = name
             self.nfa = nfa
             self.action = action
             self.section_action = section_action
             self.line_number = line_number
-
+            self.id = id
+            
     def __init__(self, root):
         # Build non-deterministic finite automata from AST node
         builder = NonDeterministicIR.Builder()
@@ -86,15 +88,6 @@ class NonDeterministicIR(object):
             self.rule_ids = {}
                     
         def visit_section(self, section):
-            # Resolve all imports that weren't found during validation
-            for id, rule in section.all('future_import'):
-                reservation = section.find('reservation', rule.id)
-                if reservation is None:
-                    rule.throw('reservation not found for imported rule')
-                if rule.pattern is None:
-                    if reservation[0].pattern is None:
-                        rule.throw('pattern must be defined for imported rule if not defined by reservation rule')
-                    rule.pattern = reservation[0].pattern
             self.current_ast_section = section
             parent_id = section.parent.get_qualified_name() if section.parent is not None else None
             self.current_ir_section = NonDeterministicIR.Section(inherits=section.inherits, exits=section.exits, parent=parent_id)
@@ -130,12 +123,10 @@ class NonDeterministicIR(object):
                     return Regex.Parser(result[0].pattern.regex, result[0].pattern.is_case_insensitive).parse() 
                 
             try:
-            
                 if 'reserve' not in rule.rule_action:
-                    rule_id_lower = rule.id.lower () if rule.id is not None else None
-                    action, section = rule.section_action if rule.section_action is not None else (None, None)
-                    rule_id = (rule.id, action, section)
-                    nfa_id = (rule_id_lower, action, section)
+                    rule_id_lower = lower_nullable(rule.id)
+                    action, section = rule.section_action
+                    nfa_id = hash(rule)
                     regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
                     nfa = Automata.NonDeterministicFiniteBuilder.build(nfa_id, DefineLookup(), regex)
                     section_action = None
@@ -145,11 +136,10 @@ class NonDeterministicIR(object):
                             raise Exception("section '{id}' not found".format(id=section.name))
                         section = rule_section.get_qualified_name()
                     section_action = (action, section)
-                    rule_action = [i.lower() if i is not None else None for i in rule.rule_action]
-                    ir_rule = NonDeterministicIR.Rule(rule_id, nfa, rule_action, section_action, rule.line_number)
+                    ir_rule = NonDeterministicIR.Rule(rule.id, nfa_id, nfa, rule.rule_action, section_action, rule.line_number)
                     self.current_ir_section.rules.append(ir_rule)
-                    if rule.id is not None and rule_id not in self.rule_ids:
-                        self.rule_ids[rule.id] = rule.id
+                    if rule.id is not None and rule_id_lower not in self.rule_ids:
+                        self.rule_ids[rule_id_lower] = rule.id
                     
             except Exception as e:
                 if rule.id is None:

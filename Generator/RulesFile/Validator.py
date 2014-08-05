@@ -17,10 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 # DEALINGS IN THE SOFTWARE.
+
 import collections
 import traceback
 
 from Visitor import Visitor
+from ..Common import lower_nullable
 
 class Validator(Visitor):
     """
@@ -37,7 +39,7 @@ class Validator(Visitor):
         
     def visit_rule(self, rule):
         rule_actions = rule.rule_action = [i.lower() for i in rule.rule_action]
-        rule_id = rule.id.lower() if rule.id is not None else None
+        rule_id = lower_nullable(rule.id)
 
         # Check for bad command combinations
         valid_rule_actions = set(('skip', 'reserve', 'import', 'capture'))
@@ -52,25 +54,24 @@ class Validator(Visitor):
             rule.throw("rule reservation cannot be mixed with other actions")
         if rule.pattern == None and 'import' not in rule_actions and 'reserve' not in rule_actions:
             rule.throw("rules not being either reserved or imported must have a pattern")
-            
-        if rule_id in self.rule_ids and 'import' not in rule_actions and rule_id is not None:
-            rule.throw("duplicate rule ID '%s'" % rule.id)
-        self.rule_ids.add(rule_id)
+
+        # Duplicate rule names
+        if rule_id is not None:
+            if rule_id in self.rule_ids and 'import' not in rule_actions:
+                rule.throw("duplicate rule ID '{id}'".format(id=rule.id))
+            self.rule_ids.add(rule_id)
         
-        # Resolve import or queue for later resolution
+        # Resolve import
         if 'import' in rule_actions:
-            reservation = self.current_section.find('reservation', rule_id)
-            if reservation is None:
-                self.current_section.add('future_import', rule)
+            reservation = self.current_section.find('rule', rule_id)
+            if reservation is not None:
+                reservation = [i for i in reservation if 'import' not in i.rule_action]
+            if reservation is None or len(reservation) == 0:
+                rule.throw("Unable to find rule '{id}' to import".format(id=rule_id)) 
             elif rule.pattern is None:
                 if reservation[0].pattern is None:
                     rule.throw('pattern must be defined for imported rule if not defined by reservation rule')
-                rule.pattern = reservation[0].pattern
-            
-        # Book reservation
-        if 'reserve' in rule_actions:
-            self.current_section.add('reservation', rule)
-    
+                rule.pattern = reservation[0].pattern    
         
     def visit_define(self, define):
         define_id = self.traverser.get_scoped_id(define.id)
@@ -78,7 +79,6 @@ class Validator(Visitor):
             define.throw("duplicate variable ID '%s'" % define.id)
         self.defines[define_id] = define
     
-    #logger = logging.getLogger("joe")
     def visit_section(self, section):
         section_id = self.traverser.get_scoped_id(section.id)
         if section_id in self.sections:

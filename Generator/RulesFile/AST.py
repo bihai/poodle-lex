@@ -20,6 +20,7 @@
 
 from Lexer import RulesFileException
 from ASTBase import Node, Scope
+from ..Common import lower_nullable
 
 class Pattern(Node):
     """
@@ -99,7 +100,7 @@ class Rule(Node):
     Represents a lexical analyzer rule with a 'action? id: pattern (section_action section?)?' syntax
     @ivar id: string containing the name of the rule
     @ivar pattern: Pattern object representing the regular expression that matches the rule
-    @ivar rule_action: string containing the action to take with the token matched by the rule
+    @ivar rule_action: set of lowercase strings indicating what action to take if the rule matches
     @ivar section_action: string containing the action to take after matching the rule
     @ivar section: Section or SectionReference object specifying which section the analyzer should enter after matching the rule
     @ivar line_number: integer with the line number in the source where this object was parsed
@@ -110,20 +111,24 @@ class Rule(Node):
     def __init__(self, id, pattern, rule_action=[], section_action=None, line_number=None):
         self.id = id
         self.pattern = pattern
-        self.rule_action = list(rule_action)
-        self.section_action = section_action
+        self.rule_action = list(i.lower() for i in rule_action)
+        if section_action is None:
+            self.section_action = (None, None)
+        else:
+            self.section_action = section_action
         self.line_number = line_number
+        
+    def __hash__(self):
+        return hash((lower_nullable(self.id), frozenset(self.rule_action), self.section_action))
         
     def __ne__(self, rhs):
         return not self.__eq__(rhs)
         
     def __eq__(self, rhs):
-        self_icase_rule_action = [i.lower() for i in self.rule_action]
-        rhs_icase_rule_action = [i.lower() for i in rhs.rule_action]
         return (isinstance(rhs, Rule) and
-            Node.compare_nullable_icase(self.id, rhs.id) and
+            compare_nullable_icase(self.id, rhs.id) and
             self.pattern == rhs.pattern and
-            self_icase_rule_action == rhs_icase_rule_action and
+            self.rule_action == rhs.rule_action and
             self.section_action == rhs.section_action)
         
     def __repr__(self):
@@ -150,20 +155,19 @@ class Section(Scope):
             section.parent = self
             self.children[id.lower()] = section
         for id, rule in self.all('rule'):
-            if rule.section_action is not None:
-                action, target = rule.section_action
-                if isinstance(target, Section):
-                    self.add('section', target)
-                    target.parent = self
-                    if target.id is not None:
-                        self.children[target.id.lower()] = target
+            action, target = rule.section_action
+            if isinstance(target, Section):
+                self.add('section', target)
+                target.parent = self
+                if target.id is not None:
+                    self.children[target.id.lower()] = target
             
     def __ne__(self, rhs):
         return not self.__eq__(rhs)
         
     def __eq__(self, rhs):
         return (isinstance(rhs, Section) and
-            Node.compare_nullable_icase(self.id, rhs.id) and
+            compare_nullable_icase(self.id, rhs.id) and
             self.inherits == rhs.inherits and
             self.exits == rhs.exits and
             Scope.__eq__(self, rhs))

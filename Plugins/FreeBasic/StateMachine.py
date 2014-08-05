@@ -19,7 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 from EmitCode import CodeEmitter
-      
+    
 class StateMachineEmitter(object):
     def __init__(self, code, formatter, dfa_ir, section_id):
         self.code = code
@@ -38,6 +38,9 @@ class StateMachineEmitter(object):
         setattr(self, 'block', self.code.block.__get__(self.code))
         setattr(self, 'line', self.code.line.__get__(self.code))
         setattr(self, 'continue_block', self.code.continue_block.__get__(self.code))
+        self.state_id_formatter = self.formatter.get_state_id_formatter(self.rules)
+        setattr(self, 'get_state_id', self.state_id_formatter.get_state_id)
+        setattr(self, 'add_state_id', self.state_id_formatter.add_state_id)
      
     @staticmethod
     def generate_state_machine_switch(code, formatter, dfa_ir):
@@ -72,14 +75,11 @@ class StateMachineEmitter(object):
             id = None
         method_name = self.formatter.get_state_machine_method_name(id, is_relative=False)
         token_type = self.formatter.get_type('token', is_relative=False)
-        self.formatter.clear_state_ids()
-        self.formatter.add_state_id(self.start_state, 'InitialState')
-        for id in ['state', 'text', 'capture', 'poodle']:
-            self.formatter.add_state_id(id, id)
+        self.add_state_id(self.start_state, 'InitialState')
             
         with self.block("Function {method_name}() As {token_type}".format(method_name=method_name, token_type=token_type), "End Function"):
             self.generate_state_enum()
-            start_state_id = self.formatter.get_state_id(self.start_state)
+            start_state_id = self.get_state_id(self.start_state)
             self.line("Dim State As StateMachineState = {scope}.{state_id}".format(scope="StateMachineState", state_id=start_state_id))
             self.line("Dim Text As Poodle.Unicode.Text")
             with self.block("Do", "Loop"):
@@ -98,20 +98,13 @@ class StateMachineEmitter(object):
         """
         with self.block("Enum StateMachineState", "End Enum"):
             for state in self.dfa:
-                self.line(self.formatter.get_state_id(state))
-
+                self.line(self.get_state_id(state))
+                
     def generate_state_case(self, state):
         """
         Emits the case for a single state
         """
-        self.line("Case {scope}.{state_id}".format(scope="StateMachineState", state_id=self.formatter.get_state_id(state)))
-        capture = False
-        for rule in self.rules:
-            rule_id = (rule.id[0].lower() if rule.id[0] is not None else None, rule.id[1], rule.id[2])
-            if 'capture' in rule.action and rule_id in state.ids:
-                capture = True
-        if capture:
-            self.line("Capture = 1")
+        self.line("Case {scope}.{state_id}".format(scope="StateMachineState", state_id=self.get_state_id(state)))
         with self.block("Select Case This.Character", "End Select"):
             self.generate_transition_table(state)
             
@@ -121,13 +114,14 @@ class StateMachineEmitter(object):
                 self.generate_token_return_case(state)
             else:
                 if state == self.start_state and (self.exits or self.inherits):
+                    # Sections can have special behavior for if the first character does not match
                     if self.exits:
                         self.line('This.ExitSection()')
                     if self.inherits:
                         method_name = self.formatter.get_state_machine_method_name(self.parent, is_relative=True)
                         self.line("Return This.{method_name}()".format(method_name=method_name))
                     elif self.exits:
-                        # Need to return something to avoid an error
+                        # Need to return something to skip the token and avoid an error
                         self.line("Return {token_type}({token_type}.{token_id}, Unicode.Text())".format(
                             token_type = self.formatter.get_type('token', is_relative=False),
                             token_id=self.formatter.get_token_id('SkippedToken')))
@@ -152,9 +146,9 @@ class StateMachineEmitter(object):
                     found_zero = True
                     self.generate_check_zero_or_eof(invalid_otherwise=False)
             rules = [rule for rule in self.rules if rule.id in destination.ids]
-            #if any([rule.has_action('capture') for rule in rules]):
-            #    self.line("Capture = 1")
-            self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id=self.formatter.get_state_id(destination)))
+            if any('capture' in rule.action for rule in rules):
+                self.line("Capture = 1")
+            self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id=self.get_state_id(destination)))
             self.line()
         if state == self.start_state and not found_zero:
             self.line("Case 0")
@@ -164,7 +158,6 @@ class StateMachineEmitter(object):
     def format_case(self, range):
         """
         Format a case argument depending on if the range covers multiple values
-        
         @return: the range formatted as an argument to "Case"
         """
         if range[0] == range[1]:
@@ -187,44 +180,40 @@ class StateMachineEmitter(object):
                     token_id=self.formatter.get_token_id('InvalidCharacter')))
 
     def generate_token_return_case(self, state):
-        rule = no_match = "::none::"
-        for rule_candidate in self.rules:
-            rule_candidate_id = (rule_candidate.id[0].lower() if rule_candidate.id[0] is not None else None, rule_candidate.id[1], rule_candidate.id[2])
-            if rule_candidate_id in state.final_ids:
-                rule = rule_candidate
-                break
-        if rule == no_match:
+        # First rule with an ID in the state's final IDs takes priority
+        rule = next((rule for rule in self.rules if rule.id in state.final_ids), None)
+        if rule is None:
             raise Exception("Internal error - unable to determine matching rule")
 
-        if rule.section_action is not None:
-            section_action, section_id = rule.section_action
-            if section_action is not None:
-                if section_action.lower() in ('enter', 'switch'):
-                    self.line('This.{action}Section({namespace}.{class_name}.{section_id})'.format( 
-                        action = section_action.title(),
-                        namespace=self.formatter.get_namespace(),
-                        class_name=self.formatter.get_mode_stack_class_name(),
-                        section_id=self.formatter.get_section_id(section_id)))
-                elif section_action.lower() == 'exit':
-                    self.line('This.ExitSection()')
-            
-        if rule.action is not None and 'skip' in rule.action:
+        # Switch sections if necessary
+        section_action, section_id = rule.section_action
+        if section_action is not None:
+            if section_action in ('enter', 'switch'):
+                self.line('This.{action}Section({namespace}.{class_name}.{section_id})'.format( 
+                    action = section_action.title(),
+                    namespace=self.formatter.get_namespace(),
+                    class_name=self.formatter.get_mode_stack_class_name(),
+                    section_id=self.formatter.get_section_id(section_id)))
+            elif section_action == 'exit':
+                self.line('This.ExitSection()')
+           
+        if 'skip' in rule.action:
             if len(self.dfa_ir.sections) > 1:
+                # On multi-section lexers, we need to return a 'skipped' token
                 self.line("Return {token_type}({token_type}.{token_id}, Unicode.Text())".format(
                     token_type = self.formatter.get_type('token', is_relative=False),
                     token_id=self.formatter.get_token_id('SkippedToken')))
             else:
-                # Reset state machine if token is skipped
-                self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id = self.formatter.get_state_id(self.start_state)))
+                # On single-section lexers, we can just reset the state machine
+                self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id = self.get_state_id(self.start_state)))
                 self.line("Text = Poodle.Unicode.Text()")
                 self.line("Continue Do")
         else:
-            if rule.action is not None and 'capture' in rule.action:
+            if 'capture' in rule.action:
                 text="Text"
             else:
                 text="Poodle.Unicode.Text()"
             self.line("Return {token_type}({token_type}.{token_id}, {text})".format(
                 token_type = self.formatter.get_type('token', is_relative=False),
-                token_id = self.formatter.get_token_id(rule.id[0]),
+                token_id = self.formatter.get_token_id(rule.name if rule.name is not None else 'Anonymous'),
                 text=text))
-            

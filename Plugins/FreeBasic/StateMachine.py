@@ -161,9 +161,11 @@ class StateMachineEmitter(object):
         @return: the range formatted as an argument to "Case"
         """
         if range[0] == range[1]:
-            return "%d" % range[0]
+            return self.formatter.get_unicode_char_name(range[0])
         else:
-            return "%d To %d" % range
+            return "{minv} To {maxv}".format(
+                minv = self.formatter.get_unicode_char_name(range[0]), 
+                maxv = self.formatter.get_unicode_char_name(range[1]))
     
     def generate_check_zero_or_eof(self, invalid_otherwise):
         """

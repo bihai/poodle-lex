@@ -118,6 +118,7 @@ class FreeBasicEmitter(PluginTemplate):
     bas_file = "LexicalAnalyzer.bas"
     mode_bi_file = "ModeStack.bi"
     mode_bas_file = "ModeStack.bas"
+    ucs_chars_bi_file = "UnicodeNames.bi"
     demo_file = os.path.join("Demo", "Demo.bas")
     windows_makefile = os.path.join("Demo", "make_demo.bat")
     linux_makefile = os.path.join("Demo", "make_demo.sh")
@@ -205,7 +206,8 @@ class FreeBasicEmitter(PluginTemplate):
             (self.bas_file, self.plugin_options.file_name + ".bas"),
             (self.demo_file, self.demo_file),
             (self.windows_makefile, self.windows_makefile),
-            (self.linux_makefile, self.linux_makefile)
+            (self.linux_makefile, self.linux_makefile),
+            (self.ucs_chars_bi_file, self.ucs_chars_bi_file)
         ]
         if len(self.lexical_analyzer.sections) > 1:
             files.extend((
@@ -299,5 +301,23 @@ class FreeBasicEmitter(PluginTemplate):
         elif token.token.startswith('TYPE_'):
             type_name = token.token[len('TYPE_'):].lower()
             token.stream.write(self.formatter.get_type(type_name, False))
+        elif token.token == 'UNICODE_CHAR_DEFINES':
+            namespace = self.plugin_options.namespace.upper()
+            all_range_edges = set()
+            for section in self.lexical_analyzer.sections.values():
+                for state in section.dfa:
+                    for edge in state.edges.values():
+                        for minv, maxv in edge:
+                            all_range_edges.update((minv, maxv))
+            for codepoint in all_range_edges:
+                name = self.formatter.get_unicode_char_name(codepoint)
+                if name[0] != '&':
+                    token.stream.write("#define {name} {codepoint}\n".format(
+                        name = name,
+                        codepoint = "&h%02x" % codepoint))
+        elif token.token == 'UNICODE_HEADER_GUARD_NAME':
+            namespace = self.plugin_options.namespace.upper()
+            class_name = self.plugin_options.class_name.upper()
+            token.stream.write('_'.join((namespace, class_name, 'UCS_DEFINES')))
         else:
             raise Exception("Token '{id}' not recognized".format(id=token.token))

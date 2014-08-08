@@ -20,6 +20,7 @@
 
 #include "$BASE_FILE_NAME.bi"
 #include "UnicodeConstants.bi"
+#include "UnicodeNames.bi"
 
 Constructor $TYPE_TOKEN()
     This.Id = $TYPE_TOKEN.InvalidCharacter

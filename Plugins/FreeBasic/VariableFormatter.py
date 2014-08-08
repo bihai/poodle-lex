@@ -19,6 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 from CachedFormatter import CachedFormatter
+import unicodedata
 
 class StateIdFormatter(object):
     def __init__(self, rules, reserved_ids):
@@ -110,3 +111,12 @@ class VariableFormatter(object):
 
     def get_state_id_formatter(self, rules):
         return StateIdFormatter(rules, self.reserved_ids)
+        
+    def get_unicode_char_name(self, codepoint):
+        try:
+            unicode_name = unicodedata.name(unichr(codepoint)).replace(' ', '_').replace('-', '_')
+            return "{namespace}_UCS_{name}".format(
+                namespace = self.get_namespace().upper(),
+                name = unicode_name.upper())
+        except ValueError:
+            return "&h%02x" % codepoint

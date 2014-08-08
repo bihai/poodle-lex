@@ -24,7 +24,7 @@ class StateMachineEmitter(object):
         self.dfa_ir = dfa_ir
         self.formatter = formatter
         self.emitter = emitter
-        
+     
         # Shortcuts
         self.section = dfa_ir.sections[section_id]
         self.inherits = self.section.inherits
@@ -35,8 +35,14 @@ class StateMachineEmitter(object):
         self.block = emitter.block.__get__(emitter)
         self.continue_block = emitter.continue_block.__get__(emitter)
         self.emit = emitter.emit.__get__(emitter)
-        
-        self.formatter.add_state_id(self.start_state, "INITIAL_STATE")
+
+
+        self.state_id_formatter = formatter.get_state_id_formatter(self.section.rules)
+        self.get_state_id = self.state_id_formatter.get_state_id
+        self.add_state_id = self.state_id_formatter.add_state_id
+        self.add_state_id(self.start_state, "INITIAL_STATE")
+        self.add_state_id('invalid_char_state', 'INVALID_CHAR_STATE')
+
 
     def emit_state_machine(self):
         section_id = self.section_id if len(self.dfa_ir.sections) > 1 else ''
@@ -50,7 +56,7 @@ class StateMachineEmitter(object):
                     token_type = self.formatter.get_type('token', is_relative=False)),
                 '{state_type} state = {initial_state};'.format(
                     state_type = self.formatter.get_type('state', is_relative=False),
-                    initial_state = self.formatter.get_state_id(self.start_state)),
+                    initial_state = self.get_state_id(self.start_state)),
                 'Unicode::String text;',
                 'bool capture = false;'
                 '',
@@ -70,7 +76,7 @@ class StateMachineEmitter(object):
     def emit_state_enum(self):
         self.line("enum State")
         with self.block("{", "};"):
-            ids = [self.formatter.get_state_id(state) for state in self.dfa]
+            ids = [self.get_state_id(state) for state in self.dfa]
             ids.insert(0, "INVALID_CHAR_STATE")
             for i, id in enumerate(sorted(ids)):
                 if i != 0:
@@ -85,7 +91,7 @@ class StateMachineEmitter(object):
         for i, state in enumerate(self.dfa):
             if i != 0:
                 self.line()
-            self.line("case {id}:".format(id=self.formatter.get_state_id(state)))
+            self.line("case {id}:".format(id=self.get_state_id(state)))
             with self.block():
                 self.emit_state(state)
             
@@ -93,8 +99,7 @@ class StateMachineEmitter(object):
         # Capture a character if there is a possibility of completing a capture rule
         capture = False
         for rule in self.section.rules:
-            rule_id = rule.id.lower() if rule.id is not None else None
-            if rule_id in state.ids and 'capture' in rule.action:
+            if rule.id in state.ids and 'capture' in rule.action:
                 self.line("capture = true;")
                 break
 
@@ -121,8 +126,7 @@ class StateMachineEmitter(object):
             # Find matching rule
             matching_rule = '::nomatch::'
             for rule in self.section.rules:
-                rule_id = rule.id.lower() if rule.id is not None else None
-                if rule_id in state.final_ids:
+                if rule.id in state.final_ids:
                     matching_rule = rule
                     break
             if matching_rule == '::nomatch::':
@@ -148,13 +152,13 @@ class StateMachineEmitter(object):
                     block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id('skippedtoken'))]
                 else:
                     block = [
-                        'state = {id};'.format(id=self.formatter.get_state_id(self.start_state)),
+                        'state = {id};'.format(id=self.get_state_id(self.start_state)),
                         'text.clear();',
                         'continue;']
             elif 'capture' in rule.action:
-                block = ['return Token(Token::{id}, text);'.format(id=self.formatter.get_token_id(matching_rule.id))]
+                block = ['return Token(Token::{id}, text);'.format(id=self.formatter.get_token_id(matching_rule.name))]
             else:
-                block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id(matching_rule.id))]
+                block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id(matching_rule.name))]
                 
             if mode_actions is not None and len(mode_actions) > 0:
                 block[0:0] = mode_actions
@@ -170,7 +174,7 @@ class StateMachineEmitter(object):
             if state == self.start_state and self.inherits:
                 self.line('return {method}();'.format(method=self.formatter.get_state_machine_method_name(self.parent, is_relative=False)))
             else:
-                self.line('state = {id};'.format(id=self.formatter.get_state_id('invalid_char_state')))
+                self.line('state = {id};'.format(id=self.get_state_id('invalid_char_state')))
 
     def emit_transition(self, statement, destination, edges):
         cases = []
@@ -182,13 +186,13 @@ class StateMachineEmitter(object):
         with self.block("{statement} ({cases})".format(
             statement=statement, 
             cases=' || '.join(cases))):
-            self.line("state = {state_id};".format(state_id=self.formatter.get_state_id(destination)))
+            self.line("state = {state_id};".format(state_id=self.get_state_id(destination)))
             
         
     def emit_invalid_char_case(self):
         self.emit([
            "case {invalid_char_state_id}:".format(
-                invalid_char_state_id = self.formatter.get_state_id('invalid_char_state')),
+                invalid_char_state_id = self.get_state_id('invalid_char_state')),
             '{', [
                 'std::ostringstream oss;',
                 'oss << "Invalid token: \'";',

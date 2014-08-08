@@ -112,7 +112,7 @@ class CPlusPlusEmitter(PluginTemplate):
         elif token.token == 'CLASS_NAME':
             token.stream.write(self.class_name)
         elif token.token == 'ENUM_TOKEN_IDS':
-            ids = sorted(self.dfa_ir.rule_ids)
+            ids = sorted(rule for rule in self.dfa_ir.rule_ids.values() if rule is not None)
             ids.insert(0, 'invalidcharacter')
             ids.insert(0, 'endofstream')
             ids.insert(0, 'skippedtoken')
@@ -161,7 +161,7 @@ class CPlusPlusEmitter(PluginTemplate):
                     indent = ' '*token.indent,
                     initial_mode = self.formatter.get_section_id('::main::')))
         elif token.token == 'SELECT_ID_STRING':
-            ids = sorted(self.dfa_ir.rule_ids)
+            ids = sorted(rule for rule in self.dfa_ir.rule_ids.values() if rule is not None)
             code = CodeEmitter(token.stream, token.indent)
             for id in ids:
                 with code.block('case {class_name}::Token::{token_id}:'.format(   

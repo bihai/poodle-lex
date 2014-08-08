@@ -234,7 +234,6 @@ class FreeBasicEmitter(PluginTemplate):
         elif token.token == 'ENUM_TOKEN_IDS':
             code = CodeEmitter(token.stream, token.indent)
             rules = [id for id in self.lexical_analyzer.rule_ids.values() if id is not None]
-            print rules
             rules.append('SkippedToken')
             for rule in sorted(rules):
                 code.line(self.formatter.get_token_id(rule))

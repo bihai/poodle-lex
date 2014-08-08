@@ -20,14 +20,35 @@
 
 from CachedFormatter import CachedFormatter
 
+def if_none(id, rule, default):
+    if id is None:
+        return defult
+    return rule(id)
+
+class StateIdFormatter(object):
+    def __init__(self, rules, reserved_ids):
+        def state_id_formatter(state):
+            state_id = 'STATE_'
+            for rule in self.rules:
+                if rule.id in state.ids:
+                    if rule.name is None:
+                        state_id += '_ANONYMOUS'
+                    else:
+                        state_id += '_' + rule.name.upper()
+            return state_id
+        self.cache = CachedFormatter(limit=512, reserved=reserved_ids)
+        self.cache.add_cache('state_id', state_id_formatter)
+        self.rules = rules
+        for attr in dir(self.cache):
+            if any(attr.startswith(i) for i in ('get_', 'add_', 'clear_')):
+                setattr(self, attr, getattr(self.cache, attr))
+
 class VariableFormatter(object):
     def __init__(self, plugin_options, reserved_ids):
         def section_id_formatter(section_id):
             path = section_id.split('.') if section_id is not None else None
             path = [i.upper().replace(':', '') for i in path] if path is not None else None
             return '_'.join(path[1:]) if section_id is not None and len(path) > 0 else ''
-        def state_id_formatter(state):
-            return '_'.join([i.upper() if i is not None else 'ANONYMOUS' for i in sorted(state.ids)])
         def token_id_formatter(id):
             return id.upper() if id is not None else None
             
@@ -35,13 +56,12 @@ class VariableFormatter(object):
         self.cache = CachedFormatter(limit=64, reserved=reserved_ids)
         self.cache.add_cache('section_id', section_id_formatter, cache_name='section_and_tokens')
         self.cache.add_cache('token_id', token_id_formatter, cache_name='section_and_tokens')
-        self.cache.add_cache('state_id', state_id_formatter, cache_name='section_and_tokens')
         self.cache.add_token_id(None, 'ANONYMOUS')
         self.cache.add_token_id('endofstream', 'ENDOFSTREAM')
         self.cache.add_token_id('invalidcharacter', 'INVALIDCHARACTER')
         self.cache.add_section_id(None, '')
         self.cache.add_section_id('::main::', 'MAIN')
-        self.cache.add_state_id('invalid_char_state', 'INVALID_CHAR_STATE')
+        self.reserved_ids = reserved_ids
         for attr in dir(self.cache):
             if any(attr.startswith(i) for i in ('get_', 'add_', 'clear_')):
                 setattr(self, attr, getattr(self.cache, attr))
@@ -74,3 +94,6 @@ class VariableFormatter(object):
         else:
             raise Exception("unrecognized type '{id}'".format(id=type_name))
         return self.get_scoped(type_text, is_relative)
+
+    def get_state_id_formatter(self, rules):
+        return StateIdFormatter(rules, self.reserved_ids)

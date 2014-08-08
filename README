@@ -1,7 +1,7 @@
 Poodle-Lex is a lexical analyzer generator, similar to lex and its variants. 
 It produces source code which scans an input stream and outputs a stream of 
-word units. Features include Unicode support and a platform for supporting 
-arbitrary programming languages through plugins.
+word units. Features include Unicode support, hierarchical patterns and a 
+platform for supporting arbitrary programming languages through plugins.
 
 Usage: Poodle-Lex RULES_FILE OUTPUT_DIR [Optional arguments]
 
@@ -26,32 +26,71 @@ Poodle-Lex list-minimizers: Prints out a list of DFA minimization algorithms sup
 
 Rules file:
 The rules file is a simple format which describes the lexical analyzer as a 
-set of token definitions, one on each line. The rules file consists of three
+set of token definitions, one on each line. The rules file consists of four
 types of statements:
 1) Token rules
 2) Variable definitions
 3) Token name reservations
 4) Comments
+5) Section blocks
 
-Token rules take the following form:
-[COMMAND] TOKEN_ID: PATTERN
+1) Token rules
+Token rules take one of the following forms:
+- [COMMANDS] TOKEN_ID: [PATTERN] [SECTION_ACTION]
+- Skip: PATTERN [SECTION_ACTION]
 
-Where TOKEN_ID is an alphanumeric ID, and PATTERN is a regular expression. 
-PATTERN must be surrounded by either single or double quotes. Quotes can be 
-escaped by using double-quotes ("" or '') inside of the pattern. If an "i" 
-appears in front of the opening quote, then the pattern will be interpreted as 
-case-insensitive for ASCII Latin characters.
+The first form is a rule which returns a token. TOKEN_ID is the name 
+of the rule. PATTERN is a regular expression defining a pattern of 
+text which should be matched to the rule, surrounded by either single 
+or double quotes. The surrounding quotes can be escaped by adding them
+twice ("" or '') inside of the pattern. If an "i" appears in front of the 
+opening quote, then the pattern will be interpreted as case-insensitive 
+for ASCII Latin characters.
+
+The second form is a rule which is skipped and does not return a token.
+Here, the same syntax applies, but the token ID may be omitted.
 
 PATTERN may consist of multiple strings, concatenated by "+". If a line ends 
 with "+", then the expression may extend over multiple lines. If a piece of 
 text matches two rules, then the rule appearing first is used.
 
-COMMAND is an optional word which describes actions to be done with. Commands 
-are case-insensitive, and valid commands are:
+SECTION_ACTION is a command which tells the lexical analyzer to enter or 
+exit a different context, referred to as "section", after matching the rule. 
+It can be one of the following:
+ - Enter SECTION_NAME
+ - Switch SECTION_NAME
+ - Exit Section
+ - [Enter|Switch] Section [ATTRIBUTES]
+       ...
+   Exit Section
+The first form instructs the lexical analyzer to enter an existing section, 
+where SECTION_NAME is an identifier matching the section. For anonymous 
+sections, the rule name is the section name. The second form instructs the
+lexical analyzer to switch to a different section without remembering the 
+current section. The third form instructs the lexical analyzer to exit the 
+current section. The fourth form actually defines an anonymous section, and 
+instructs the lexical analyzer to enter or switch to it.
+
+Sections in other areas of the hierarchy can be referred to using scoped
+section names. Scoped names are a set of names divided by a period. The 
+current section is searched for a section named as the first name in the set. 
+Then the found section is searched for the second name in the set, and so 
+forth. If the name begins with a period, the root of the rules file is 
+searched.
+
+The lexical analyzer remembers the order in which each section is entered.
+When a section is exited, the lexical analyzer returns to the section that 
+it previously entered. If a section is switched, the current section 
+changes, but the movement is not recorded.
+
+COMMANDS is an optional, comma-separated list of words which describe actions 
+take regarding the token. Commands are case-insensitive, and valid commands are:
  - Skip: The pattern will be matched, but no token will be produced
  - Capture: The text of the match will be returned along with the token
- - Reserve: ID will be reserved, but no rule will match it.
+ - Reserve: ID will be reserved, and optionally a pattern will be stored
+ - Import: Use the same rule name, and optionally the same pattern as an existing rule.
  
+2) Variable Definitions
 Variable definitions take the following form:
 Let VARIABLE_NAME = PATTERN
 
@@ -59,14 +98,46 @@ Variables can be substituted within a pattern, but are not themselves rules.
 VARIABLE_NAME is the name of a variable to define. PATTERN is a pattern in the 
 same format as with token rules.
 
+3) Token name reservations
 Token name reservations take the following form:
-Reserve TOKEN_ID
+Reserve TOKEN_ID[: PATTERN]
 
 If used, this will add TOKEN_ID to the list of token ids. This can be used to 
-reserve token ids, or create ids that can be emitted by a preprocessor.
+reserve token ids, or create ids that can be emitted by a preprocessor. A pattern
+can optionally be stored with the token ID. If the rule is imported, the pattern
+only needs to be specified if the pattern was not specified in the rule reservation.
 
-Finally, any text on a line after "#" is considered a comment. 
- 
+4) Comments
+Any text on a line after "#" is considered a comment. 
+
+5) Section Blocks
+Finally, different contexts, referred to as sections or section blocks, can
+be defined. These are useful if, at certain points, the lexical analyzer should
+use a different set of rules. A section can be define in two ways, as a 
+standalone section or anonymously as part of a rule. See the section on 
+rules for how to define a section as part of a rule.
+
+Standalone sections take the following form:
+Section SECTION_NAME [ATTRIBUTES]
+    CONTENT
+End Section
+
+SECTION_NAME is the name of the section. CONTENT is a set of rules,
+variable definitions, comments, or sub-sections that exist within the
+context of the section. Sections can contain other sections for 
+organizational purposes, though this only affects behavior if attributes
+are defined for the section.
+
+ATTRIBUTES is a comma-separated list of attributes which can be applied 
+to the section. Each attribute defines the behavior of the lexical 
+analyzer if a rule is not matched on the first character of a token.
+The following attributes can be applied:
+ - Inherits: If the first character does not fit a rule in this section, attempt
+       attempt to match the rule in the section containing this one
+ - Exits: If the first character does not fit a rule in this section, exit
+       the section and return to the section the lexical analyzer was in 
+       previously.
+       
 Language plug-ins:
 As packaged, Poodle-Lex supports the following language arguments
  - freebasic: FreeBasic language emitter with full Unicode support
@@ -90,6 +161,14 @@ special characters can be used to define more complex patterns:
 "{...}": Matches a pattern defined by a variable, identified by the text between the curly braces
 "\": Matches a special character or the next character literally
 "|": Matches either the previous item or the next item.
+
+Variable names within a pattern follow the same scoping rules as section names.
+A scoped name is a set of names separated by a period. If there are multiple names,
+all names but the last one refer to a list of sections within the hierarchy. The 
+current section is searched for the first section name, then the matched section
+is searched for the next section name, and so forth. Then, the last matched section
+is searched for the variable name. If the scoped name begins with a period, the 
+root of the document is searched.
 
 The following standard special characters are NOT accepted:
 "$": In the POSIX ERE standard, matches text at the end of a line or input

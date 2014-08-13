@@ -362,16 +362,20 @@ Capture Identifier: i"[a-z_][a-z0-9_]*"
 
 # Whitespace and comments
 Let SingleLineComment = "'[^\r\n]*"
-Newline: "\r?\n"
-Skip: "[ \t]+"
-Skip: "_[ \t]*\r?\n"
-Skip: "{SingleLineComment}"
+Let ContinueLine = "_[ \t]*\r?\n"
+Let Whitespace = "[ \t]+"
+Skip: "{SingleLineComment}|{ContinueLine}|{Whitespace}"
+
+# Skip repeat newlines
+Newline: "\r?\n+" Enter Section Exits
+    Skip: "(\r?\n)+"
+    Skip: "{SingleLineComment}|{ContinueLine}|{Whitespace}"
+    Skip: "/'" Enter MultiLineComment
+End Section
+
 Skip: "/'" Enter MultiLineComment
 Section MultiLineComment
-    Let CommentContent = '' +
-        "[^'/]|/*" + '|' +
-        "'+[^/']" + '|' +
-        "/+[^/']"
-    Skip: "(/*[^'/]|'*[^'/])*/+'" Enter MultiLineComment
+    Let Other = "[^'/]"
+    Skip: "(/*{Other}|'*{Other})*/+'" Enter MultiLineComment
     Skip: "('*[^'/]|/*[^'/])*'+/" Exit Section
 End Section

@@ -123,28 +123,22 @@ class StateMachineEmitter(object):
         
     def emit_else_case(self, state, is_in_if=False):
         if len(state.final_ids) > 0:
-            # Find matching rule
-            matching_rule = '::nomatch::'
-            for rule in self.section.rules:
-                if rule.id in state.final_ids:
-                    matching_rule = rule
-                    break
-            if matching_rule == '::nomatch::':
+            rule = self.section.get_matching_rule(state)
+            if rule is None:
                 raise Exception("internal error, final ID has no rule")
                 
             # Section action - push or pop mode if necessary
             mode_actions = []
-            if matching_rule is not None and matching_rule.section_action is not None:
-                action, section = matching_rule.section_action
-                if action == 'enter' or action == 'switch':
-                    mode_actions.append('mode.push({id});'.format(id=self.formatter.get_section_id(section)))
-                if action == 'exit' or action == 'switch':
-                    mode_actions.insert(0, 'mode.pop();')
-                    if len(mode_actions) > 1:
-                        mode_actions = ['{', mode_actions, '}']
-                    else:
-                        mode_actions = [mode_actions]
-                    mode_actions = ['if (mode.size() > 1)'] + mode_actions
+            action, section = rule.section_action
+            if action == 'enter' or action == 'switch':
+                mode_actions.append('mode.push({id});'.format(id=self.formatter.get_section_id(section)))
+            if action == 'exit' or action == 'switch':
+                mode_actions.insert(0, 'mode.pop();')
+                if len(mode_actions) > 1:
+                    mode_actions = ['{', mode_actions, '}']
+                else:
+                    mode_actions = [mode_actions]
+                mode_actions = ['if (mode.size() > 1)'] + mode_actions
                 
             # Emit final action
             if 'skip' in rule.action:
@@ -156,9 +150,9 @@ class StateMachineEmitter(object):
                         'text.clear();',
                         'continue;']
             elif 'capture' in rule.action:
-                block = ['return Token(Token::{id}, text);'.format(id=self.formatter.get_token_id(matching_rule.name))]
+                block = ['return Token(Token::{id}, text);'.format(id=self.formatter.get_token_id(rule.name))]
             else:
-                block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id(matching_rule.name))]
+                block = ['return Token(Token::{id});'.format(id=self.formatter.get_token_id(rule.name))]
                 
             if mode_actions is not None and len(mode_actions) > 0:
                 block[0:0] = mode_actions

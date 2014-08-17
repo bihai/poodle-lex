@@ -52,6 +52,13 @@ class DeterministicIR(object):
             self.exits = exits
             self.parent = parent
             
+        def get_matching_rule(self, state):
+            """
+            Given a state, return the highest priority rule which can end in that state
+            @param state: A DeterministicState object which exists within the section's DFA
+            """
+            return next((rule for rule in self.rules if rule.id in state.final_ids), None)
+            
     class Rule(object):
         """
         Represents meta-data for a rule, including ID, action, and section
@@ -88,5 +95,7 @@ class DeterministicIR(object):
             dfa = Automata.DeterministicFiniteBuilder.build(combined_nfa)
             minimizer.__call__(dfa)
             self.sections[id] = DeterministicIR.Section(dfa, section_rules, section.inherits, section.exits, section.parent)
+            
+        
             
             

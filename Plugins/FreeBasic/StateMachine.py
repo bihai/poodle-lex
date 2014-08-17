@@ -28,13 +28,15 @@ class StateMachineEmitter(object):
         self.section_id = section_id
         
         # Shortcuts
-        self.dfa = dfa_ir.sections[section_id].dfa
-        self.rules = dfa_ir.sections[section_id].rules
-        self.inherits = dfa_ir.sections[section_id].inherits
-        self.exits = dfa_ir.sections[section_id].exits
-        self.parent = dfa_ir.sections[section_id].parent
+        self.section = self.dfa_ir.sections[section_id]
+        self.dfa = self.section.dfa
+        self.rules = self.section.rules
+        self.inherits = self.section.inherits
+        self.exits = self.section.exits
+        self.parent = self.section.parent
         self.ids = dfa_ir.rule_ids
         self.start_state = self.dfa.start_state
+        
         setattr(self, 'block', self.code.block.__get__(self.code))
         setattr(self, 'line', self.code.line.__get__(self.code))
         setattr(self, 'continue_block', self.code.continue_block.__get__(self.code))
@@ -183,7 +185,7 @@ class StateMachineEmitter(object):
 
     def generate_token_return_case(self, state):
         # First rule with an ID in the state's final IDs takes priority
-        rule = next((rule for rule in self.rules if rule.id in state.final_ids), None)
+        rule = self.section.get_matching_rule(state)
         if rule is None:
             raise Exception("Internal error - unable to determine matching rule")
 

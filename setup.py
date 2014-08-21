@@ -31,6 +31,7 @@ includefiles = [
     os.path.join('Plugins', 'FreeBasic', 'Template', 'LexicalAnalyzer.bi'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'ModeStack.bas'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'ModeStack.bi'),
+    os.path.join('Plugins', 'FreeBasic', 'Template', 'UnicodeNames.bi'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Stream', 'Windows', 'MemoryMapWindows.bi'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Stream', 'Windows', 'MemoryMapWindows.bas'),
     os.path.join('Plugins', 'FreeBasic', 'Template', 'Stream', 'Linux', 'MemoryMapLinux.bi'),
@@ -70,6 +71,8 @@ includefiles = [
     os.path.join('Example', 'CLexer', 'HelloWorld.c'),
     os.path.join('Example', 'SimpleLexer', 'SimpleLexer.rules'),
     os.path.join('Example', 'SimpleLexer', 'SimpleLexerText.txt'),
+    os.path.join('Example', 'FBCLexer', 'FreeBasicLexer.rules'),
+    os.path.join('Example', 'FBCLexer', 'HelloWorld.bas'),
     'README',
     'LICENSE',
     'CHANGELIST'
@@ -87,7 +90,7 @@ if platform.system() == "Windows":
     target_name += ".exe"
 setup(
     name = 'Poodle-Lex',
-    version = '1.9.5',
+    version = '1.9.6',
     description = 'A lexical analyzer generator with support for multiple languages.',
     author = 'Parker Michaels',
     author_email = 'parkertomatoes@gmail.com',

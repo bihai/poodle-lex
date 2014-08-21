@@ -28,6 +28,7 @@ class StateMachineEmitter(object):
         # Shortcuts
         self.section = dfa_ir.sections[section_id]
         self.inherits = self.section.inherits
+        self.exits = self.section.exits
         self.parent = self.section.parent
         self.dfa = dfa_ir.sections[section_id].dfa
         self.start_state = self.dfa.start_state
@@ -167,6 +168,10 @@ class StateMachineEmitter(object):
             # Error if there isn't a section to test
             if state == self.start_state and self.inherits:
                 self.line('return {method}();'.format(method=self.formatter.get_state_machine_method_name(self.parent, is_relative=False)))
+            elif state == self.start_state and self.exits:
+                with self.block('{', '}'):
+                    self.line('mode.pop();')
+                    self.line('return {method}();'.format(method=self.formatter.get_state_machine_method_name(self.parent, is_relative=False)))
             else:
                 self.line('state = {id};'.format(id=self.get_state_id('invalid_char_state')))
 

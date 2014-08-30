@@ -1,4 +1,6 @@
 import os.path
+import sys
+from itertools import chain
 import json
 from ..CoverageSet import CoverageSet
 
@@ -17,6 +19,8 @@ class UnicodeQuery(object):
         'z': ['zs', 'zl', 'zp'],
         'c': ['cc', 'cf', 'cs', 'co', 'cn']
     }
+    _db_all_categories = list(chain(*(_db_category.keys(), chain(*_db_category.values()))))
+    
     _db_binary_names = [
         u'ahex', u'alpha', u'bidic', u'bidim', u'cased', u'ce', u'ci', u'compex', 
         u'cwcf', u'cwcm', u'cwkcf', u'cwl', u'cwt', u'cwu', u'dash', u'dep', u'di', 
@@ -59,6 +63,26 @@ class UnicodeQuery(object):
             return self.get_binary_property(code)
         else:
             return self.get_string_property(code, value)
+            
+    def query(self, property, value=None):
+        """
+        Retrieves a CoverageSet of every character matching a property value. Treats script and category values as properties
+        @param property: the name of the property to look up, a category name, or a script name
+        @param value: if the property is non-binary, the value of the property to filter by
+        """
+        try:
+            return self.get_property(property, value)
+        except ValueError:
+            if value is not None:
+                raise
+            
+            # Property might be a category or script value
+            result = self.get_property('gc', property)
+            if len(result) == 0:
+                result = self.get_property('sc', property)
+            if len(result) == 0:
+                raise
+            return result
         
     def get_binary_property(self, code):
         """
@@ -84,7 +108,7 @@ class UnicodeQuery(object):
         code_path = os.path.join(self.path, code_file)
         if code_path not in self.cache:
             if not os.path.exists(code_path):
-                raise ValueError("Code '{code}' not found").format(code=code)
+                raise ValueError("Code '{code}' not found".format(code=code))
             with open(code_path, 'r')as f:  
                 self.cache[code_path] = json.load(f)
         cache = self.cache[code_path]
@@ -140,14 +164,16 @@ class UnicodeQuery(object):
         return input.lower().replace('_', '').replace('-', '').replace(' ', '')
         
     @staticmethod
-    def is_binary(code): 
+    def find_db():
         """
-        
+        Get the location of the unicode database, "[MAIN_FOLDER]\UnicodeData", or None if in interactive mode
         """
-        return code.lower() in [
-            ]
-            
-    @staticmethod
-    def category_combines(code):
-        return 
-        
+        main_file = sys.executable
+        if getattr(sys, 'frozen', None) is None:
+            main = sys.modules['__main__']
+            if hasattr(main, '__file__'):
+                main_file = os.path.realpath(main.__file__)
+            else:
+                return None
+        main_folder = os.path.dirname(os.path.normcase(main_file))
+        return os.path.join(main_folder, 'UnicodeData')

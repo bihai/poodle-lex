@@ -138,7 +138,6 @@ class CoverageSet(object):
     def difference_update(self, *other_coverage_sets):
         """
         Removes from the set's coverage the values covered by one or more other CoverageSet object.
-        
         @param other_coverage_sets: one or more CoverageSet objects, the coverage of which will be removed from this object.
         """
         for coverage_set in other_coverage_sets:

@@ -29,11 +29,6 @@ from Generator import LanguagePlugins
 from Generator import RulesFile
 from Generator import LanguagePlugins
 
-this_file = sys.executable
-if getattr(sys, 'frozen', None) is None:
-    this_file = __file__
-this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
-
 minimizers = {
     'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', hopcroft),
     'polynomial': ('Minimize using a polynomial algorithm comparing each state', polynomial)

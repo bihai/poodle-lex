@@ -22,6 +22,7 @@ import string
 import Regex
 from ..CoverageSet import CoverageSet
 from Exceptions import *
+from UnicodeQuery import UnicodeQuery
 
 class Parser(object):
     """
@@ -38,15 +39,22 @@ class Parser(object):
     carriage_return = (13, 13)
     space = ((ord(' '), ord(' ')))
     special = u'(){[.^$*+?|:'
+    unicode_db = UnicodeQuery.find_db()
+    set_operators = "-&~|"
     
-    def __init__(self, text, is_case_insensitive=False):
+    def __init__(self, text, is_case_insensitive=False, unicode_db=None):
         """
         @param text: string containing the regular expression
         @param is_case_insensitive: boolean which is true if the regular expression should be case insensitive
+        @param unicode_db: location of the folder containing the JSON unicode property data files
         """
         self.text = text
         self.index = 0
         self.is_case_insensitive = is_case_insensitive
+        if unicode_db is not None:
+            self.unicode_db = unicode_db
+        elif Parser.unicode_db is None and unicode_db is None:
+            raise ValueError("Unicode database not found and no database provided")
         
     def parse(self):
         """
@@ -159,6 +167,12 @@ class Parser(object):
             elif self.get_next_if(u'x'):
                 codepoint = self.parse_hex_digits(2)
                 return Regex.Literal([(codepoint, codepoint)])
+            elif self.get_next_if(u'p'):
+                coverage = self.parse_unicode_expression()
+                return Regex.Literal(coverage)
+            elif self.get_next_if(u'P'):
+                coverage = self.parse_unicode_expression()
+                return Regex.LiteralExcept(coverage)
             elif self.get_next_if(u'u'):
                 codepoint = self.parse_hex_digits(4)
                 return Regex.Literal([(codepoint, codepoint)])
@@ -287,26 +301,23 @@ class Parser(object):
         @return: True if the next characters is in the expected set, False otherwise or if at end of string
         """
         return n > 0 and self.index + n-1 < len(self.text) and self.text[self.index+n-1] not in characters
+
+    def next_is_set_operator(self):
+        return self.next_is(Parser.set_operators) and self.nth_next_is(2, self.text[self.index])
         
     def parse_character_class(self):
         """
         Parse a character class ([...]) expression from the string at its current index.
-        @return: a Regex.Literal or Regex.LiteralExcept object representing the characters
+        @return: a Regex.Literal object representing the characters
         """
-        inverse = False
-        if self.get_next_if(u'^'):
-            inverse = True
-        characters = self.parse_character_range().characters
-        while self.next_is_not(u']'):
-            characters.update(self.parse_character_range().characters)
-        self.expect(u']')
-        
-        if inverse:
-            return Regex.LiteralExcept([i for i in characters])
-        else:
-            return Regex.Literal([i for i in characters])
+        characters = self.parse_character_class_expression()
+        return Regex.Literal([i for i in characters])
     
     def parse_named_character_class(self):
+        """
+        Parse a named character class ([:...:]) subexpresion from the string at its current index.
+        @return: a CoverageSet object covering all the characters covered by the named class
+        """
         classes = {
             u"alnum": [Parser.lowercase, Parser.uppercase, Parser.digits],
             u"word": [Parser.lowercase, Parser.uppercase, Parser.digits, Parser.underscore],
@@ -329,28 +340,41 @@ class Parser(object):
         self.expect("]")
         
         if class_name in classes:
-            return Regex.Literal(classes[class_name])
+            return CoverageSet(classes[class_name])
         else:
             raise RegexParserExceptionInternal("Character class '%s' not recognized" % class_name)
-
-    def parse_character_range(self):
+            
+    def parse_character_class_subexpression(self):
         """
-        Parse a range (e.g. a-z) expression from the string at its current index
-        @return: a string containing all the characters in the range
+        Parse either a group "[...]", a named character class "[:...:]", or a range "...-..."
+        @returns: a CoverageSet object containing the characters in the sub-expression
         """
         if self.get_next_if(u'['):
-            return self.parse_named_character_class()
-        start_literal = self.parse_literal(True)
-        if self.get_next_if(u'-'):
-            end_literal = self.parse_literal(True)
+            if self.next_is(':'):
+                return self.parse_named_character_class()
+            expression = self.parse_character_class_expression()
+            self.expect(']')
+            return expression
+            
+        return self.parse_character_class_range()
+
+    def parse_character_class_range(self):
+        """
+        Parse a range (e.g. a-z) expression from the string at its current index
+        @return: a CoverageSet object containing all the characters in the range
+        """
+        start_literal = self.parse_literal(True).characters
+        if self.next_is('-') and self.nth_next_is_not(2, '-'):
+            self.get_next()
+            end_literal = self.parse_literal(True).characters
         else:
             return start_literal
         
         # Range must be two single characters with the end having a larger value than the start
-        if len(start_literal.characters) > 1 or len(end_literal.characters) > 1:
-            raise RegexParserInvalidCharacterRange(start_literal.characters, end_literal.characters)
-        start_ordinal = next(iter(start_literal.characters))[0]
-        end_ordinal = next(iter(end_literal.characters))[0]
+        if len(start_literal) > 1 or len(end_literal) > 1:
+            raise RegexParserInvalidCharacterRange(start_literal, end_literal)
+        start_ordinal = next(iter(start_literal))[0]
+        end_ordinal = next(iter(end_literal))[0]
         if start_ordinal > end_ordinal:
             raise RegexParserInvalidCharacterRange(unichr(start_ordinal), unichr(end_ordinal))
         
@@ -359,7 +383,92 @@ class Parser(object):
             lower_end = ord(unichr(end_ordinal).lower())
             upper_start = ord(unichr(start_ordinal).upper())
             upper_end = ord(unichr(end_ordinal).upper())
-            return Regex.Literal([(lower_start, lower_end), (upper_start, upper_end)])
+            return CoverageSet([(lower_start, lower_end), (upper_start, upper_end)])
         else:
-            return Regex.Literal([(start_ordinal, end_ordinal)])
+            return CoverageSet([(start_ordinal, end_ordinal)])
+            
+    def parse_character_class_terms(self):
+        """
+        Parse a series of terms within a character class ("a-zbc", etc).
+        @returns: the union of their coverage        
+        """
+        coverage = CoverageSet()
+        while self.next_is_not(']\r\n') and not self.next_is_set_operator():
+            coverage.update(self.parse_character_class_range())
+        return coverage
+        
+    def parse_character_class_expression(self):
+        """
+        Parses the text after the left bracket of a "[...]" expression
+        @returns: a CoverageSet object covering all the characters covered by the character class.
+        """
+        inverse = self.get_next_if(u'^')
+        
+        set_operators = (u'|', u'&', u'-', u'~')
+        coverage = self.parse_character_class_terms()
+        while self.next_is_set_operator():
+            operator = self.get_next()
+            self.get_next()
+            rhs = self.parse_character_class_terms()
+            if operator == u'|':
+                coverage.update(rhs)
+            elif operator == u'&':
+                coverage.intersection_update(rhs)
+            elif operator == u'-':
+                coverage.difference_update(rhs)
+            elif operator == u'~':
+                intersection = CoverageSet.intersection(coverage, rhs)
+                coverage.update(rhs)
+                coverage.difference_update(intersection)
+        self.expect("]")
+        
+        if inverse:
+            inverted_coverage = CoverageSet()
+            inverted_coverage.add(1, 0x10FFFF)
+            inverted_coverage.difference_update(coverage)
+            return inverted_coverage
+        
+        return coverage
+        
+    def parse_unicode_expression(self):
+        """
+        Parse a unicode "{...}" expression for querying unicode properties.
+        @returns: A CoverageSet object containing all characters covered by
+            the specified unicode query.
+        """
+        self.expect("{")
+        coverage = self.parse_unicode_subexpression()
+        while self.get_next_if(u'|'):
+            coverage.update(self.parse_unicode_subexpression())
+        self.expect("}")
+        return coverage
+        
+    def parse_unicode_subexpression(self):
+        """
+        Parse a single "NAME=VALUE" term for a unicode property.
+        @returns: A CoverageSet object containing the values covered by the term
+        """
+        name = self.parse_unicode_word()
+        if self.get_next_if(u':='):
+            value = self.parse_unicode_word()
+        else:
+            value = None
+        return UnicodeQuery.instance(self.unicode_db).query(name, value)
+        
+    def parse_unicode_word(self):
+        """
+        Scan a string, while skipping over whitespace, hyphens, and underscores.
+        @return: the filtered name that was parsed out.
+        """
+        variable_name = ''
+        while True:
+            if self.next_is(' \t-_'):
+                self.get_next()
+            elif self.next_is(string.ascii_letters):
+                variable_name += self.get_next()
+            else:
+                break
+        if variable_name == '':
+            raise RegexParserExpected("string", self.text, self.index)
+        return variable_name
         

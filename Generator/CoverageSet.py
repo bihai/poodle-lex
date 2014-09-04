@@ -71,17 +71,20 @@ class CoverageSet(object):
         if self.dirty:
             level = 0
             did_remove = False
+            to_delete = []
             for i, (value, is_end) in reverse_enumerate(self.intervals):
                 if is_end == 1:
                     if level > 0:
-                        del self.intervals[i]
+                        to_delete.append(i)
                         did_remove = True
                     level += 1
                 else:
                     if level > 1:
-                        del self.intervals[i]
+                        to_delete.append(i)
                         did_remove = True
                     level -= 1
+            for index in to_delete:
+                del self.intervals[index]
             self.merge_adjacent()
             self.dirty = False
             return did_remove
@@ -173,8 +176,8 @@ class CoverageSet(object):
             else:
                 return "%s-%s" % tuple([format_codepoint(i) for i in intervals])
                 
-        self.remove_overlap()
-        return "CoverageSet([%s]" % ", ".join([repr(remove_duplicates(i)) for i in self])
+        #self.remove_overlap()
+        return "CoverageSet([%s])" % ", ".join([repr(remove_duplicates(i)) for i in self])
     
     def __repr__(self):
         return str(self)
@@ -318,3 +321,4 @@ class CoverageSet(object):
             (min_v, min_is_end), (max_v, max_is_end) = self.intervals[i:i+2]
             n += max_v - min_v + 1
         return n
+        

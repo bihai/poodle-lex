@@ -142,6 +142,7 @@ class NonDeterministicIR(object):
                         self.rule_ids[rule_id_lower] = rule.id
                     
             except Exception as e:
+                raise
                 if rule.id is None:
                     rule.throw("anonymous rule: {message}".format(message=str(e)))
                 else:

@@ -79,7 +79,7 @@ class NonDeterministicFinite(object):
         descriptions.append('    %s [label="end", shape=none];' % (len(states)+1))
         for state in states:
             if len(state.ids) > 0:
-                descriptions.append('    %d [label="%d\\n(%s)"];' % (states.index(state), states.index(state), ", ".join([i for i in state.ids])))
+                descriptions.append('    %d [label="%d\\n(%s)"];' % (states.index(state), states.index(state), ", ".join([str(i) for i in state.ids])))
         descriptions.append('    %d -> %d' % (len(states), start_state_index))
         descriptions.append('    %d -> %d' % (end_state_index, len(states)+1))
         for state in states:

@@ -139,6 +139,8 @@ class StateMachineEmitter(object):
         Emit transitions to other states for a single character input
         """
         found_zero = False
+        
+        
         # Emit transition table
         for destination, edges in state.edges.iteritems():
             self.line("Case %s" % ", ".join([self.format_case(i) for i in edges]))
@@ -163,11 +165,12 @@ class StateMachineEmitter(object):
         @return: the range formatted as an argument to "Case"
         """
         if range[0] == range[1]:
-            return self.formatter.get_unicode_char_name(range[0])
+            return str(range[0])#self.formatter.get_unicode_char_name(range[0])
         else:
-            return "{minv} To {maxv}".format(
-                minv = self.formatter.get_unicode_char_name(range[0]), 
-                maxv = self.formatter.get_unicode_char_name(range[1]))
+            return str(range[0]) + " to " + str(range[1])
+            #"{minv} To {maxv}".format(
+                #minv = self.formatter.get_unicode_char_name(range[0]), 
+                #maxv = self.formatter.get_unicode_char_name(range[1]))
     
     def generate_check_zero_or_eof(self, invalid_otherwise):
         """

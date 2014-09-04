@@ -29,6 +29,11 @@ from Generator import LanguagePlugins
 from Generator import RulesFile
 from Generator import LanguagePlugins
 
+this_file = sys.executable
+if getattr(sys, 'frozen', None) is None:
+    this_file = __file__
+this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
+
 minimizers = {
     'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', hopcroft),
     'polynomial': ('Minimize using a polynomial algorithm comparing each state', polynomial)
@@ -71,6 +76,7 @@ try:
     language_plugins[language].load()
     language_plugin = language_plugins[language]
 except Exception as e:
+    raise
     print("Unable to load language plug-in '%s': %s\n" % (language, str(e)), file=sys.stderr)
     sys.exit(1)
 
@@ -91,6 +97,7 @@ try:
     nfa_ir = RulesFile.NonDeterministicIR(rules_file)
     dfa_ir = RulesFile.DeterministicIR(nfa_ir)
 except Exception as e:
+    raise
     print("Error processing rules. %s" % str(e), file=sys.stderr)
     sys.exit(1)
     

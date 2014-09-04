@@ -82,7 +82,7 @@ class DeterministicIR(object):
         def has_action(self, action):
             return action in self.action
 
-    def __init__(self, non_deterministic_ir, minimizer=Minimizer.hopcroft):
+    def __init__(self, non_deterministic_ir, minimizer=Minimizer.polynomial):
         self.rule_ids = dict(non_deterministic_ir.rule_ids)
         self.sections = {}
         for id, section in non_deterministic_ir.sections.items():

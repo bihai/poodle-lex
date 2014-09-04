@@ -117,6 +117,6 @@ class VariableFormatter(object):
             unicode_name = unicodedata.name(unichr(codepoint)).replace(' ', '_').replace('-', '_')
             return "{namespace}_UCS_{name}".format(
                 namespace = self.get_namespace().upper(),
-                name = unicode_name.upper())
+                name = unicode_name.upper())[:64]
         except ValueError:
             return "&h%02x" % codepoint

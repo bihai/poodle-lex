@@ -36,6 +36,7 @@ def minimize(state_machine):
     in is modified and nothing is returned.
     @param state_machine: an Automata.DeterministicFinite object representing the DFA to minimize.
     """   
+    f = open("test.joe.txt", "w")
     states = [state for state in state_machine]
     is_distinct = set()
     
@@ -108,7 +109,11 @@ def minimize(state_machine):
         for state in states:
             for destination in state.edges.keys():
                 if destination in to_merge:
+                    f.write("FROM: " + repr(state.edges[destination]) + "\n")
+                    f.write("  TO: " + repr(state.edges[merge_into]) + "\n")
                     state.edges[merge_into].update(state.edges[destination])
+                    f.write("RSLT: " + repr(state.edges[merge_into]) + "\n")
                     del state.edges[destination]
         if state_machine.start_state in to_merge:
             state_machine.start_state = merge_into
+    f.close()

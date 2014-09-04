@@ -349,24 +349,33 @@ class Parser(object):
         Parse either a group "[...]", a named character class "[:...:]", or a range "...-..."
         @returns: a CoverageSet object containing the characters in the sub-expression
         """
-        if self.get_next_if(u'['):
-            if self.next_is(':'):
-                return self.parse_named_character_class()
-            expression = self.parse_character_class_expression()
-            self.expect(']')
-            return expression
+        if self.next_is(':'):
+            return self.parse_named_character_class()
+        expression = self.parse_character_class_expression()
+        self.expect(']')
+        return expression
             
         return self.parse_character_class_range()
+        
+    def parse_character_class_character(self):
+        """
+        Parse a lingle literal, but accomodate sub-expressions such as "[:...:]" or "[...]"
+        @return: a CoverageSet object containing the characters that were parsed
+        """
+        if self.get_next_if(u'['):
+            return self.parse_character_class_subexpression()
+        else:
+            return self.parse_literal(True).characters
 
     def parse_character_class_range(self):
         """
         Parse a range (e.g. a-z) expression from the string at its current index
         @return: a CoverageSet object containing all the characters in the range
         """
-        start_literal = self.parse_literal(True).characters
+        start_literal = self.parse_character_class_character()
         if self.next_is('-') and self.nth_next_is_not(2, '-'):
             self.get_next()
-            end_literal = self.parse_literal(True).characters
+            end_literal = self.parse_character_class_character()
         else:
             return start_literal
         
@@ -404,7 +413,6 @@ class Parser(object):
         """
         inverse = self.get_next_if(u'^')
         
-        set_operators = (u'|', u'&', u'-', u'~')
         coverage = self.parse_character_class_terms()
         while self.next_is_set_operator():
             operator = self.get_next()
@@ -453,7 +461,8 @@ class Parser(object):
             value = self.parse_unicode_word()
         else:
             value = None
-        return UnicodeQuery.instance(self.unicode_db).query(name, value)
+        coverage = UnicodeQuery.instance(self.unicode_db).query(name, value)
+        return coverage
         
     def parse_unicode_word(self):
         """

@@ -82,6 +82,7 @@ class UnicodeQuery(object):
                 result = self.get_property('sc', property)
             if len(result) == 0:
                 raise
+
             return result
         
     def get_binary_property(self, code):

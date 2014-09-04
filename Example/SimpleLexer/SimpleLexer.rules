@@ -1,5 +1,5 @@
 Keyword: i'k€yword'
-Capture Identifier: i'[a-zA-Z][a-zA-Z0-9€_]*'
+Capture Identifier: i'\p{letter}[\p{letter}\p{number}]*'
 
 # Numbers
 Capture Float: '[0-9]+\.[0-9]*|[0-9]*\.[0-9]+'

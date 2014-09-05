@@ -43,12 +43,6 @@ def minimize(state_machine):
     """
     states = [state for state in state_machine]
     
-    for state in state_machine:
-        for edge in state.edges.values():
-            for minv, maxv in edge:
-                if minv > 100 and maxv > 100000:
-                    print "FUCKED UP BEFORE MINIMIZED"
-    
     # Step 1: Partition based on final states
     group_map = collections.defaultdict(StateGroup)
     for state in states:
@@ -99,9 +93,3 @@ def minimize(state_machine):
                         del state.edges[destination_state]
             if state_machine.start_state in to_merge:
                 state_machine.start_state = group[0]
-
-    for state in state_machine:
-        for edge in state.edges.values():
-            for minv, maxv in edge:
-                if minv > 100 and maxv > 100000:
-                    print "FUCKED UP AFTER MINIMIZED"

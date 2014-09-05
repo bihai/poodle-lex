@@ -59,6 +59,7 @@ class UnicodeQuery(object):
         code = self.get_property_code(property)
         if value is not None:
             value = self.get_value_code(code, value)
+            
         if code in self._db_binary_names:
             return self.get_binary_property(code)
         else:
@@ -148,11 +149,11 @@ class UnicodeQuery(object):
             with open(value_path, 'r') as f:
                 self.cache[value_path] = json.load(f)
         code_sanitized = self.sanitize_input(property_code)
-        if code_sanitized not in self.cache[value_path]:
-            return value
         value_sanitized = self.sanitize_input(value)
+        if code_sanitized not in self.cache[value_path]:
+            return value_sanitized
         if value_sanitized not in self.cache[value_path][code_sanitized]:
-            return value
+            return value_sanitized
         return self.cache[value_path][code_sanitized][value_sanitized]
         
     @staticmethod
@@ -177,4 +178,9 @@ class UnicodeQuery(object):
             else:
                 return None
         main_folder = os.path.dirname(os.path.normcase(main_file))
-        return os.path.join(main_folder, 'UnicodeData')
+        folder = os.path.join(main_folder, 'UnicodeData')
+        if not os.path.exists(os.path.join(folder, "BinaryProperties.json")):
+            folder = os.path.join(os.path.join(main_folder, ".."), 'UnicodeData')
+        if not os.path.exists(os.path.join(folder, "BinaryProperties.json")):
+            raise Exception("Could not find Unicode database")
+        return folder

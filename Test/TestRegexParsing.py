@@ -4,6 +4,8 @@ import unittest
 from Generator import Regex
 from Generator.Regex import RegexParserExpected, RegexParserInvalidCharacter, RegexParserInvalidCharacterRange, RegexParserExceptionInternal, RegexParserUnicodeCodepointOutOfRange
 
+from Utility.DebugDecorator import DebugDecorate
+
 class TestRegexParser(unittest.TestCase):
     def test_float_pattern(self):
         expected = Regex.Alternation([
@@ -58,6 +60,26 @@ class TestRegexParser(unittest.TestCase):
             (0xFE63, 0xFE63), (0xFF0D, 0xFF0D)
         ])))
         
+    def test_grouping_and_subexpressions(self):
+        x = DebugDecorate(Regex.Parser)
+        parsed = Regex.Parser("[a-z--h]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 103), (105, 122)])))
+        parsed = Regex.Parser("[[a-z]--h]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 103), (105, 122)])))
+        parsed = Regex.Parser("[[a-z]--[h]]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 103), (105, 122)])))
+        parsed = Regex.Parser("[[a-z]--g[h]]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 102), (105, 122)])))
+        parsed = Regex.Parser("[[a-z]--[gh--g]]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 103), (105, 122)])))
+        parsed = Regex.Parser("[a-h~~h-z]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 103), (105, 122)])))
+        parsed = Regex.Parser("[a-h||h-z]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 122)])))
+        parsed = Regex.Parser("[a-h&&h-z]").parse()
+        self.assertEqual(repr(parsed), repr(Regex.Literal([(104, 104)])))
+        
+        
     def test_syntax_errors(self):
         # Mismatched parenthesis
         self.assertRaises(RegexParserExpected, Regex.Parser(u"(Hello").parse)
@@ -71,7 +93,7 @@ class TestRegexParser(unittest.TestCase):
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"+Hello").parse)
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"?Hello").parse)
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"|Hello").parse)
-        self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u")Hello").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u")Hello").parse)
         self.assertRaises(RegexParserExpected, Regex.Parser(u"Hel)lo").parse)
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u":Hello").parse)
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"*Hello").parse)
@@ -159,7 +181,26 @@ class TestRegexParser(unittest.TestCase):
         self.assertRaises(RegexParserExpected, Regex.Parser(u"[\p{Name:]").parse)
         self.assertRaises(RegexParserExpected, Regex.Parser(u"[\p{Name:}]").parse)
         
+        # Set operations and groups
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[[hello]").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello--").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello~~").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello&&").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello||").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello--goodbye").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello~~goodbye").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello&&goodbye").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello||goodbye").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello--]").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello~~]").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello&&]").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello||]").parse)
+        self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"[--hello]").parse)
+        self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"[~~hello]").parse)
+        self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"[&&hello]").parse)
+        self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"[||hello]").parse)
+        self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello]]").parse)
         
-                
+
 if __name__ == '__main__':
     unittest.main()

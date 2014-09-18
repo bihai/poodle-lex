@@ -38,7 +38,8 @@ class Parser(object):
     form_feed = (12, 12)
     carriage_return = (13, 13)
     space = ((ord(' '), ord(' ')))
-    special = u'(){[.^$*+?|:'
+    special = u'(){}[].^$*+-~&?|:'
+    closing = u')}]'
     unicode_db = UnicodeQuery.find_db()
     set_operators = "-&~|"
     
@@ -170,6 +171,9 @@ class Parser(object):
             elif self.get_next_if(u'p'):
                 coverage = self.parse_unicode_expression()
                 return Regex.Literal(coverage)
+            elif self.get_next_if(u'N'):
+                coverage = self.parse_unicode_name()
+                return Regex.Literal(coverage)
             elif self.get_next_if(u'P'):
                 coverage = self.parse_unicode_expression()
                 return Regex.LiteralExcept(coverage)
@@ -183,7 +187,9 @@ class Parser(object):
                 return get_literal(self.get_next(), self.is_case_insensitive)
         else:
             character = self.get_next()
-            if character in Parser.special:
+            if character in Parser.closing:
+                raise RegexParserExpected("character", self.text, self.index-1)
+            elif character in Parser.special:
                 raise RegexParserInvalidCharacter(character)
             return get_literal(character, self.is_case_insensitive)
    
@@ -352,7 +358,6 @@ class Parser(object):
         if self.next_is(':'):
             return self.parse_named_character_class()
         expression = self.parse_character_class_expression()
-        self.expect(']')
         return expression
             
         return self.parse_character_class_range()
@@ -373,7 +378,7 @@ class Parser(object):
         @return: a CoverageSet object containing all the characters in the range
         """
         start_literal = self.parse_character_class_character()
-        if self.next_is('-') and self.nth_next_is_not(2, '-'):
+        if self.next_is('-') and not self.nth_next_is(2, '-'):
             self.get_next()
             end_literal = self.parse_character_class_character()
         else:
@@ -402,6 +407,7 @@ class Parser(object):
         @returns: the union of their coverage        
         """
         coverage = CoverageSet()
+        coverage.update(self.parse_character_class_range())
         while self.next_is_not(']\r\n') and not self.next_is_set_operator():
             coverage.update(self.parse_character_class_range())
         return coverage
@@ -417,6 +423,8 @@ class Parser(object):
         while self.next_is_set_operator():
             operator = self.get_next()
             self.get_next()
+            if self.next_is(u'])}'):
+                raise RegexParserExpected("expression term", self.text, self.index)
             rhs = self.parse_character_class_terms()
             if operator == u'|':
                 coverage.update(rhs)
@@ -449,6 +457,19 @@ class Parser(object):
         while self.get_next_if(u'|'):
             coverage.update(self.parse_unicode_subexpression())
         self.expect("}")
+        return coverage
+        
+    def parse_unicode_name(self):
+        """
+        Parse a unicode "{...}" expresion for querying unicode names.
+        @returns: A CoverageSet object containing all characters covered by
+            the specified unicode query
+        """
+        self.expect("{")
+        name = self.parse_unicode_word()
+        coverage = UnicodeQuery.instance(self.unicode_db).query('na', name)
+        if coverage.empty():
+            raise ValueError("Name '{name}' not found".format(name=name))
         return coverage
         
     def parse_unicode_subexpression(self):

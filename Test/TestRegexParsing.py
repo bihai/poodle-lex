@@ -4,8 +4,6 @@ import unittest
 from Generator import Regex
 from Generator.Regex import RegexParserExpected, RegexParserInvalidCharacter, RegexParserInvalidCharacterRange, RegexParserExceptionInternal, RegexParserUnicodeCodepointOutOfRange
 
-from Utility.DebugDecorator import DebugDecorate
-
 class TestRegexParser(unittest.TestCase):
     def test_float_pattern(self):
         expected = Regex.Alternation([
@@ -61,7 +59,6 @@ class TestRegexParser(unittest.TestCase):
         ])))
         
     def test_grouping_and_subexpressions(self):
-        x = DebugDecorate(Regex.Parser)
         parsed = Regex.Parser("[a-z--h]").parse()
         self.assertEqual(repr(parsed), repr(Regex.Literal([(97, 103), (105, 122)])))
         parsed = Regex.Parser("[[a-z]--h]").parse()

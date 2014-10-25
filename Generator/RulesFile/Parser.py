@@ -187,9 +187,21 @@ class Parser(object):
         @return: a Pattern object representing the expression
         """
         self.lexer.skip('whitespace')
-        is_case_insensitive = False
-        if self.lexer.token == 'identifier' and self.lexer.text == 'i':
-            is_case_insensitive = True
+        attributes = AST.PatternAttributes(False, False, False)
+        history = {}
+        if self.lexer.token == 'identifier':
+            for letter in self.lexer.text.lower():
+                if letter in history:
+                    raise RulesFileException("Duplicate attribute '{id}'".format(id=letter))
+                if letter == 'i':
+                    attributes.is_case_insensitive = True
+                elif letter == 'l':
+                    attributes.is_literal = True
+                elif letter == 'u':
+                    attributes.is_unicode_default = True
+                else:
+                    raise RulesFileException("Unrecognized attribute '{id}'".format(id=letter))
+                history[letter] = True
             self.lexer.get_next()
         string_value = self.lexer.expect_string()
         self.lexer.skip('whitespace')
@@ -198,7 +210,7 @@ class Parser(object):
             self.lexer.skip('whitespace', 'newline', 'comment')
             string_value += self.lexer.expect_string()
             self.lexer.skip('whitespace')
-        return self.Pattern(string_value, is_case_insensitive)
+        return self.Pattern(string_value, attributes)
         
     def parse_section_attributes(self):
         """

@@ -83,6 +83,7 @@ class DeterministicIR(object):
             return action in self.action
 
     def __init__(self, non_deterministic_ir, minimizer=Minimizer.polynomial):
+        self.automata_type = "dfa"
         self.rule_ids = dict(non_deterministic_ir.rule_ids)
         self.sections = {}
         for id, section in non_deterministic_ir.sections.items():

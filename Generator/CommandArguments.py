@@ -32,17 +32,17 @@ def handle():
             return 'list-minimizers', None
         if sys.argv[1] == 'list-languages':
             return 'list-languages', None
+        if sys.argv[1] == 'list-forms':
+            return 'list-forms', None
     
     # Parse complex options
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("RULES_FILE", help="Rules file")
     arg_parser.add_argument("OUTPUT_DIR", help="Containing directory for output files")
     arg_parser.add_argument("-e", "--encoding", help="Rules file encoding", default="utf-8")
-    arg_parser.add_argument("-n", "--print-nfa", help="Print a graph of the NFA of the ruleset to a .dot file", metavar="DOT_FILE")
-    arg_parser.add_argument("-d", "--print-dfa", help="Print a graph of the non-minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
-    arg_parser.add_argument("-m", "--print-min-dfa", help="Print a graph of the minimized DFA of the ruleset to a .dot file", metavar="DOT_FILE")
     arg_parser.add_argument("-i", "--minimizer", help="Minimizer algorithm to use. Use '--action=list-minimizers' for list of options", default="hopcroft", metavar="ALGORITHM")
     arg_parser.add_argument("-l", "--language", help="Output programming language. Use '--action=list-languages' for list of options", default=None)
+    arg_parser.add_argument("-m", "--form", help="The type of state machine to use. Use '--action-list-forms' for list of options'", default='default', choices=['nfa', 'dfa', 'default'])
     arg_parser.add_argument("-c", "--class-name", help="The name of the lexical analyzer class to generate", default=None)
     arg_parser.add_argument("-f", "--file-name", help="The base name of the generated source files", default=None)
     arg_parser.add_argument("-s", "--namespace", help="The namespace name of the lexical analyzer class to generate", default=None)

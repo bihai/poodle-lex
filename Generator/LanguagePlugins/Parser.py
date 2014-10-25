@@ -42,6 +42,18 @@ def is_path(text, base_directory):
         if os.path.exists(path):
             return path
     return None
+    
+def is_form(form):
+    """
+    Simple utility function to check valid entries for "Forms" and "DefaultForm"
+    @return: The specified state machine representation, in enum form.
+    """
+    if is_text(form):
+        if form.lower() == "dfa":
+            return LanguagePlugins.PluginOptions.DFA_IR
+        elif form.lower() == "nfa":
+            return LanguagePlugins.PluginOptions.NFA_IR
+    return None
 
 def load(base_directory, file, encoding='utf-8'):
     """ 
@@ -68,6 +80,8 @@ def load(base_directory, file, encoding='utf-8'):
                 plugin_paths = {}
                 dependencies = []
                 description = ""
+                forms = [LanguagePlugins.PluginOptions.DFA_IR]
+                default_form = LanguagePlugins.PluginOptions.DFA_IR
                 for plugin_attr in plugin_file["Plugins"][plugin_id]:
                     if is_text(plugin_attr) and plugin_attr in ("Source", "Files"):
                         plugin_paths[plugin_attr] = is_path(plugin_file["Plugins"][plugin_id][plugin_attr], base_directory)
@@ -85,6 +99,20 @@ def load(base_directory, file, encoding='utf-8'):
                             description = plugin_file["Plugins"][plugin_id][plugin_attr]
                         else:
                             valid = False
+                    elif plugin_attr == "Forms":
+                        pf_forms = plugin_file["Plugins"][plugin_id][plugin_attr]
+                        if isinstance(pf_forms, list):
+                            forms = set()
+                            for form in pf_forms:
+                                parsed_form = is_form(form)
+                                if parsed_form is not None:
+                                    forms.add(parsed_form)
+                    elif plugin_attr == "DefaultForm":
+                        pf_default_form = is_form(plugin_file["Plugins"][plugin_id][plugin_attr])
+                        if pf_default_form is not None:
+                            default_form = pf_default_form
+                if default_form not in forms:
+                    valid = False
                 if "Source" not in plugin_paths or "Files" not in plugin_paths:
                     valid = False
                 if valid:
@@ -92,7 +120,9 @@ def load(base_directory, file, encoding='utf-8'):
                         plugin_paths["Source"], 
                         plugin_paths["Files"], 
                         dependencies,
-                        description)
+                        description,
+                        forms,
+                        default_form)
        
         if len(language_plugins) == 0:
             raise Exception("No plugins found")

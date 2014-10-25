@@ -70,6 +70,7 @@ class NonDeterministicIR(object):
         root.accept(traverser)
         
         # Add metadata
+        self.automata_type = "nfa"
         self.sections = builder.sections
         self.rule_ids = builder.rule_ids
         self.root = root.get_qualified_name()
@@ -120,14 +121,15 @@ class NonDeterministicIR(object):
                     result = current_ast_section.find('define', item_name)
                     if result is None:
                         raise Exception("variable '{id}' not found".format(id=item_name))
-                    return Regex.Parser(result[0].pattern.regex, result[0].pattern.is_case_insensitive).parse() 
+                    return Regex.Parser(result[0].pattern.regex, result[0].pattern.attributes.is_case_insensitive).parse() 
                 
             try:
                 if 'reserve' not in rule.rule_action:
                     rule_id_lower = lower_nullable(rule.id)
                     action, section = rule.section_action
                     nfa_id = hash(rule)
-                    regex = Regex.Parser(rule.pattern.regex, rule.pattern.is_case_insensitive).parse()
+                    attributes = rule.pattern.attributes
+                    regex = Regex.Parser(rule.pattern.regex, attributes.is_case_insensitive, attributes.is_unicode_defaults, attributes.is_literal).parse()
                     nfa = Automata.NonDeterministicFiniteBuilder.build(nfa_id, DefineLookup(), regex)
                     section_action = None
                     if section is not None:

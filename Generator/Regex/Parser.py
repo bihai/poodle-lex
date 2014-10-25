@@ -43,7 +43,7 @@ class Parser(object):
     unicode_db = UnicodeQuery.find_db()
     set_operators = "-&~|"
     
-    def __init__(self, text, is_case_insensitive=False, unicode_db=None):
+    def __init__(self, text, is_case_insensitive=False, is_unicode_defaults=False, is_literal=False, unicode_db=None):
         """
         @param text: string containing the regular expression
         @param is_case_insensitive: boolean which is true if the regular expression should be case insensitive
@@ -52,6 +52,8 @@ class Parser(object):
         self.text = text
         self.index = 0
         self.is_case_insensitive = is_case_insensitive
+        self.is_unicode_defaults = is_unicode_defaults
+        self.is_literal = is_literal
         if unicode_db is not None:
             self.unicode_db = unicode_db
         elif Parser.unicode_db is None and unicode_db is None:
@@ -336,8 +338,25 @@ class Parser(object):
             u"print": [(32, 127)],
             u"punct": [(ord(i), ord(i)) for i in "][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-"],
             u"space": [(ord(i), ord(i)) for i in string.whitespace],
-            u"xdigit": [Parser.digits, (ord('a'), ord('f')), (ord('A'), ord('F'))]
+            u"xdigit": [Parser.digits, (ord('a'), ord('f')), (ord('A'), ord('F'))],
+            u"upper": [Parser.uppercase]
         }
+        unicode_classes = {
+            u"alnum": {False: [('alpha', None), ('digit', None)], True: []},
+            u"word": {False: [('alpha', None), ('gc', 'Mark'), ('digit', None), ('gc', 'Connector_Punctuation'), ('Join_Control', None)], True: []},
+            u"alpha": {False: [('alpha', None)], True: []},
+            u"blank": {False: [('gc', 'Space_Separator'), ('na1', 'CHARACTER TABULATION')], True: []},
+            u"cntrl": {False: [('gc', 'Control')], True: []},
+            u"digit": {False: [('gc', 'Decimal_Number')], True: []},
+            u"graph": {False: [], True: [('space', None), ('gc', 'Control'), ('gc', 'Surrogate'), ('gc', 'Unassigned')]},
+            u"lower": {False: [('Lowercase', None)], True: []},
+            u"print": {False: [('gc', 'Space_Separator'), ('na1', 'CHARACTER TABULATION')], True: [('space', None), ('gc', 'Control'), ('gc', 'Surrogate'), ('gc', 'Unassigned')]},
+            u"punct": {False: [('gc', 'Punctuation')], True: []},
+            u"space": {False: [('Whitespace', None)], True: []},
+            u"xdigit": {False: [('gc', 'Decimal_Number'), ('Hex_Digit', None)], True: []},
+            u"upper": {False: [('Uppercase', None)], True: []}
+        }
+        
         self.expect(u':')
         class_name = ""
         while self.next_is(string.ascii_letters):
@@ -345,7 +364,20 @@ class Parser(object):
         self.expect(":")
         self.expect("]")
         
-        if class_name in classes:
+        if self.is_unicode_defaults and class_name in unicode_classes:
+            class_queries = unicode_classes[class_name]
+            instance = UnicodeQuery.instance(self.unicode_db)
+            coverage = CoverageSet()
+            for k, v in class_queries[False]:
+                coverage.update(instance.query(k, v))
+            if len(class_queries[True]) > 0:
+                inverted_coverage = CoverageSet([(1, 0x10ffff)])
+                for k, v in class_queries[True]:
+                    inverted_coverage.difference_update(instance.query(k, v))
+                coverage.update(inverted_coverage)
+            return coverage
+                
+        elif not self.is_unicode_defaults and class_name in classes:
             return CoverageSet(classes[class_name])
         else:
             raise RegexParserExceptionInternal("Character class '%s' not recognized" % class_name)

@@ -197,7 +197,6 @@ class TestRegexParser(unittest.TestCase):
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"[&&hello]").parse)
         self.assertRaises(RegexParserInvalidCharacter, Regex.Parser(u"[||hello]").parse)
         self.assertRaises(RegexParserExpected, Regex.Parser(u"[hello]]").parse)
-        
-
+       
 if __name__ == '__main__':
     unittest.main()

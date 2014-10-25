@@ -24,8 +24,11 @@ class TestCExampleFreeBasic(unittest.TestCase):
         language_plugins, default_language = LanguagePlugins.load(base_directory, "Plugins/Plugins.json", 'utf-8')
         language_plugins[language].load()
         language_plugin = language_plugins[language]
+        representation = dfa_ir
+        if lanaguage_plugins.representation = LanguagePlugins.PluginOptions.NFA_IR:
+            representation = nfa_ir
         plugin_options = LanguagePlugins.PluginOptions()
-        emitter = language_plugin.create(dfa_ir, plugin_options)
+        emitter = language_plugin.create(representation, plugin_options)
         executor = LanguagePlugins.Executor(emitter, language_plugin.plugin_files_directory, output_dir)
         executor.execute()
         return output_dir

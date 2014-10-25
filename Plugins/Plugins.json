@@ -14,11 +14,12 @@
             "Dependencies": ["Plugins/CPlusPlus/VariableFormatter.py", "Plugins/CPlusPlus/StateMachine.py"],
             "Files": "Plugins/CPlusPlus/Template"
         },
-        "test": {
+        "dot": {
             "Description": "Test plugin",
-            "Source": "Plugins/Test/Test.py",
-            "Dependencies": ["Plugins/Test/Test2.py"],
-            "Files": "Plugins/Test/Template"
+            "Source": "Plugins/Dot/Dot.py",
+            "Files": "Plugins/Dot/Template",
+            "Forms": ["nfa", "dfa"],
+            "DefaultForm": "dfa"
         }
     }
 }

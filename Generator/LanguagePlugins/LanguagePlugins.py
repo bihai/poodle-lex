@@ -45,11 +45,15 @@ def rethrow_formatted(e, action):
         error=str(e)))
 
 class PluginOptions(object):
+    NFA_IR = 0
+    DFA_IR = 1
+    
     def __init__(self):
         self.is_backtracking = False
         self.class_name = None
         self.namespace = None
         self.file_name = None
+        self.form = PluginOptions.DFA_IR
         
 class Plugin(object):
     """
@@ -58,12 +62,19 @@ class Plugin(object):
         containing create_emitter()
     @ivar plugin_files_directory: String containing path to the plugin files
     @ivar description: String describing the plugin
+    @ivar dependencies: A list of strings, each referring to a Python source, the code of which must be made available to the plugin.
+    @ivar forms: A list of forms (just PluginOptions.NFA_IR and PluginOptions.DFA_IR are valid) which can be passed to the plugin
+    @ivar default_form: represents the default form to pass to the plugin, either PluginOptions.NFA_IR or PluginOptions.DFA_IR
+    @ivar module: The loaded plugin
+    @ivar dependency_modules: The loaded forms of the dependencies specified by the dependencies instance variable
     """
-    def __init__(self, source_path, plugin_files_directory, dependencies, description): 
+    def __init__(self, source_path, plugin_files_directory, dependencies, description, forms, default_form): 
         self.source_path = source_path
         self.plugin_files_directory = plugin_files_directory
         self.description = description
         self.dependencies = dependencies
+        self.forms = forms
+        self.default_form = default_form
         self.module = None
         self.dependency_modules = {}
         
@@ -86,6 +97,8 @@ class Plugin(object):
     def create(self, lexical_analyzer, plugin_options):
         """
         Creates a LanugageEmitter object from the plug-in
+        @param lexical_analyzer: The lexical analyzer in the specified representation
+        @param plugin_options: A set of options passed in by the user.
         """
         if self.module is None:
             raise Exception("Plug-in not loaded")

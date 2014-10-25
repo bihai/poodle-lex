@@ -22,19 +22,40 @@ from Lexer import RulesFileException
 from ASTBase import Node, Scope
 from ..Common import lower_nullable
 
+class PatternAttributes(object):
+    """
+    Represents the attributes which can be applied to a pattern using a 
+    prefix attached to the first string. (e.g. i"hello")
+    @ivar is_literal: Indicates that all characters in the pattern are literal
+    @ivar is_unicode_defaults: Indicates that special characters and classes should use Unicode equivalents
+    @ivar is_case_insensitive: Indicates that letters in the pattern should match both their uppercase and lowercase versions
+    """
+    def __init__(self, is_case_insensitive, is_unicode_defaults, is_literal):
+        """
+        @param is_literal: Boolean which, if True, indicates that all characters in the pattern are literal
+        @param is_unicode_defaults: Boolean which, if True, indicates that special characters and classes should use Unicode equivalents
+        @param is_case_insensitive: Boolean which, if True, indicates that letters in the pattern should match both their uppercase and lowercase versions
+        """
+        if is_literal and is_unicode_defaults:
+            raise ValueError("Pattern cannot be both literal and have Unicode special characters")
+        
+        self.is_literal = is_literal
+        self.is_unicode_defaults = is_unicode_defaults
+        self.is_case_insensitive = is_case_insensitive
+
 class Pattern(Node):
     """
     Represents a regular expression string
     @ivar regex: string containing the regular expression
-    @ivar is_case_insensitive: boolean which is true if the regular expression string should be case-insensitive
+    @ivar attributes: a set of pattern attributes which guide parsing
     @ivar line_number: integer with the line number in the source where this object was parsed
     """
     def accept(self, visitor):
         visitor.visit_pattern(self)
 
-    def __init__(self, regex, is_case_insensitive=False, line_number=None):
+    def __init__(self, regex, attributes = PatternAttributes(False, False, False), line_number=None):
         self.regex = regex
-        self.is_case_insensitive = is_case_insensitive
+        self.attributes = attributes
         self.line_number = line_number
 
     def __ne__(self, rhs):

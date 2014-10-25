@@ -36,7 +36,8 @@ this_folder = os.path.dirname(os.path.normcase(os.path.realpath(this_file)))
 
 minimizers = {
     'hopcroft': ('Minimize using Hopcroft\'s partition refinement algorithm', hopcroft),
-    'polynomial': ('Minimize using a polynomial algorithm comparing each state', polynomial)
+    'polynomial': ('Minimize using a polynomial algorithm comparing each state', polynomial),
+    'none': ('Do not minimize', lambda: None)
 }
 
 # Handle 'list' commands
@@ -50,6 +51,11 @@ if command == 'list-minimizers':
 elif command == 'list-languages':
     LanguagePlugins.describe(this_folder, "Plugins/Plugins.json", 'utf-8')
     sys.exit(0)
+elif command == 'list-forms':
+    print("Supported State Machine Forms (language support may vary)")
+    print("    nfa     Non-deterministic finite automata")
+    print("    dfa     Minimized deterministic finit automata")
+    print("    default Use the default specified for the language")
     
 # Check minimizer
 if arguments.minimizer not in minimizers:
@@ -82,7 +88,8 @@ except Exception as e:
 
 # Parse rules file
 rules_file = None
-dfa_ir = None
+ir = None
+form = LanguagePlugins.PluginOptions.DFA_IR
 try:
     rules_file = RulesFile.parse(arguments.RULES_FILE, arguments.encoding)
     validator = RulesFile.Validator()
@@ -94,8 +101,18 @@ except Exception as e:
 
 # Compile rules file
 try:
-    nfa_ir = RulesFile.NonDeterministicIR(rules_file)
-    dfa_ir = RulesFile.DeterministicIR(nfa_ir)
+    form = language_plugin.default_form
+    if arguments.form != "default":
+        if arguments.form == "nfa":
+            form = LanguagePlugins.PluginOptions.NFA_IR
+        elif arguments.form == "dfa":
+            form = LanguagePlugins.PluginOptions.DFA_IR
+    if form not in language_plugin.forms:
+        raise Exception("Specified state machine form '{0}' not supported by language plugin".format(arguments.form))
+    ir = RulesFile.NonDeterministicIR(rules_file)
+    if form == LanguagePlugins.PluginOptions.DFA_IR:
+        ir = RulesFile.DeterministicIR(ir)
+
 except Exception as e:
     raise
     print("Error processing rules. %s" % str(e), file=sys.stderr)
@@ -107,7 +124,9 @@ try:
     plugin_options.class_name = arguments.class_name
     plugin_options.namespace = arguments.namespace
     plugin_options.file_name = arguments.file_name
-    emitter = language_plugin.create(dfa_ir, plugin_options)
+    plugin_options.form = form
+    
+    emitter = language_plugin.create(ir, plugin_options)
     if os.path.normcase(os.path.realpath(arguments.OUTPUT_DIR)) == this_folder:
         print("Output directory cannot be same as executable directory", file=sys.stderr)
         sys.exit(1)

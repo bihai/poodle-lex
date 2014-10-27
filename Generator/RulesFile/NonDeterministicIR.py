@@ -48,7 +48,7 @@ class NonDeterministicIR(object):
         Represents a rule in the intermediate representation
         @ivar name: a string identifying the name of the rule's token
         @ivar nfa: a NonDeterministicFinite object representing the NFA representation of rule's regular expression
-        @ivar action: a string representing the action to take with the rule's token
+        @ivar action: a list of strings, each representing an action to take after matching the rule
         @ivar section_action: a tuple, with a string and Section object. The action can be 'enter', 
             'exit' or None. If the action is 'enter', the Section object represents the section into 
             which the lexical analyzer should enter after matching the rule.
@@ -87,12 +87,14 @@ class NonDeterministicIR(object):
             self.current_ir_section = None
             self.sections = {}
             self.rule_ids = {}
+            self.rule_hashes = list()
                     
         def visit_section(self, section):
             self.current_ast_section = section
             parent_id = section.parent.get_qualified_name() if section.parent is not None else None
             self.current_ir_section = NonDeterministicIR.Section(inherits=section.inherits, exits=section.exits, parent=parent_id)
-            self.sections[section.get_qualified_name()] = self.current_ir_section
+            self.sections[self.current_ast_section.get_qualified_name()] = self.current_ir_section
+            self.rule_hashes.append(set())
             
         def leave_section(self, section):
             """
@@ -103,6 +105,7 @@ class NonDeterministicIR(object):
                 self.current_ir_section = self.sections[section.parent.get_qualified_name()]
             else:
                 self.current_ir_section = None
+            self.rule_hashes.pop()
         
         def visit_rule(self, rule):
             """
@@ -139,12 +142,19 @@ class NonDeterministicIR(object):
                         section = rule_section.get_qualified_name()
                     section_action = (action, section)
                     ir_rule = NonDeterministicIR.Rule(rule.id, nfa_id, nfa, rule.rule_action, section_action, rule.line_number)
-                    self.current_ir_section.rules.append(ir_rule)
-                    if rule.id is not None and rule_id_lower not in self.rule_ids:
+                    if nfa_id in self.rule_hashes[-1]:
+                        # Merge identical rules if already exists
+                        rule = next((r for r in self.current_ir_section.rules if r.id == nfa_id), None)
+                        rule.nfa = nfa.alternate((rule.nfa, nfa))
+                        self.current_ir_section.rules
+                    else:
+                        # Otherwise, add the rule to the set
+                        self.current_ir_section.rules.append(ir_rule)
+                        self.rule_hashes[-1].add(nfa_id)
+                    if rule_id_lower not in self.rule_ids:
                         self.rule_ids[rule_id_lower] = rule.id
-                    
+                        
             except Exception as e:
-                raise
                 if rule.id is None:
                     rule.throw("anonymous rule: {message}".format(message=str(e)))
                 else:

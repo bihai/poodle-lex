@@ -17,8 +17,8 @@ class TestDFAEquivalency(unittest.TestCase):
     def test_lexical_analyzer(self):
         # Generate DFA through the LexicalAnalyzer class
         rules_file = AST.Section("::main::", None, rule = [
-            AST.Rule("keyword", AST.Pattern(ur'k€yword', is_case_insensitive=True)),
-            AST.Rule("identifier", AST.Pattern(ur'[a-zA-Z][a-zA-Z0-9€_]*', is_case_insensitive=True)),
+            AST.Rule("keyword", AST.Pattern(ur'k€yword', AST.PatternAttributes(True, False, False))),
+            AST.Rule("identifier", AST.Pattern(ur'[a-zA-Z][a-zA-Z0-9€_]*', AST.PatternAttributes(True, False, False))),
             AST.Rule("float", AST.Pattern(ur'[0-9]+\.[0-9]*|[0-9]*\.[0-9]+')),
             AST.Rule("integer", AST.Pattern(ur'[[:digit:]]+')),
             AST.Rule("quote", AST.Pattern(ur'"([^"\\]|\\.)*"')),

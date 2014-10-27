@@ -15,9 +15,17 @@
             "Files": "Plugins/CPlusPlus/Template"
         },
         "dot": {
-            "Description": "Test plugin",
+            "Description": "A graph in the GraphViz dot format.",
             "Source": "Plugins/Dot/Dot.py",
             "Files": "Plugins/Dot/Template",
+            "Forms": ["nfa", "dfa"],
+            "DefaultForm": "dfa"
+        },
+        "xml": {
+            "Description": "XML serialization of the lexical analyzer intermediate formats",
+            "Source": "Plugins/Xml/Xml.py",
+            "Dependencies": ["Plugins/Xml/ElementTreeFactory.py"],
+            "Files": "Plugins/Xml/Template",
             "Forms": ["nfa", "dfa"],
             "DefaultForm": "dfa"
         }

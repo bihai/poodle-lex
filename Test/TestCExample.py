@@ -25,7 +25,7 @@ class TestCExampleFreeBasic(unittest.TestCase):
         language_plugins[language].load()
         language_plugin = language_plugins[language]
         representation = dfa_ir
-        if lanaguage_plugins.representation = LanguagePlugins.PluginOptions.NFA_IR:
+        if language_plugin.default_form == LanguagePlugins.PluginOptions.NFA_IR:
             representation = nfa_ir
         plugin_options = LanguagePlugins.PluginOptions()
         emitter = language_plugin.create(representation, plugin_options)

@@ -46,6 +46,7 @@ def handle():
     arg_parser.add_argument("-c", "--class-name", help="The name of the lexical analyzer class to generate", default=None)
     arg_parser.add_argument("-f", "--file-name", help="The base name of the generated source files", default=None)
     arg_parser.add_argument("-s", "--namespace", help="The namespace name of the lexical analyzer class to generate", default=None)
+    arg_parser.add_argument("-p", "--plugin-file", help="The file describing available language plugins", default=None)
     arguments = arg_parser.parse_args()
 
     return 'build', arguments

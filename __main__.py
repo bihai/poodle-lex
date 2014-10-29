@@ -66,8 +66,11 @@ minimizer_description, minimizer = minimizers[arguments.minimizer]
 # Load language plug-ins file and list languages if requested
 language_plugins = None
 default_language = None
+plugin_file = os.path.join(this_folder, "Plugins/Plugins.json")
 try:
-    language_plugins, default_language = LanguagePlugins.load(this_folder, "Plugins/Plugins.json", 'utf-8')
+    if arguments.plugin_file is not None:
+        plugin_file = arguments.plugin_file
+    language_plugins, default_language = LanguagePlugins.load(plugin_file, 'utf-8')
 except Exception as e: 
    print("Unable to load plug-in file: %s\n" % str(e), file=sys.stderr)
    sys.exit(1)

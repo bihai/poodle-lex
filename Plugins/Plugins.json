@@ -4,28 +4,28 @@
     "Plugins": {
         "freebasic": {
             "Description": "FreeBasic programming language using proprietary Unicode streams",
-            "Source": "Plugins/FreeBasic/FreeBasic.py",
-            "Dependencies": ["Plugins/FreeBasic/VariableFormatter.py", "Plugins/FreeBasic/StateMachine.py"],
-            "Files": "Plugins/FreeBasic/Template"
+            "Source": "FreeBasic/FreeBasic.py",
+            "Dependencies": ["FreeBasic/VariableFormatter.py", "FreeBasic/StateMachine.py"],
+            "Files": "FreeBasic/Template"
         },
         "cpp": {
             "Description": "C++ programming language interface which consumes an std::istream",
-            "Source": "Plugins/CPlusPlus/CPlusPlus.py",
-            "Dependencies": ["Plugins/CPlusPlus/VariableFormatter.py", "Plugins/CPlusPlus/StateMachine.py"],
-            "Files": "Plugins/CPlusPlus/Template"
+            "Source": "CPlusPlus/CPlusPlus.py",
+            "Dependencies": ["CPlusPlus/VariableFormatter.py", "CPlusPlus/StateMachine.py"],
+            "Files": "CPlusPlus/Template"
         },
         "dot": {
             "Description": "A graph in the GraphViz dot format.",
-            "Source": "Plugins/Dot/Dot.py",
-            "Files": "Plugins/Dot/Template",
+            "Source": "Dot/Dot.py",
+            "Files": "Dot/Template",
             "Forms": ["nfa", "dfa"],
             "DefaultForm": "dfa"
         },
         "xml": {
             "Description": "XML serialization of the lexical analyzer intermediate formats",
-            "Source": "Plugins/Xml/Xml.py",
-            "Dependencies": ["Plugins/Xml/ElementTreeFactory.py"],
-            "Files": "Plugins/Xml/Template",
+            "Source": "Xml/Xml.py",
+            "Dependencies": ["Xml/ElementTreeFactory.py"],
+            "Files": "Xml/Template",
             "Forms": ["nfa", "dfa"],
             "DefaultForm": "dfa"
         }

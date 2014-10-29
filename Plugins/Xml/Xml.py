@@ -28,6 +28,12 @@ import xml.dom.minidom
 def create_emitter(rules_file, dependencies, plugin_options):
     return XmlPlugin(rules_file, dependencies, plugin_options)
     
+def maybe_list(include, value_factory):
+    if include:
+        return [i for i in value_factory()]
+    else:
+        return []
+    
 def maybe(include, value_factory):
     if include:
         return [value_factory()]
@@ -48,7 +54,7 @@ class XmlPlugin(PluginTemplate):
         if self.file_name is None:
             self.file_name = "LexicalAnalyzer"
         self.cache = CachedFormatter(limit=64, reserved=[])
-        self.cache.add_cache('id', lambda id: id if id is not None else 'Anonymous', 'ids')
+        self.cache.add_cache('id', lambda id: id or 'Anonymous', 'ids')
         self.cache.add_cache('rule', lambda id_and_rule: id_and_rule[1], 'ids')
         self.cache.add_cache('state', lambda state_and_name: state_and_name[1], 'ids')
 
@@ -76,17 +82,17 @@ class XmlPlugin(PluginTemplate):
         
     @staticmethod
     def get_rule_name(rule):
-        return 'Anonymous' if rule.name is None else rule.name
+        return rule.name or 'Anonymous'
         
     @staticmethod
     def get_rule_names(ids, section):
         return (XmlPlugin.get_rule_name(rule) for rule in XmlPlugin.get_rules(ids, section))
         
     def format_state_id(self, state, section):
-        return self.cache.get_state((state, ''.join(self.get_rule_names(state.ids, section))))
+        return self.cache.get_state((state, ''.join(self.get_rule_names(state.ids, section)) or 'State'))
         
     def format_rule_id(self, rule, section):
-        return self.cache.get_rule((rule.id, self.get_rule_name(rule)))
+        return self.cache.get_rule((rule.id, self.get_rule_name(rule) or 'Rule'))
         
     # Generation methods
     def generate_root(self, token):
@@ -108,7 +114,6 @@ class XmlPlugin(PluginTemplate):
             return self.generate_state_machine(E, section, section.dfa)
         def section_attributes():
             return {'id': self.cache.get_id(id), 'inherits': str(section.inherits).lower(), 'exits': str(section.exits).lower()}
-        print list(rule.id for rule in section.rules)    
         return E.Section(
             *(section_rules() + maybe(hasattr(section, 'dfa'), section_state_machine)), 
             **section_attributes())
@@ -133,7 +138,7 @@ class XmlPlugin(PluginTemplate):
             return self.get_rule_name(rule)
         def rule_attributes():
             if hasattr(rule, 'line_number'):
-                return {'name': get_rule_name(), 'id': get_rule_id(), 'line_number': rule.line_number}
+                return {'name': get_rule_name(), 'id': get_rule_id(), 'line_number': str(rule.line_number)}
             else:
                 return {'name': get_rule_name(), 'id': get_rule_id()}
         
@@ -178,10 +183,8 @@ class XmlPlugin(PluginTemplate):
             yield E.Id(self.format_rule_id(rule, section))
         
     def generate_transitions(self, E, section, state):
-        return chain(
-            self.generate_edge_transitions(E, section, state),
-            maybe(hasattr(state, 'epsilon_edges'), lambda: self.generate_epsilon_transitions(E, section, state))
-        )
+        return (list(self.generate_edge_transitions(E, section, state))
+            + maybe_list(hasattr(state, 'epsilon_edges'), lambda: self.generate_epsilon_transitions(E, section, state)))
         
     def generate_edge_transitions(self, E, section, state):
         for destination, edge in state.edges.items():
@@ -199,5 +202,5 @@ class XmlPlugin(PluginTemplate):
         
     def generate_epsilon_transitions(self, E, section, state):
         for destination in state.epsilon_edges:
-            yield E.Transition(Destination=self.format_state_id(destination))
+            yield E.Transition(Destination=self.format_state_id(destination, section))
             

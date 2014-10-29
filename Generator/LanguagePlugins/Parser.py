@@ -55,17 +55,19 @@ def is_form(form):
             return LanguagePlugins.PluginOptions.NFA_IR
     return None
 
-def load(base_directory, file, encoding='utf-8'):
+def load(file, encoding='utf-8'):
     """ 
     Loads a plug-in file and returns 
-    @param base_directory: string specifying the root directory of the application
     @param file: a string specifying the plug-in specification file
     @param encoding: a string specifying the encoding of the plug-in specification file
     @return: dict mapping strings representing plug-in identifiers to Plugin objects
     """
     language_plugins = {}
     default_language = None
-    with open(os.path.join(base_directory, file)) as f:
+    if not os.path.exists(file):
+        raise Exception("Plugin file not found")
+    base_directory = os.path.dirname(file)
+    with open(file) as f:
         plugin_file = json.load(f, encoding)
         if "Version" not in plugin_file or not isinstance(plugin_file["Version"], int) or plugin_file["Version"] != 1:
             raise Exception("Language plug-in file version not recognized")

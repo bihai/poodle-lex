@@ -21,7 +21,8 @@ class TestCExampleFreeBasic(unittest.TestCase):
         rules_file.accept(RulesFile.Traverser(RulesFile.Validator()))
         nfa_ir = RulesFile.NonDeterministicIR(rules_file)
         dfa_ir = RulesFile.DeterministicIR(nfa_ir)
-        language_plugins, default_language = LanguagePlugins.load(base_directory, "Plugins/Plugins.json", 'utf-8')
+        plugin_file_path = os.path.join(base_directory, "Plugins/Plugins.json")
+        language_plugins, default_language = LanguagePlugins.load(plugin_file_path, 'utf-8')
         language_plugins[language].load()
         language_plugin = language_plugins[language]
         representation = dfa_ir

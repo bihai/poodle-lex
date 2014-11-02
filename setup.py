@@ -95,7 +95,7 @@ if platform.system() == "Windows":
     target_name += ".exe"
 setup(
     name = 'Poodle-Lex',
-    version = '1.9.6',
+    version = '1.9.7',
     description = 'A lexical analyzer generator with support for multiple languages.',
     author = 'Parker Michaels',
     author_email = 'parkertomatoes@gmail.com',

@@ -93,7 +93,7 @@ class FreeBasicEmitter(PluginTemplate):
         "option", "option", "or", "orelse", "out", "output", "overload", 
         "override", "paint", "palette", "pascal", "pcopy", "peek", "pmap", 
         "point", "pointcoord", "pointer", "poke", "pos", "preserve", "preset", 
-        "private", "procptr", "property", "protected:", "pset", 
+        "private", "procptr", "property", "protected", "pset", 
         "ptr", "public", "put", "random", "randomize", "read", 
         "reallocate", "redim", "rem", "reset", "restore", "resume", "return", 
         "rgb", "rgba", "right", "rmdir", "rnd", "rset", "rtrim", "run", "sadd", 

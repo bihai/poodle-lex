@@ -49,3 +49,6 @@ Dim Shared Poodle.UTF16SurrogateOffset As Const Integer = &h10000 - (&hD800 Shl 
 
 Dim Shared Poodle.UTF16BigEndianMark(0 To 1) As Const Unsigned Byte = {&hFE, &hFF}
 Dim Shared Poodle.UTF16LittleEndianMark(0 To 1) As Const Unsigned Byte = {&hFF, &hFE}
+
+Dim Shared Poodle.UTF32BigEndianMark(0 To 3) As Const Unsigned Byte = {0, 0, &hFE, &hFF}
+Dim Shared Poodle.UTF32LittleEndianMark(0 To 3) As Const Unsigned Byte = {&hFF, &hFE, 0, 0}

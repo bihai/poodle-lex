@@ -47,17 +47,17 @@ Sub Poodle.UTF32Stream.DetectByteOrder()
     If This.Size < 4 Then 
         This.ByteOrderData = Poodle.UTF32Stream.UTF32BigEndian
     ElseIf _
-        This.CharacterData[0] = Poodle.UTF16BigEndianMark(0) And _
-        This.CharacterData[1] = Poodle.UTF16BigEndianMark(1) And _
-        This.CharacterData[2] = Poodle.UTF16BigEndianMark(2) And _
-        This.CharacterData[3] = Poodle.UTF16BigEndianMark(3) Then
+        This.CharacterData[0] = Poodle.UTF32BigEndianMark(0) And _
+        This.CharacterData[1] = Poodle.UTF32BigEndianMark(1) And _
+        This.CharacterData[2] = Poodle.UTF32BigEndianMark(2) And _
+        This.CharacterData[3] = Poodle.UTF32BigEndianMark(3) Then
         This.ByteOrderData = Poodle.UTF32Stream.UTF32BigEndian
         This.Index += 4
     ElseIf _
-        This.CharacterData[0] = Poodle.UTF16LittleEndianMark(0) And _
-        This.CharacterData[1] = Poodle.UTF16LittleEndianMark(1) And _
-        This.CharacterData[2] = Poodle.UTF16LittleEndianMark(2) And _
-        This.CharacterData[3] = Poodle.UTF16LittleEndianMark(3) Then
+        This.CharacterData[0] = Poodle.UTF32LittleEndianMark(0) And _
+        This.CharacterData[1] = Poodle.UTF32LittleEndianMark(1) And _
+        This.CharacterData[2] = Poodle.UTF32LittleEndianMark(2) And _
+        This.CharacterData[3] = Poodle.UTF32LittleEndianMark(3) Then
         This.ByteOrderData = Poodle.UTF32Stream.UTF32LittleEndian
         This.Index += 4
     Else

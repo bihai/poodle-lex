@@ -31,6 +31,8 @@ Namespace Poodle
     Extern UTF16SurrogateOffset As Const Integer
     Extern UTF16BigEndianMark(0 To 1) As Const Unsigned Byte
     Extern UTF16LittleEndianMark(0 To 1) As Const Unsigned Byte
+    Extern UTF32BigEndianMark(0 To 3) As Const Unsigned Byte
+    Extern UTF32LittleEndianMark(0 To 3) As Const Unsigned Byte
 End Namespace
 
 #endif

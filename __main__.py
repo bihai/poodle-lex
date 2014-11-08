@@ -113,7 +113,7 @@ try:
         raise Exception("Specified state machine form '{0}' not supported by language plugin".format(arguments.form))
     ir = RulesFile.NonDeterministicIR(rules_file)
     if form == LanguagePlugins.PluginOptions.DFA_IR:
-        ir = RulesFile.DeterministicIR(ir)
+        ir = RulesFile.DeterministicIR(ir, minimizer)
 
 except Exception as e:
     print("Error processing rules. %s" % str(e), file=sys.stderr)

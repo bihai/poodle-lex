@@ -85,7 +85,6 @@ try:
     language_plugins[language].load()
     language_plugin = language_plugins[language]
 except Exception as e:
-    raise
     print("Unable to load language plug-in '%s': %s\n" % (language, str(e)), file=sys.stderr)
     sys.exit(1)
 
@@ -117,7 +116,6 @@ try:
         ir = RulesFile.DeterministicIR(ir)
 
 except Exception as e:
-    raise
     print("Error processing rules. %s" % str(e), file=sys.stderr)
     sys.exit(1)
     

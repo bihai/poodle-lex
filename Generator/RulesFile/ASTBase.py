@@ -33,11 +33,16 @@ class Node(object):
     def __init__(self, line_number):
         self.line_number = line_number
         
-    def throw(self, message):
+    def throw(self, message, is_sealed=False):
+        """
+        Throws an exception which refers to the line number
+        @param message: the error message
+        @param is_sealed: if True, tells exception wrappers not to wrap this in a similar exception
+        """
         if self.line_number is None:
-            raise RulesFileException(message)
+            raise RulesFileException(message, is_sealed)
         else:
-            raise RulesFileException("On line %d, %s" % (self.line_number, message))
+            raise RulesFileException("On line %d, %s" % (self.line_number, message), is_sealed)
         
     @staticmethod
     def compare_nullable_icase(a, b):

@@ -124,7 +124,10 @@ class NonDeterministicIR(object):
                     result = current_ast_section.find('define', item_name)
                     if result is None:
                         raise Exception("variable '{id}' not found".format(id=item_name))
-                    return Regex.Parser(result[0].pattern.regex, result[0].pattern.attributes.is_case_insensitive).parse() 
+                    try:
+                        return Regex.Parser(result[0].pattern.regex, result[0].pattern.attributes.is_case_insensitive).parse() 
+                    except Exception as e:
+                        result[0].pattern.throw(str(e), is_sealed=True)
                 
             try:
                 if 'reserve' not in rule.rule_action:
@@ -155,6 +158,8 @@ class NonDeterministicIR(object):
                         self.rule_ids[rule_id_lower] = rule.id
                         
             except Exception as e:
+                if getattr(e, 'is_sealed', False):
+                    raise
                 if rule.id is None:
                     rule.throw("anonymous rule: {message}".format(message=str(e)))
                 else:

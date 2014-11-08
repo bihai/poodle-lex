@@ -21,8 +21,9 @@
 import re
 
 class RulesFileException(Exception):
-    def __init__(self, message):
+    def __init__(self, message, is_sealed = False):
         self.message = message
+        self.is_sealed = is_sealed
     
     def __str__(self):
         return self.message

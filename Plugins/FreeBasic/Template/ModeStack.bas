@@ -21,29 +21,44 @@
 $MODE_INCLUDE
 
 Constructor $NAMESPACE.$MODE_STACK_CLASS_NAME()
+    This.Stack = 0
     This.Reset()
 End Constructor
 
 Property $NAMESPACE.$MODE_STACK_CLASS_NAME.Mode() As $TYPE_MODE
-    Return This.Stack(This.Index)
+    Return This.Stack[This.Index]
 End Property
 
 Sub $NAMESPACE.$MODE_STACK_CLASS_NAME.Reset()
-    This.Index = 1
-    This.Stack(1) = $INITIAL_MODE_ID    
+    This.Index = 0
+    If This.Stack = 0 Then
+        Delete This.Stack
+    End If
+    This.Capacity = 16
+    This.Stack = New ModeId[This.Capacity]
+    This.Stack[This.Index] = $INITIAL_MODE_ID    
 End Sub
 
 Sub $NAMESPACE.$MODE_STACK_CLASS_NAME.EnterSection(ByVal Id As $TYPE_MODE)
-    If This.Index < $STACK_DEPTH_ID Then
-        This.Index += 1
-        This.Stack(This.Index) = Id
+    If This.Index = This.Capacity-1 Then
+        ' Expand the stack
+        Var NewCapacity = This.Capacity * 2
+        Var NewStack = New ModeId[NewCapacity]
+        For i As Integer = 0 To This.Capacity - 1
+            NewStack[i] = This.Stack[i]
+        Next i
+        Delete This.Stack
+        This.Stack = NewStack
+        This.Capacity = NewCapacity
     End If
+    This.Index += 1
+    This.Stack[This.Index] = Id
 End Sub
 
 Sub $NAMESPACE.$MODE_STACK_CLASS_NAME.ExitSection()
-    If This.Index > 1 Then This.Index -= 1
+    If This.Index > 0 Then This.Index -= 1
 End Sub
 
 Sub $NAMESPACE.$MODE_STACK_CLASS_NAME.SwitchSection(ByVal Id As $TYPE_MODE)
-    This.Stack(This.Index) = Id
+    This.Stack[This.Index] = Id
 End Sub

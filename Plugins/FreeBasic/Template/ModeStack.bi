@@ -37,8 +37,9 @@ Namespace $NAMESPACE
         Declare Sub Reset()
         
         Private:
-        Dim Stack(1 To $STACK_DEPTH_ID) As ModeId
+        Dim Stack As ModeId Pointer
         Dim Index As Integer
+        Dim Capacity As Integer
     End Type
 End Namespace
 

@@ -82,25 +82,35 @@ class StateMachineEmitter(object):
         with self.block("Function {method_name}() As {token_type}".format(method_name=method_name, token_type=token_type), "End Function"):
             self.generate_state_enum()
             start_state_id = self.get_state_id(self.start_state)
+            invalid_id = self.formatter.get_token_id('InvalidCharacter')
             self.line("Dim State As StateMachineState = {scope}.{state_id}".format(scope="StateMachineState", state_id=start_state_id))
             self.line("Dim Text As Poodle.Unicode.Text")
             with self.block("Do", "Loop"):
+                token_type = self.formatter.get_type('token', is_relative=False)
                 self.line("Dim Capture As Integer = 0")
+                self.line("Dim ReturnTokenId As {token_type}.TokenId = {token_type}.{invalid_id}".format(token_type=token_type, invalid_id=invalid_id))
                 with self.block("Select Case State", "End Select"):
                     for i, state in enumerate(self.dfa):
                         if i != 0:
                             self.line()
-                        self.generate_state_case(state)
+                        if any(state.edges) or len(state.final_ids) == 0:
+                            self.generate_state_case(state)
                 self.line("If Capture = 1 Then Text.Append(This.Character)")
                 self.line("This.Character = This.Stream->GetCharacter()")
-
+                with self.block("If ReturnTokenId <> {token_type}.{invalid_id} Then".format(token_type=token_type, invalid_id=invalid_id), "End If"):
+                    with self.block("If Capture = 1 Then", "End If"):
+                        self.line("Return {token_type}(ReturnTokenId, Text)".format(token_type=token_type))
+                        self.continue_block("Else")
+                        self.line("Return {token_type}(ReturnTokenId, Unicode.Text())".format(token_type=token_type))
+                
     def generate_state_enum(self):
         """
         Generate an enum value for each state
         """
         with self.block("Enum StateMachineState", "End Enum"):
             for state in self.dfa:
-                self.line(self.get_state_id(state))
+                if any(state.edges) or len(state.final_ids) == 0:
+                    self.line(self.get_state_id(state))
                 
     def generate_state_case(self, state):
         """
@@ -140,24 +150,30 @@ class StateMachineEmitter(object):
         """
         found_zero = False
         
-        
         # Emit transition table
         for destination, edges in state.edges.iteritems():
             self.line("Case %s" % ", ".join([self.format_case(i) for i in edges]))
-            if state == self.start_state:
-                if 0 in zip(*iter(edges))[0]:
-                    # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
-                    found_zero = True
-                    self.generate_check_zero_or_eof(invalid_otherwise=False)
-            rules = [rule for rule in self.rules if rule.id in destination.ids]
-            if any('capture' in rule.action for rule in rules):
-                self.line("Capture = 1")
-            self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id=self.get_state_id(destination)))
-            self.line()
-        if state == self.start_state and not found_zero:
-            self.line("Case 0")
-            self.generate_check_zero_or_eof(invalid_otherwise=True)
-            self.line()
+            if not any(destination.edges) and len(destination.final_ids) > 0:
+                # Special case - if next state is a sink then just return the token.
+                rules = [rule for rule in self.rules if rule.id in destination.ids]
+                if any('capture' in rule.action for rule in rules):
+                    self.line("Capture = 1")
+                self.generate_token_return_case(destination, return_using_flag=True)
+            else:
+                if state == self.start_state:
+                    if 0 in zip(*iter(edges))[0]:
+                        # Since 0 could mean either end of stream or a binary zero, use IsEndOfStream() to determine
+                        found_zero = True
+                        self.generate_check_zero_or_eof(invalid_otherwise=False)
+                rules = [rule for rule in self.rules if rule.id in destination.ids]
+                if any('capture' in rule.action for rule in rules):
+                    self.line("Capture = 1")
+                self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id=self.get_state_id(destination)))
+                self.line()
+                if state == self.start_state and not found_zero:
+                    self.line("Case 0")
+                    self.generate_check_zero_or_eof(invalid_otherwise=True)
+                    self.line()
                     
     def format_case(self, range):
         """
@@ -186,7 +202,7 @@ class StateMachineEmitter(object):
                     token_type=self.formatter.get_type('token', is_relative=False), 
                     token_id=self.formatter.get_token_id('InvalidCharacter')))
 
-    def generate_token_return_case(self, state):
+    def generate_token_return_case(self, state, return_using_flag = False):
         # First rule with an ID in the state's final IDs takes priority
         rule = self.section.get_matching_rule(state)
         if rule is None:
@@ -205,6 +221,8 @@ class StateMachineEmitter(object):
                 self.line('This.ExitSection()')
            
         if 'skip' in rule.action:
+            if return_using_flag:
+                self.line("This.Character = This.Stream->GetCharacter()")
             if len(self.dfa_ir.sections) > 1:
                 # On multi-section lexers, we need to return a 'skipped' token
                 self.line("Return {token_type}({token_type}.{token_id}, Unicode.Text())".format(
@@ -215,6 +233,10 @@ class StateMachineEmitter(object):
                 self.line("State = {scope}.{state_id}".format(scope="StateMachineState", state_id = self.get_state_id(self.start_state)))
                 self.line("Text = Poodle.Unicode.Text()")
                 self.line("Continue Do")
+        elif return_using_flag:
+            self.line("ReturnTokenId = {token_type}.{token_id}".format(
+                token_type = self.formatter.get_type('token', is_relative=False),
+                token_id = self.formatter.get_token_id(rule.name if rule.name is not None else 'Anonymous')))
         else:
             if 'capture' in rule.action:
                 text="Text"
